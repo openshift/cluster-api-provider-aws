@@ -17,6 +17,4 @@ func GenerateAwsCredentialsSecretFromEnv(secretName, namespace string) *apiv1.Se
 		Data: map[string][]byte{
 			awsclient.AwsCredsSecretIDKey:     []byte(os.Getenv("AWS_ACCESS_KEY_ID")),
 			awsclient.AwsCredsSecretAccessKey: []byte(os.Getenv("AWS_SECRET_ACCESS_KEY")),
-		},
-	}
-}
+		}
