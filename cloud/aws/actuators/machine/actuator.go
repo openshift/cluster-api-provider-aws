@@ -53,11 +53,6 @@ type Actuator struct {
 	awsClientBuilder awsclient.AwsClientBuilderFuncType
 }
 
-// ActuatorParams holds parameter information for Actuator
-type ActuatorParams struct {
-	ClusterClient client.ClusterInterface
-}
-
 // NewActuator returns a new AWS Actuator
 func NewActuator(kubeClient kubernetes.Interface, clusterClient clusterclient.Interface, logger *log.Entry, awsClientBuilder awsclient.AwsClientBuilderFuncType) (*Actuator, error) {
 	actuator := &Actuator{
