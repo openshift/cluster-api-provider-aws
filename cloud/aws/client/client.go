@@ -54,6 +54,8 @@ type Client interface {
 	TerminateInstances(*ec2.TerminateInstancesInput) (*ec2.TerminateInstancesOutput, error)
 
 	RegisterInstancesWithLoadBalancer(*elb.RegisterInstancesWithLoadBalancerInput) (*elb.RegisterInstancesWithLoadBalancerOutput, error)
+
+	GetRunningInstances(clusterID string) ([]*ec2.Instance, error)
 }
 
 type awsClient struct {
@@ -130,4 +132,46 @@ func NewClient(kubeClient kubernetes.Interface, secretName, namespace, region st
 		ec2Client: ec2.New(s),
 		elbClient: elb.New(s),
 	}, nil
+}
+
+// getInstances returns all instances that have a tag matching a clsuterid
+func (c *awsClient) getInstances(instanceStateFilter []*string, clusterID string) ([]*ec2.Instance, error) {
+	requestFilters := []*ec2.Filter{
+		{
+			Name:   aws.String("tag:tectonicClusterID"),
+			Values: []*string{aws.String(clusterID)},
+		},
+	}
+
+	if instanceStateFilter != nil {
+		requestFilters = append(requestFilters, &ec2.Filter{
+			Name:   aws.String("instance-state-name"),
+			Values: instanceStateFilter,
+		})
+	}
+
+	// Query instances with our machine's name, and in running/pending state.
+	request := &ec2.DescribeInstancesInput{
+		Filters: requestFilters,
+	}
+
+	result, err := c.ec2Client.DescribeInstances(request)
+	if err != nil {
+		return []*ec2.Instance{}, err
+	}
+
+	instances := make([]*ec2.Instance, 0, len(result.Reservations))
+	for _, reservation := range result.Reservations {
+		for _, instance := range reservation.Instances {
+			instances = append(instances, instance)
+		}
+	}
+
+	return instances, nil
+}
+
+// GetRunningInstances returns instances that match InstanceStateNameRunning or InstanceStateNamePending
+func (c *awsClient) GetRunningInstances(clusterID string) ([]*ec2.Instance, error) {
+	stateFilter := []*string{aws.String(ec2.InstanceStateNameRunning), aws.String(ec2.InstanceStateNamePending)}
+	return c.getInstances(stateFilter, clusterID)
 }
