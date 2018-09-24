@@ -9,7 +9,7 @@ export TF_VAR_cluster_namespace="dev-${TF_VAR_cluster_name}"
 
 export TF_IN_AUTOMATION="true"
 
-cd ./prebuild
+cd ./prebuild/aws
 case ${1} in
  "install")
    echo "***  starting terraform with TF_VAR_environment_id=${TF_VAR_environment_id}"
