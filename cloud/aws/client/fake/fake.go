@@ -104,3 +104,16 @@ func (c *awsClient) RegisterInstancesWithLoadBalancer(input *elb.RegisterInstanc
 func NewClient(kubeClient kubernetes.Interface, secretName, namespace, region string) (client.Client, error) {
 	return &awsClient{}, nil
 }
+
+// GetRunningInstances returns instances that match InstanceStateNameRunning or InstanceStateNamePending
+func (c *awsClient) GetRunningInstances(clusterID string) ([]*ec2.Instance, error) {
+	return []*ec2.Instance{
+		{
+			ImageId:    aws.String("ami-a9acbbd6"),
+			InstanceId: aws.String("i-02fcb933c5da7085c"),
+			State: &ec2.InstanceState{
+				Code: aws.Int64(16),
+			},
+		},
+	}, nil
+}

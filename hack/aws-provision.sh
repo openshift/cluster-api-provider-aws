@@ -3,9 +3,7 @@
 # Your AWS user account
 export TF_VAR_aws_user=$(aws iam get-user | jq --raw-output '.User.UserName')
 
-export TF_VAR_cluster_domain="aos-cloud.eu"
 export TF_VAR_environment_id=${ENVIRONMENT_ID:-$(uuidgen)}
-export TF_VAR_cluster_namespace="dev-${TF_VAR_cluster_name}"
 
 export TF_IN_AUTOMATION="true"
 

@@ -4,6 +4,7 @@
 *.dll
 *.so
 *.dylib
+/bin/
 
 # Test binary, build with `go test -c`
 *.test
@@ -24,3 +25,6 @@
 
 # Auto-generated manifests
 tfManifests/
+
+# e2e
+/test/e2e/manifests/aws-credentials.yaml
