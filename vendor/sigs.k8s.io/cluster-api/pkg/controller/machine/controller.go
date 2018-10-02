@@ -18,6 +18,7 @@ package machine
 
 import (
 	"errors"
+	"bytes"
 	"fmt"
 	"os"
 	"time"
@@ -107,7 +108,35 @@ func (c *MachineControllerImpl) Reconcile(machine *clusterv1.Machine) error {
 			glog.Infof("Skipping reconciling of machine object %v", name)
 			return nil
 		}
+
 		glog.Infof("reconciling machine object %v triggers delete.", name)
+		if machine.Labels["force-deletion"] != "True" && machine.Status.NodeRef != nil {
+			glog.Infof("draining node before delete")
+			buf := bytes.NewBuffer([]byte{})
+			errBuf := bytes.NewBuffer([]byte{})
+
+			nodeName := machine.Status.NodeRef.Name
+			drainOptions := NewDrainOptions(
+				c.kubernetesClientSet,
+				nodeName,
+				-1,
+				true,
+				true,
+				true,
+				buf,
+				errBuf,
+			)
+			err := drainOptions.RunDrain()
+			if err != nil {
+				// Machine still tries to terminate after drain failure
+				glog.Warningf("drain failed for machine %s - \nBuf:%v \nErrBuf:%v \nErr-Message:%v", machine.Name, buf, errBuf, err)
+				return err
+			}
+			glog.Infof("drain successful for machine %s - %v %v", machine.Name, buf, errBuf)
+		} else {
+			glog.Infof("found force-deletion label, skipping node drain")
+		}
+
 		if err := c.delete(m); err != nil {
 			glog.Errorf("Error deleting machine object %v; %v", name, err)
 			return err
