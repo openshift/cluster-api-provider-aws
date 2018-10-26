@@ -19,10 +19,11 @@ package machine
 import (
 	"encoding/base64"
 	"fmt"
+	"time"
+
 	"github.com/golang/glog"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
-	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -143,7 +144,18 @@ func (a *Actuator) updateMachineStatus(machine *clusterv1.Machine, awsStatus *pr
 		machineCopy.Status.Addresses = networkAddresses
 	}
 
-	if !equality.Semantic.DeepEqual(machine.Status, machineCopy.Status) {
+	// The Status.ProviderStatus gets rerender into a different string than the one
+	// produced by EncodeProviderStatus. Thus, we need to separatelly compare
+	// decoded version of Status.ProviderStatus.
+	machineNilProviderStatus := machine.DeepCopy()
+	machineNilProviderStatus.Status.ProviderStatus = nil
+	machineCopyNilProviderStatus := machineCopy.DeepCopy()
+	machineCopyNilProviderStatus.Status.ProviderStatus = nil
+
+	machineAwsStatus, err := ProviderStatusFromMachine(a.codec, machine)
+	machineCopyAwsStatus, err := ProviderStatusFromMachine(a.codec, machineCopy)
+
+	if !equality.Semantic.DeepEqual(machineNilProviderStatus.Status, machineCopyNilProviderStatus.Status) || !equality.Semantic.DeepEqual(machineAwsStatus, machineCopyAwsStatus) {
 		mLog.Info("machine status has changed, updating")
 		time := metav1.Now()
 		machineCopy.Status.LastUpdated = &time
