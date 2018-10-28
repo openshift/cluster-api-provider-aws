@@ -19,10 +19,7 @@ package university
 import (
 	"fmt"
 
-	"github.com/kubernetes-incubator/apiserver-builder/pkg/controller"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/util/workqueue"
+	"github.com/kubernetes-incubator/apiserver-builder/pkg/builders"
 
 	"github.com/kubernetes-incubator/apiserver-builder/example/pkg/apis/miskatonic/v1beta1"
 	listers "github.com/kubernetes-incubator/apiserver-builder/example/pkg/client/listers_generated/miskatonic/v1beta1"
@@ -31,30 +28,15 @@ import (
 
 // +controller:group=miskatonic,version=v1beta1,kind=University,resource=universities
 type UniversityControllerImpl struct {
-	// universityinformer listens for events about Universities
-	universityinformer cache.SharedIndexInformer
+	builders.DefaultControllerFns
 
 	// universitylister indexes properties about Universities
 	universitylister listers.UniversityLister
 }
 
 // Init initializes the controller and is called by the generated code
-// config - client configuration for talking to the apiserver
-// si - informer factory shared across all controllers for listening to events and indexing resource properties
-// queue - message queue for handling new events.  unique to this controller.
-func (c *UniversityControllerImpl) Init(
-	config *rest.Config,
-	si *sharedinformers.SharedInformers,
-	queue workqueue.RateLimitingInterface) {
-
-	// Get the informer and lister for subscribing to university events and querying universities from
-	// the lister cache
-	i := si.Factory.Miskatonic().V1beta1().Universities()
-	c.universityinformer = i.Informer()
-	c.universitylister = i.Lister()
-
-	// Add an event handler to enqueue a message for university adds / updates
-	c.universityinformer.AddEventHandler(&controller.QueueingEventHandler{queue})
+func (c *UniversityControllerImpl) Init(arguments sharedinformers.ControllerInitArguments) {
+	c.universitylister = arguments.GetSharedInformers().Factory.Miskatonic().V1beta1().Universities().Lister()
 }
 
 // Reconcile handles enqueued messages

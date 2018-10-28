@@ -70,8 +70,12 @@ type APIGroup struct {
 type Struct struct {
 	// Name is the name of the type
 	Name string
-	// IsResource
-	IsResource bool
+	// GenClient
+	GenClient     bool
+	GenDeepCopy   bool
+	NonNamespaced bool
+
+	GenUnversioned bool
 	// Fields is the list of fields appearing in the struct
 	Fields []*Field
 }
@@ -81,7 +85,7 @@ type Field struct {
 	Name string
 	// For versioned Kubernetes types, this is the versioned package
 	VersionedPackage string
-	// For versioned Kubernetes types, this is theun versioned package
+	// For versioned Kubernetes types, this is the unversioned package
 	UnversionedImport string
 	UnversionedType   string
 }
@@ -282,7 +286,7 @@ func (b *APIsBuilder) ParseIndex() {
 		}
 
 		r := &APIResource{
-			Type: c,
+			Type:          c,
 			NonNamespaced: IsNonNamespaced(c),
 		}
 		r.Group = GetGroup(c)
@@ -487,10 +491,15 @@ func (b *APIsBuilder) GetResourceTag(c *types.Type) string {
 	return resource
 }
 
-func (b *APIsBuilder) IsResource(c *types.Type) bool {
+func (b *APIsBuilder) GenClient(c *types.Type) bool {
 	comments := Comments(c.CommentLines)
 	resource := comments.GetTag("resource", ":")
 	return len(resource) > 0
+}
+
+func (b *APIsBuilder) GenDeepCopy(c *types.Type) bool {
+	comments := Comments(c.CommentLines)
+	return comments.HasTag("subresource-request")
 }
 
 func (b *APIsBuilder) GetControllerTag(c *types.Type) string {
@@ -558,16 +567,21 @@ func (b *APIsBuilder) ParseDomain() {
 	}
 }
 
+type GenUnversionedType struct {
+	Type     *types.Type
+	Resource *APIResource
+}
+
 func (b *APIsBuilder) ParseStructs(apigroup *APIGroup) {
-	remaining := []*types.Type{}
+	remaining := []GenUnversionedType{}
 	for _, version := range apigroup.Versions {
 		for _, resource := range version.Resources {
-			remaining = append(remaining, resource.Type)
+			remaining = append(remaining, GenUnversionedType{resource.Type, resource})
 		}
 	}
 	for _, version := range b.SubByGroupVersionKind[apigroup.Group] {
 		for _, kind := range version {
-			remaining = append(remaining, kind)
+			remaining = append(remaining, GenUnversionedType{kind, nil})
 		}
 	}
 
@@ -579,66 +593,149 @@ func (b *APIsBuilder) ParseStructs(apigroup *APIGroup) {
 		remaining = remaining[:len(remaining)-1]
 
 		// Already processed this type.  Skip it
-		if done.Has(next.Name.Name) {
+		if done.Has(next.Type.Name.Name) {
 			continue
 		}
-		done.Insert(next.Name.Name)
+		done.Insert(next.Type.Name.Name)
 
 		// Generate the struct and append to the list
-		result, additionalTypes := apigroup.DoType(next)
+		result, additionalTypes := apigroup.DoType(next.Type)
 
 		// This is a resource, so generate the client
-		if b.IsResource(next) {
-			result.IsResource = true
+		if b.GenClient(next.Type) {
+			result.GenClient = true
+			result.GenDeepCopy = true
+		}
+
+		if next.Resource != nil {
+			result.NonNamespaced = IsNonNamespaced(next.Type)
+		}
+
+		if b.GenDeepCopy(next.Type) {
+			result.GenDeepCopy = true
 		}
 		apigroup.Structs = append(apigroup.Structs, result)
 
 		// Add the newly discovered subtypes
-		remaining = append(remaining, additionalTypes...)
+		for _, at := range additionalTypes {
+			remaining = append(remaining, GenUnversionedType{at, nil})
+		}
 	}
 }
 
 func (apigroup *APIGroup) DoType(t *types.Type) (*Struct, []*types.Type) {
 	remaining := []*types.Type{}
+
 	s := &Struct{
-		Name:       t.Name.Name,
-		IsResource: false,
+		Name:           t.Name.Name,
+		GenClient:      false,
+		GenUnversioned: true, // Generate unversioned structs by default
 	}
+
+	for _, c := range t.CommentLines {
+		if strings.Contains(c, "+genregister:unversioned=false") {
+			// Don't generate the unversioned struct
+			s.GenUnversioned = false
+		}
+	}
+
 	for _, member := range t.Members {
-		memberGroup := GetGroup(member.Type)
 		uType := member.Type.Name.Name
 		memberName := member.Name
 		uImport := ""
 
+		// Use the element type for Pointers, Maps and Slices
+		mSubType := member.Type
+		hasElem := false
+		for mSubType.Elem != nil {
+			mSubType = mSubType.Elem
+			hasElem = true
+		}
+		if hasElem {
+			// Strip the package from the field type
+			uType = strings.Replace(member.Type.String(), mSubType.Name.Package+".", "", 1)
+		}
+
 		base := filepath.Base(member.Type.String())
-		samepkg := t.Name.Package == member.Type.Name.Package
+		samepkg := t.Name.Package == mSubType.Name.Package
 
 		// If not in the same package, calculate the import pkg
 		if !samepkg {
 			parts := strings.Split(base, ".")
 			if len(parts) > 1 {
-				switch member.Type.Name.Package {
-				case "k8s.io/apimachinery/pkg/apis/meta/v1":
-					// Use versioned types for meta/v1
-					uImport = fmt.Sprintf("%s \"%s\"", "metav1", "k8s.io/apimachinery/pkg/apis/meta/v1")
-					uType = "metav1." + parts[1]
-				default:
-					// Use unversioned types for everything else
-					t := member.Type
-					hasElem := false
-					if t.Elem != nil {
-						// Handle Pointers, Maps, Slices correctly
-						t = t.Elem
-						hasElem = true
-					}
-					uImportName := path.Base(path.Dir(t.Name.Package))
-					uImport = path.Dir(t.Name.Package)
-					uType = uImportName + "." + t.Name.Name
+				// Don't generate unversioned types for core types, just use the versioned types
+				if strings.HasPrefix(mSubType.Name.Package, "k8s.io/api/") {
+					// Import the package under an alias so it doesn't conflict with other groups
+					// having the same version
+					importAlias := path.Base(path.Dir(mSubType.Name.Package)) + path.Base(mSubType.Name.Package)
+					uImport = fmt.Sprintf("%s \"%s\"", importAlias, mSubType.Name.Package)
 					if hasElem {
-						uType = strings.Replace(member.Type.String(), path.Dir(uImport)+"/", "", 1)
-						uType = strings.Replace(uType, "/"+path.Base(t.Name.Package), "", 1)
+						// Replace the full package with the alias when referring to the type
+						uType = strings.Replace(member.Type.String(), mSubType.Name.Package, importAlias, 1)
+					} else {
+						// Replace the full package with the alias when referring to the type
+						uType = fmt.Sprintf("%s.%s", importAlias, parts[1])
 					}
-					fmt.Printf("\n%s : %s : %s\n%s : %s\n\n", member.Type.Kind, member.Type.String(), path.Dir(uImport), uImport, uType)
+				} else {
+					switch member.Type.Name.Package {
+					case "k8s.io/apimachinery/pkg/apis/meta/v1":
+						// Use versioned types for meta/v1
+						uImport = fmt.Sprintf("%s \"%s\"", "metav1", "k8s.io/apimachinery/pkg/apis/meta/v1")
+						uType = "metav1." + parts[1]
+					default:
+						// Use unversioned types for everything else
+						t := member.Type
+
+						if t.Elem != nil {
+							// Handle Pointers, Maps, Slices
+
+							// We need to parse the package from the Type String
+							t = t.Elem
+							str := member.Type.String()
+							startPkg := strings.LastIndexAny(str, "*]")
+							endPkg := strings.LastIndexAny(str, ".")
+							pkg := str[startPkg+1 : endPkg]
+							name := str[endPkg+1:]
+							prefix := str[:startPkg+1]
+
+							uImportBase := path.Base(pkg)
+							uImportName := path.Base(path.Dir(pkg)) + uImportBase
+							uImport = fmt.Sprintf("%s \"%s\"", uImportName, pkg)
+
+							uType = prefix + uImportName + "." + name
+
+							//fmt.Printf("\nDifferent Parent Package: %s\nChild Package: %s\nKind: %s (Kind.String() %s)\nImport stmt: %s\nType: %s\n\n",
+							//	pkg,
+							//	member.Type.Name.Package,
+							//	member.Type.Kind,
+							//	member.Type.String(),
+							//	uImport,
+							//	uType)
+						} else {
+							// Handle non- Pointer, Maps, Slices
+							pkg := t.Name.Package
+							name := t.Name.Name
+
+							// Come up with the alias the package is imported under
+							// Concatenate with directory package to reduce naming collisions
+							uImportBase := path.Base(pkg)
+							uImportName := path.Base(path.Dir(pkg)) + uImportBase
+
+							// Create the import statement
+							uImport = fmt.Sprintf("%s \"%s\"", uImportName, pkg)
+
+							// Create the field type name - should be <pkgalias>.<TypeName>
+							uType = uImportName + "." + name
+
+							//fmt.Printf("\nDifferent Parent Package: %s\nChild Package: %s\nKind: %s (Kind.String() %s)\nImport stmt: %s\nType: %s\n\n",
+							//	pkg,
+							//	member.Type.Name.Package,
+							//	member.Type.Kind,
+							//	member.Type.String(),
+							//	uImport,
+							//	uType)
+						}
+					}
 				}
 			}
 		}
@@ -654,9 +751,10 @@ func (apigroup *APIGroup) DoType(t *types.Type) (*Struct, []*types.Type) {
 			UnversionedType:   uType,
 		})
 
-		// Add this member Type for processing
-		if !member.Type.IsPrimitive() && memberGroup == GetGroup(t) {
-			remaining = append(remaining, member.Type)
+		// Add this member Type for processing if it isn't a primitive and
+		// is part of the same API group
+		if !mSubType.IsPrimitive() && GetGroup(mSubType) == GetGroup(t) {
+			remaining = append(remaining, mSubType)
 		}
 	}
 	return s, remaining

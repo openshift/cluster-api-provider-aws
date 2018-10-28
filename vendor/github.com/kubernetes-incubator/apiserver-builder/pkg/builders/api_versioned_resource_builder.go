@@ -18,13 +18,13 @@ package builders
 
 import (
 	"fmt"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/client-go/pkg/api"
 )
 
 //
@@ -61,15 +61,15 @@ func NewApiResourceWithStorage(
 	unversionedBuilder UnversionedResourceBuilder,
 	schemeFns SchemeFns,
 	new, newList func() runtime.Object,
-	storage rest.Storage) *versionedResourceBuilder {
+	RESTFunc func() rest.Storage) *versionedResourceBuilder {
 	v := &versionedResourceBuilder{
-		unversionedBuilder, schemeFns, new, newList, nil, storage, nil,
+		unversionedBuilder, schemeFns, new, newList, nil, RESTFunc, nil,
 	}
 	if new == nil {
 		panic(fmt.Errorf("Cannot call NewApiResourceWithStorage with nil new function."))
 	}
-	if storage == nil {
-		panic(fmt.Errorf("Cannot call NewApiResourceWithStorage with nil new storage."))
+	if RESTFunc == nil {
+		panic(fmt.Errorf("Cannot call NewApiResourceWithStorage with nil RESTFunc function."))
 	}
 	return v
 }
@@ -84,11 +84,11 @@ type versionedResourceBuilder struct {
 	// NewListFunc returns and empty unversioned instance of a resource List
 	NewListFunc func() runtime.Object
 
-	// Store is used to modify the default storage, mutually exclusive with RESTFunc
+	// StorageBuilder is used to modify the default storage, mutually exclusive with RESTFunc
 	StorageBuilder StorageBuilder
 
-	// REST a rest.Store implementation, mutually exclusive with StoreFunc
-	REST rest.Storage
+	// RESTFunc returns a rest.Storage implementation, mutually exclusive with StorageBuilder
+	RESTFunc func() rest.Storage
 
 	Storage rest.StandardStorage
 }
@@ -120,13 +120,11 @@ func (b *versionedResourceBuilder) Build(
 	optionsGetter generic.RESTOptionsGetter) rest.StandardStorage {
 
 	// Set a default strategy
-	wcs := 1000
 	store := &StorageWrapper{registry.Store{
-		Copier:            api.Scheme,
-		NewFunc:           b.Unversioned.New,     // Use the unversioned type
-		NewListFunc:       b.Unversioned.NewList, // Use the unversioned type
-		QualifiedResource: b.getGroupResource(group),
-		WatchCacheSize:    &wcs,
+		Copier:                   Scheme,
+		NewFunc:                  b.Unversioned.New,     // Use the unversioned type
+		NewListFunc:              b.Unversioned.NewList, // Use the unversioned type
+		DefaultQualifiedResource: b.getGroupResource(group),
 	}}
 
 	// Use default, requires
@@ -173,9 +171,9 @@ func (b *versionedResourceBuilder) registerEndpoints(
 		path = b.Unversioned.GetName()
 	}
 
-	if b.REST != nil {
+	if b.RESTFunc != nil {
 		// Use the REST implementation directly.
-		registry[path] = b.REST
+		registry[path] = b.RESTFunc()
 	} else {
 		// Create a new REST implementation wired to storage.
 		registry[path] = b.

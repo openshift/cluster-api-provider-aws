@@ -29,7 +29,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/names"
-	"k8s.io/client-go/pkg/api"
 )
 
 var _ rest.RESTCreateStrategy = &DefaultStorageStrategy{}
@@ -37,7 +36,7 @@ var _ rest.RESTDeleteStrategy = &DefaultStorageStrategy{}
 var _ rest.RESTUpdateStrategy = &DefaultStorageStrategy{}
 
 var StorageStrategySingleton = DefaultStorageStrategy{
-	api.Scheme,
+	Scheme,
 	names.SimpleNameGenerator,
 }
 
@@ -67,6 +66,7 @@ func (DefaultStorageStrategy) Build(builder StorageBuilder, store *StorageWrappe
 	store.DeleteStrategy = builder
 
 	options.AttrFunc = builder.GetAttrs
+	options.TriggerFunc = builder.TriggerFunc
 }
 
 func (DefaultStorageStrategy) NamespaceScoped() bool { return true }
@@ -115,11 +115,18 @@ func (b DefaultStorageStrategy) GetAttrs(obj runtime.Object) (labels.Set, fields
 	switch t := obj.(type) {
 	case HasObjectMeta:
 		apiserver := obj.(HasObjectMeta)
-		return labels.Set(apiserver.GetObjectMeta().Labels), b.GetSelectableFields(apiserver), false, nil
+		return labels.Set(apiserver.GetObjectMeta().Labels),
+			b.GetSelectableFields(apiserver),
+			apiserver.GetObjectMeta().Initializers != nil,
+			nil
 	default:
 		return nil, nil, false, fmt.Errorf(
 			"Cannot get attributes for object type %v which does not implement HasObjectMeta.", t)
 	}
+}
+
+func (b DefaultStorageStrategy) TriggerFunc(obj runtime.Object) []storage.MatchValue {
+	return []storage.MatchValue{}
 }
 
 // GetSelectableFields returns a field set that represents the object.

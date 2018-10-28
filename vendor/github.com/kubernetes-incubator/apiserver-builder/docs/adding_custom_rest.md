@@ -15,6 +15,7 @@ For more information on custom REST implementations, see the
 
 ```go
 // +genclient=true
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // +resource:path=foos,rest=FooREST
 // +k8s:openapi-gen=true
@@ -23,8 +24,15 @@ type Foo struct {
     // Your resource definition here
 }
 
-// Custom REST storage
+// Initialize custom REST storage
 func NewFooREST() rest.Storage {
-    // Your rest.Storage implementation here
+    // Initialize fields of custom REST implementation
 }
+
+// Your rest.Storage implementation below
+// ...
 ```
+
+**Warning:** NewFooREST() should not contain any non-trivial logic, besides
+simply initializing the fields of the struct, that represents the custom REST.
+See [this issue](https://github.com/kubernetes-incubator/apiserver-builder/issues/92) for details.

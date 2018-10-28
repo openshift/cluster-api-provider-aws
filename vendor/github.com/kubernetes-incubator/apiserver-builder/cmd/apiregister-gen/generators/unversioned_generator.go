@@ -46,8 +46,7 @@ func (d *unversionedGenerator) Imports(c *generator.Context) []string {
 		"k8s.io/apimachinery/pkg/runtime",
 		"k8s.io/apimachinery/pkg/runtime/schema",
 		"k8s.io/apiserver/pkg/endpoints/request",
-		"k8s.io/apiserver/pkg/registry/rest",
-		"k8s.io/client-go/pkg/api")
+		"k8s.io/apiserver/pkg/registry/rest")
 
 	// Get imports for all fields
 	for _, s := range d.apigroup.Structs {
@@ -75,17 +74,19 @@ var (
 	{{ range $api := .UnversionedResources -}}
 	Internal{{ $api.Kind }} = builders.NewInternalResource(
 		"{{ $api.Resource }}",
+        "{{ $api.Kind }}",
 		func() runtime.Object { return &{{ $api.Kind }}{} },
 		func() runtime.Object { return &{{ $api.Kind }}List{} },
 	)
 	Internal{{ $api.Kind }}Status = builders.NewInternalResourceStatus(
 		"{{ $api.Resource }}",
+        "{{ $api.Kind }}Status",
 		func() runtime.Object { return &{{ $api.Kind }}{} },
 		func() runtime.Object { return &{{ $api.Kind }}List{} },
 	)
 	{{ range $subresource := .Subresources -}}
 	Internal{{$subresource.REST}} = builders.NewInternalSubresource(
-		"{{$subresource.Resource}}", "{{$subresource.Path}}",
+		"{{$subresource.Resource}}", "{{$subresource.Request}}", "{{$subresource.Path}}",
 		func() runtime.Object { return &{{$subresource.Request}}{} },
 	)
 	{{ end -}}
@@ -122,27 +123,34 @@ func Resource(resource string) schema.GroupResource {
 }
 
 {{ range $s := .Structs -}}
-{{ if $s.IsResource }}// +genclient=true{{end}}
+{{ if $s.GenUnversioned -}}
+{{ if $s.GenClient }}// +genclient{{end}}
+{{ if $s.GenClient }}// +genclient{{ if $s.NonNamespaced }}:nonNamespaced{{end}}{{end}}
+{{ if $s.GenDeepCopy }}// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object{{end}}
 
 type {{ $s.Name }} struct {
 {{ range $f := $s.Fields -}}
     {{ $f.Name }} {{ $f.UnversionedType }}
 {{ end -}}
 }
-
+{{ end -}}
 {{ end -}}
 
 {{ range $api := .UnversionedResources -}}
 //
 // {{.Kind}} Functions and Structs
 //
+// +k8s:deepcopy-gen=false
 type {{.Kind}}Strategy struct {
 	builders.DefaultStorageStrategy
 }
 
+// +k8s:deepcopy-gen=false
 type {{$api.Kind}}StatusStrategy struct {
 	builders.DefaultStatusStorageStrategy
 }
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 type {{$api.Kind}}List struct {
 	metav1.TypeMeta
@@ -151,6 +159,8 @@ type {{$api.Kind}}List struct {
 }
 
 {{ range $subresource := $api.Subresources -}}
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
 type {{$subresource.Request}}List struct {
 	metav1.TypeMeta
 	metav1.ListMeta
@@ -191,6 +201,7 @@ func (pc {{$api.Kind}}) GetGeneration() int64 {
 }
 
 // Registry is an interface for things that know how to store {{.Kind}}.
+// +k8s:deepcopy-gen=false
 type {{.Kind}}Registry interface {
 	List{{.Kind}}s(ctx request.Context, options *internalversion.ListOptions) (*{{.Kind}}List, error)
 	Get{{.Kind}}(ctx request.Context, id string, options *metav1.GetOptions) (*{{.Kind}}, error)
@@ -206,6 +217,7 @@ func New{{.Kind}}Registry(sp builders.StandardStorageProvider) {{.Kind}}Registry
 
 // Implement Registry
 // storage puts strong typing around storage calls
+// +k8s:deepcopy-gen=false
 type storage{{.Kind}} struct {
 	builders.StandardStorageProvider
 }
@@ -242,7 +254,7 @@ func (s *storage{{.Kind}}) Create{{.Kind}}(ctx request.Context, object *{{.Kind}
 
 func (s *storage{{.Kind}}) Update{{.Kind}}(ctx request.Context, object *{{.Kind}}) (*{{.Kind}}, error) {
 	st := s.GetStandardStorage()
-	obj, _, err := st.Update(ctx, object.Name, rest.DefaultUpdatedObjectInfo(object, api.Scheme))
+	obj, _, err := st.Update(ctx, object.Name, rest.DefaultUpdatedObjectInfo(object, builders.Scheme))
 	if err != nil {
 		return nil, err
 	}

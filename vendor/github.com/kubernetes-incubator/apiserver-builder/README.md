@@ -1,148 +1,88 @@
 ## `apiserver-builder`
 
 [![Build Status](https://travis-ci.org/kubernetes-incubator/apiserver-builder.svg?branch=master)](https://travis-ci.org/kubernetes-incubator/apiserver-builder "Travis")
+[![Go Report Card](https://goreportcard.com/badge/github.com/kubernetes-incubator/apiserver-builder)](https://goreportcard.com/report/github.com/kubernetes-incubator/apiserver-builder)
+
+**Note**: This project is still only a proof of concept, and is not production ready.
 
 Apiserver Builder is a collection of libraries and tools to build native
 Kubernetes extensions using Kubernetes apiserver code.
 
-## Quick start
+## Motivation
 
-### Installation
+*Addon apiservers* are a Kubernetes extension point allowing fully featured Kubernetes
+APIs to be developed on the same api-machinery used to build the core Kubernetes APIS,
+but with the flexibility of being distributed and installed separately from
+the Kubernetes project.  This allows APIs to be developed outside of the
+Kubernetes repo and installed separately as a package.
 
-Instructions on installing the set of binary tools for:
+Building addon apiservers directly on the raw api-machinery libraries requires non-trivial
+code that must be maintained and rebased as the raw libraries change. The goal of this project is
+to make building apiservers in *Go* simple and accessible to everyone in the
+Kubernetes community.
 
-- bootstrapping new apiserver code, godeps, and APIs
-- generating code for APIs
-- generating docs
+apiserver-builder provides libraries, code generators, and tooling to make it possible to build
+and run a basic apiserver in an afternoon, while providing all of the hooks to offer the
+same capabilities when building from scratch.
 
-Details [here](https://github.com/kubernetes-incubator/apiserver-builder/blob/master/docs/installing.md)
+## Highlights
 
-### Getting started
+- Tools to bootstrap type definitions, controllers, tests and documentation for new resources
+- Tools to build and run the extension control plane standalone and in minikube and remote clusters.
+- Easily watch and update Kubernetes API types from your controller
+- Easily add new resources and subresources
+- Provides sane defaults for most values, but can be overridden
 
-Instructions on how to bootstrap a new apiserver with a simple type
+## Guides
 
-Details [here](https://github.com/kubernetes-incubator/apiserver-builder/blob/master/docs/getting_started.md)
+**Note:** The guides are presented roughly in the order of recommended progression.
 
-### Adding a new resource with a controller
+#### Installation guide
 
-Instructions on how to add a new resource
+Download the latest release and install on your PATH.
 
-Details [here](https://github.com/kubernetes-incubator/apiserver-builder/blob/master/docs/adding_resources.md)
+[installation guide](docs/installing.md)
 
-### Adding validation
+#### Building APIs concept guide
 
-Instructions on how to add schema validation an existing resource
+Conceptual information on how APIs and the Kubernetes control plane is structure and how to
+build new API extensions using apiserver-builder.
 
-Details [here](https://github.com/kubernetes-incubator/apiserver-builder/blob/master/docs/adding_validation.md)
+If you want to get straight to building something without knowing all the details of what is going on,
+skip ahead to the tools guide and come back to this later.
 
-### Adding defaulting
+[api building concept guide](docs/concepts/api_building_overview.md)
 
-Instructions on how to add field value defaulting to an existing resource
 
-Details [here](https://github.com/kubernetes-incubator/apiserver-builder/blob/master/docs/adding_defaulting.md)
+#### Tools user guide
 
-### Adding subresource
+Instructions on how to use the tools packaged with apiserver-builder to build and run a new apiserver.
 
-Instructions on how to add a new subresource to an existing resource
+[tools guide](docs/tools_user_guide.md)
 
-Details [here](https://github.com/kubernetes-incubator/apiserver-builder/blob/master/docs/adding_subresources.md)
+#### Step by step example
 
-### Defining custom REST handlers
+List of commints showing `apiserver-boot` commands run and the corresponding changes:
 
-Instructions on how to Overriding the default resource storage with
-custom REST handlers
+https://github.com/kubernetes-incubator/apiserver-builder/commits/example-simple
 
-Details [here](https://github.com/kubernetes-incubator/apiserver-builder/blob/master/docs/adding_custom_rest.md)
+#### Coding and libraries user guide
 
-### Generating code
+Instructions for how to implement custom APIs on top of the apiserver-builder libraries.
 
-Run:
+[libraries guide](docs/libraries_user_guide.md)
 
-`apiserver-boot generate"`
+#### Concept guides
 
-### Generating docs
+Conceptual information on addon apiservers, such as how auth works and how they interact
+with the main Kubernetes API server and API aggregator.
 
-Run:
+[Concepts](docs/concepts/README.md)
 
-`apiserver-boot generate docs --server <apiserver-binary>`
+## Additional material
 
-### Build and run etcd + apiserver + controller manager
-
-Run:
-
-`apiserver-boot build`
-
-`apiserver-boot run`
-
-This will create a kubeconfig file to use with `kubectl --kubeconfig`
-
-### Using delegated auth with minikube
+##### Using delegated auth with minikube
 
 Instructions on how to run an apiserver using delegated auth with a minikube cluster
 
 Details [here](https://github.com/kubernetes-incubator/apiserver-builder/blob/master/docs/using_minikube.md)
-
-
-## Motivation
-
-Standing up apiservers from scratch and adding apis requires 100's of lines of boilerplate
-code that must be understood and maintained (rebased against master).  There are few defaults,
-requiring the common case configuration to be repeated for each new apiserver and resource.
-Apiservers rely heavily on code generation to build libraries used by the apiserver, putting a
-steep learning curve on Kubernetes community members that want to implement a native api.
-Frameworks like Ruby on Rails and Spring have made standing up REST apis trivial by eliminating
-boilerplate and defaulting common values, allowing developers to focus on creating
-implementing the business logic of their component.
-
-## Goals
-
-- Working hello-world apiserver in ~5 lines.
-- Users can make a new resource type by simply defining a struct and tagging it
-  as a resource.
-- Adding sub-resources requires only defining the request-type struct definition,
-  implementing the REST implementation, and tagging the parent resource.
-- Adding validation / defaulting to a type only requires defining the validation / defaulting method
-  as a function of the appropriate struct type.
-- All necessary generated code can be generated running a single command, passing in repo root.
-
-
-### Binary distribution of build tools
-
-- Distribute binaries for all code-generators
-- Write porcelain wrapper for code-generators that is able to detect the
-  appropriate arguments for each from the GOPATH and `types.go`.
-
-### Helper libraries
-
-- Implement common-case defaults for create/update strategies
-  - Define implementable interfaces for default actions requiring
-    type specific knowledge - e.g. HasStatus - how to set and get Status
-- Implement libraries for registering types and setting up strategies
-  - Implement structs to defining wiring semantics instead of linking
-    directly to package variables for declarations
-- Implement libraries for registering subresources
-
-### Generate code for common defaults that require type or variable declarations
-
-- Implementations for "unversioned" types
-- Implementations for "List" types
-- Package variables used by code generation
-- Generate invocations of helper libraries from the types in `types.go`.
-
-### Support hooks for overriding defaults
-
-- Try to support 100% of the flexibility of manually writing the boilerplate by 
-  providing hooks.
-  - Users can call functions to register overrides.
-  
-### Support for generating reference documentation
-
-- Generate k8s.io style reference documentation for declared types
-  - Support request / response examples and manual edits
-
-### Thorough documentation and examples
-
-- Hello-world example
-- How to override each default
-- Build tools
-- How to use libraries directly (without relying on code generation)

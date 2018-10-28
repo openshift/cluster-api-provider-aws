@@ -42,14 +42,19 @@ func IsNonNamespaced(t *types.Type) bool {
 		return false
 	}
 
-	// here we check only SecondClosestCommentLines in order to reuse
-	// the lister-gen's +nonNamespaced tag
-	v, err := types.ExtractSingleBoolCommentTag("+", "nonNamespaced",
-		false, t.SecondClosestCommentLines)
-	if err != nil {
-		panic(errors.Errorf("Cannot get value for nonNamespaced tag: %v", err))
+	for _, c := range t.CommentLines {
+		if strings.Contains(c, "+genclient:nonNamespaced") {
+			return true
+		}
 	}
-	return v
+
+	for _, c := range t.SecondClosestCommentLines {
+		if strings.Contains(c, "+genclient:nonNamespaced") {
+			return true
+		}
+	}
+
+	return false
 }
 
 func IsController(t *types.Type) bool {
@@ -136,6 +141,16 @@ func (c Comments) GetTag(name, sep string) string {
 		}
 	}
 	return ""
+}
+
+func (c Comments) HasTag(name string) bool {
+	for _, c := range c {
+		prefix := fmt.Sprintf("+%s", name)
+		if strings.HasPrefix(c, prefix) {
+			return true
+		}
+	}
+	return false
 }
 
 // GetTags returns the value for all comments with a prefix and separator.  E.g. for "name" and "="

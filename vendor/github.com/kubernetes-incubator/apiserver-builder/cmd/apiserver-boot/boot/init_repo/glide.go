@@ -17,11 +17,15 @@ limitations under the License.
 package init_repo
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"io/ioutil"
 
 	"github.com/kubernetes-incubator/apiserver-builder/cmd/apiserver-boot/boot/util"
 	"github.com/spf13/cobra"
@@ -41,10 +45,47 @@ apiserver-boot init glide --fetch
 }
 
 var fetch bool
+var builderCommit string
+var Update bool
 
 func AddGlideInstallCmd(cmd *cobra.Command) {
 	glideInstallCmd.Flags().BoolVar(&fetch, "fetch", true, "if true, fetch new glide deps instead of copying the ones packaged with the tools")
+	glideInstallCmd.Flags().StringVar(&builderCommit, "commit", "", "if specified with fetch, use this commit for the apiserver-builder deps")
+	glideInstallCmd.Flags().BoolVar(&Update, "update", false, "if true, don't touch glide.yaml or glide.lock, and replace versions of packages managed by apiserver-boot.")
 	cmd.AddCommand(glideInstallCmd)
+}
+
+func retrieveVersion(versionString string) string {
+	const V = "version"
+	versionString = strings.ToLower(versionString)
+	i := strings.Index(versionString, V)
+	if i >= 0 {
+		i += len(V)
+	} else {
+		i = 0
+	}
+
+	var r rune
+	var j int
+	for j, r = range versionString[i:] {
+		if '0' <= r && r <= '9' {
+			goto FindEnd
+		}
+	}
+	return ""
+
+FindEnd:
+	var k int
+	j += i
+	for k, r = range versionString[j:] {
+		if (r < '0' || '9' < r) && r != '.' {
+			goto Final
+		}
+	}
+	return versionString[j:]
+
+Final:
+	return versionString[j : k+j]
 }
 
 func fetchGlide() {
@@ -52,8 +93,8 @@ func fetchGlide() {
 	if err != nil {
 		log.Fatal("must install glide v0.12 or later")
 	}
-	if !strings.HasPrefix(string(o), "glide version v0.12") &&
-		!strings.HasPrefix(string(o), "glide version v0.13") {
+	v := retrieveVersion(string(o))
+	if !strings.HasPrefix(v, "0.12") && !strings.HasPrefix(v, "0.13") {
 		log.Fatalf("must install glide  or later, was %s", o)
 	}
 
@@ -66,11 +107,15 @@ func fetchGlide() {
 	}
 }
 
-func copyGlide() {
+func CopyGlide() {
+	// Delete old versions of the packages we manage before installing the new ones
+	if Update {
+		DeleteOld()
+	}
+
 	// Move up two directories from the location of the `apiserver-boot`
 	// executable to find the `vendor` directory we package with our
-	// releases. TODO(campbellalex@google.com): this doesn't work for people
-	// who used `go install` to put `apiserver-boot` in their $GOPATH/bin.
+	// releases.
 	e, err := os.Executable()
 	if err != nil {
 		log.Fatal("unable to get directory of apiserver-builder tools")
@@ -78,41 +123,123 @@ func copyGlide() {
 
 	e = filepath.Dir(filepath.Dir(e))
 
-	doCmd := func(cmd string, args ...string) {
-		c := exec.Command(cmd, args...)
-		c.Stderr = os.Stderr
-		c.Stdout = os.Stdout
-		err = c.Run()
+	// read the file
+	f := filepath.Join(e, "bin", "glide.tar.gz")
+	fr, err := os.Open(f)
+	if err != nil {
+		log.Fatalf("failed to read vendor tar file %s %v", f, err)
+	}
+	defer fr.Close()
+
+	// setup gzip of tar
+	gr, err := gzip.NewReader(fr)
+	if err != nil {
+		log.Fatalf("failed to read vendor tar file %s %v", f, err)
+	}
+	defer gr.Close()
+
+	// setup tar reader
+	tr := tar.NewReader(gr)
+
+	for file, err := tr.Next(); err == nil; file, err = tr.Next() {
+		p := filepath.Join(".", file.Name)
+
+		if Update && filepath.Dir(p) == "." {
+			continue
+		}
+
+		err := os.MkdirAll(filepath.Dir(p), 0700)
 		if err != nil {
-			log.Fatalf("failed to copy go dependencies %v", err)
+			log.Fatalf("Could not create directory %s: %v", filepath.Dir(p), err)
+		}
+		b, err := ioutil.ReadAll(tr)
+		if err != nil {
+			log.Fatalf("Could not read file %s: %v", file.Name, err)
+		}
+		err = ioutil.WriteFile(p, b, os.FileMode(file.Mode))
+		if err != nil {
+			log.Fatalf("Could not write file %s: %v", p, err)
 		}
 	}
+}
 
-	doCmd("tar", "-xzvf", filepath.Join(e, "bin", "glide.tar.gz"))
+// DeleteOld delete all the versions for all packages it is going to untar
+func DeleteOld() {
+	// Move up two directories from the location of the `apiserver-boot`
+	// executable to find the `vendor` directory we package with our
+	// releases.
+	e, err := os.Executable()
+	if err != nil {
+		log.Fatal("unable to get directory of apiserver-builder tools")
+	}
+
+	e = filepath.Dir(filepath.Dir(e))
+
+	// read the file
+	f := filepath.Join(e, "bin", "glide.tar.gz")
+	fr, err := os.Open(f)
+	if err != nil {
+		log.Fatalf("failed to read vendor tar file %s %v", f, err)
+	}
+	defer fr.Close()
+
+	// setup gzip of tar
+	gr, err := gzip.NewReader(fr)
+	if err != nil {
+		log.Fatalf("failed to read vendor tar file %s %v", f, err)
+	}
+	defer gr.Close()
+
+	// setup tar reader
+	tr := tar.NewReader(gr)
+
+	for file, err := tr.Next(); err == nil; file, err = tr.Next() {
+		p := filepath.Join(".", file.Name)
+		// Delete existing directory first if upgrading
+		if filepath.Dir(p) != "." {
+			dir := filepath.Base(filepath.Dir(p))
+			parent := filepath.Base(filepath.Dir(filepath.Dir(p)))
+			gparent := filepath.Base(filepath.Dir(filepath.Dir(filepath.Dir(p))))
+
+			// Delete the directory if it is a repo or package in a repo
+			if dir != "vendor" && parent != "vendor" && !(gparent == "vendor" && parent == "github.com") {
+				os.RemoveAll(filepath.Dir(p))
+			}
+		}
+	}
 }
 
 func RunGlideInstall(cmd *cobra.Command, args []string) {
-	createGlide()
+	if !Update {
+		createGlide()
+	}
 	if fetch {
 		fetchGlide()
 	} else {
-		copyGlide()
+		CopyGlide()
 	}
 }
 
 type glideTemplateArguments struct {
-	Repo string
+	Repo          string
+	BuilderCommit string
 }
 
 var glideTemplate = `
 package: {{.Repo}}
 import:
+{{ if .BuilderCommit -}}
+- package: github.com/kubernetes-incubator/apiserver-builder
+  version: {{ .BuilderCommit }}
+{{ end -}}
+- package: k8s.io/api
+  version: c9fffff41e45e3c00186ac6b00d2cb585734d43e
 - package: k8s.io/apimachinery
-  version: cff8db64dd5b6fb0166dc2cf36e39c7ff4fe48c8
+  version: 7da60ba7ddca684051555f2c558eef2dfebc70d5
 - package: k8s.io/apiserver
-  version: 2e70bac0745c7f8e506f7f3e432d040c55d5718a
+  version: e24df9a2e58151a85874948908a454d511066460
 - package: k8s.io/client-go
-  version: 36b51953e6efc7779fe27c14258d78573de4e0de
+  version: 1be407b92aa39a2f63ddbb3d46104a1fd425fda0
 - package: github.com/go-openapi/analysis
   version: b44dc874b601d9e4e2f6e19140e794ba24bead3b
 - package: github.com/go-openapi/jsonpointer
@@ -146,5 +273,6 @@ func createGlide() {
 	util.WriteIfNotFound(path, "glide-template", glideTemplate,
 		glideTemplateArguments{
 			util.Repo,
+			builderCommit,
 		})
 }

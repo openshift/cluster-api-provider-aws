@@ -1,4 +1,3 @@
-
 /*
 Copyright YEAR The Kubernetes Authors.
 
@@ -15,49 +14,29 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-
-
 package festival
 
 import (
 	"log"
 
-	"github.com/kubernetes-incubator/apiserver-builder/pkg/controller"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/util/workqueue"
+	"github.com/kubernetes-incubator/apiserver-builder/pkg/builders"
 
 	"github.com/kubernetes-incubator/apiserver-builder/example/pkg/apis/kingsport/v1"
-	"github.com/kubernetes-incubator/apiserver-builder/example/pkg/controller/sharedinformers"
 	listers "github.com/kubernetes-incubator/apiserver-builder/example/pkg/client/listers_generated/kingsport/v1"
+	"github.com/kubernetes-incubator/apiserver-builder/example/pkg/controller/sharedinformers"
 )
 
 // +controller:group=kingsport,version=v1,kind=Festival,resource=festivals
 type FestivalControllerImpl struct {
-	// informer listens for events about Festival
-	informer cache.SharedIndexInformer
+	builders.DefaultControllerFns
 
 	// lister indexes properties about Festival
 	lister listers.FestivalLister
 }
 
 // Init initializes the controller and is called by the generated code
-// Registers eventhandlers to enqueue events
-// config - client configuration for talking to the apiserver
-// si - informer factory shared across all controllers for listening to events and indexing resource properties
-// queue - message queue for handling new events.  unique to this controller.
-func (c *FestivalControllerImpl) Init(
-	config *rest.Config,
-	si *sharedinformers.SharedInformers,
-	queue workqueue.RateLimitingInterface) {
-
-	// Set the informer and lister for subscribing to events and indexing festivals labels
-	i := si.Factory.Kingsport().V1().Festivals()
-	c.informer = i.Informer()
-	c.lister = i.Lister()
-
-	// Add an event handler to enqueue a message for festivals adds / updates
-	c.informer.AddEventHandler(&controller.QueueingEventHandler{queue})
+func (c *FestivalControllerImpl) Init(arguments sharedinformers.ControllerInitArguments) {
+	c.lister = arguments.GetSharedInformers().Factory.Kingsport().V1().Festivals().Lister()
 }
 
 // Reconcile handles enqueued messages

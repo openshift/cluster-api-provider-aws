@@ -1,4 +1,3 @@
-
 /*
 Copyright 2017 The Kubernetes Authors.
 
@@ -15,8 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-
-
 package v1
 
 import (
@@ -31,8 +28,9 @@ import (
 	"github.com/kubernetes-incubator/apiserver-builder/example/pkg/apis/kingsport"
 )
 
-// +genclient=true
-// +nonNamespaced=true
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // Festival
 // +k8s:openapi-gen=true
