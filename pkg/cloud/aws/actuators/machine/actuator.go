@@ -53,6 +53,9 @@ const (
 
 	// MachineCreationFailed indicates that machine creation failed
 	MachineCreationFailed = "MachineCreationFailed"
+
+	// providerIDAnnotationKey is the annotation storing aws provider id of format aws:///<zone>/<awsInstanceId>
+	providerIDAnnotationKey = "providerID"
 )
 
 // MachineActuator is a variable used to include the actuator into the machine controller
@@ -122,7 +125,44 @@ func (a *Actuator) Create(cluster *clusterv1.Cluster, machine *clusterv1.Machine
 		}
 		return err
 	}
+	err = a.updateProviderID(machine, instance, mLog)
+	if err != nil {
+		mLog.Errorf("Failed to update machine object with providerID annotation: %v", err)
+		return err
+	}
+
 	return a.updateStatus(machine, instance, mLog)
+}
+
+// updateProviderID adds providerID in the machine annotations
+func (a *Actuator) updateProviderID(machine *clusterv1.Machine, instance *ec2.Instance, mLog log.FieldLogger) error {
+	existingProviderID, ok := machine.Annotations[providerIDAnnotationKey]
+	machineCopy := machine.DeepCopy()
+	if instance != nil {
+		providerID := fmt.Sprintf("aws:///%s/%s", aws.StringValue(instance.Placement.AvailabilityZone), aws.StringValue(instance.InstanceId))
+
+		if ok && existingProviderID == providerID {
+			mLog.Debugf("ProviderID annotation already present with value:%s", existingProviderID)
+			return nil
+		}
+		if machineCopy.Annotations == nil {
+			machineCopy.Annotations = make(map[string]string)
+		}
+		machineCopy.Annotations[providerIDAnnotationKey] = providerID
+		if err := a.client.Update(context.Background(), machineCopy); err != nil {
+			mLog.Errorf("error updating machine annotations: %v", err)
+			return err
+		}
+		mLog.Infof("ProviderID annotation updated at machine: %s", providerID)
+	} else {
+		machineCopy.Annotations[providerIDAnnotationKey] = ""
+		if err := a.client.Update(context.Background(), machineCopy); err != nil {
+			mLog.Errorf("error updating machine annotations: %v", err)
+			return err
+		}
+		mLog.Infof("No instance found so clearing ProviderID annotation at machine")
+	}
+	return nil
 }
 
 func (a *Actuator) updateMachineStatus(machine *clusterv1.Machine, awsStatus *providerconfigv1.AWSMachineProviderStatus, mLog log.FieldLogger, networkAddresses []corev1.NodeAddress) error {
@@ -137,7 +177,6 @@ func (a *Actuator) updateMachineStatus(machine *clusterv1.Machine, awsStatus *pr
 	if networkAddresses != nil {
 		machineCopy.Status.Addresses = networkAddresses
 	}
-
 	if !equality.Semantic.DeepEqual(machine.Status, machineCopy.Status) {
 		mLog.Info("machine status has changed, updating")
 		time := metav1.Now()
@@ -516,8 +555,12 @@ func (a *Actuator) Update(cluster *clusterv1.Cluster, machine *clusterv1.Machine
 	// but instance could be deleted between the two calls.
 	if len(instances) == 0 {
 		mLog.Warnf("attempted to update machine but no instances found")
+		err := a.updateProviderID(machine, nil, mLog)
+		if err != nil {
+			return err
+		}
 		// Update status to clear out machine details.
-		err := a.updateStatus(machine, nil, mLog)
+		err = a.updateStatus(machine, nil, mLog)
 		if err != nil {
 			return err
 		}
@@ -543,7 +586,10 @@ func (a *Actuator) Update(cluster *clusterv1.Cluster, machine *clusterv1.Machine
 	if err != nil {
 		return err
 	}
-
+	err = a.updateProviderID(machine, newestInstance, mLog)
+	if err != nil {
+		return err
+	}
 	// We do not support making changes to pre-existing instances, just update status.
 	return a.updateStatus(machine, newestInstance, mLog)
 }
