@@ -273,6 +273,7 @@ var _ = framework.SigKubeDescribe("Machines", func() {
 
 				var nonMasterNodes []apiv1.Node
 				for _, node := range items.Items {
+					log.Infof("Node %v", node)
 					// filter out all nodes with master role (assumming it's always set)
 					if _, isMaster := node.Labels["node-role.kubernetes.io/master"]; isMaster {
 						continue
@@ -318,11 +319,11 @@ var _ = framework.SigKubeDescribe("Machines", func() {
 			})
 			Expect(err).NotTo(HaveOccurred())
 
-			By("Destroying worker machines")
+			By("Destroying worker machines NNOT")
 			// Let it fail and continue (assuming all instances gets removed out of the e2e)
-			clusterFramework.DeleteMachineSetAndWait(workerMachineSet, acw)
-			By("Destroying master machine")
-			f.DeleteMachineAndWait(masterMachine, acw)
+			//clusterFramework.DeleteMachineSetAndWait(workerMachineSet, acw)
+			By("Destroying master machine NOT")
+			//f.DeleteMachineAndWait(masterMachine, acw)
 		})
 
 	})

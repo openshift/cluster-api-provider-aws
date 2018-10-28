@@ -143,8 +143,8 @@ func (a *Actuator) updateMachineStatus(machine *clusterv1.Machine, awsStatus *pr
 		time := metav1.Now()
 		machineCopy.Status.LastUpdated = &time
 
-		if err := a.client.Update(context.Background(), machineCopy); err != nil {
-			glog.Errorf("error updating machine status: %v", err)
+		if err := a.client.Status().Update(context.Background(), machineCopy); err != nil {
+			glog.Errorf("YOYO  error updating machine status: %v", err)
 			return err
 		}
 	} else {

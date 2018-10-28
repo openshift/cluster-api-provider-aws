@@ -44,6 +44,7 @@ const (
 // Currently, these annotations are added by the node itself as part of its
 // bootup script after "kubeadm join" succeeds.
 func (c *ReconcileNode) link(node *corev1.Node) error {
+	glog.Infof("node-controller linking node %s", node.Name)
 	nodeReady := noderefutil.IsNodeReady(node)
 
 	// skip update if cached and no change in readiness.
@@ -75,7 +76,7 @@ func (c *ReconcileNode) link(node *corev1.Node) error {
 	t := metav1.Now()
 	machine.Status.LastUpdated = &t
 	machine.Status.NodeRef = objectRef(node)
-	if err = c.Client.Update(context.Background(), machine); err != nil {
+	if err = c.Client.Status().Update(context.Background(), machine); err != nil {
 		glog.Errorf("Error updating machine to link to node: %v\n", err)
 	} else {
 		glog.Infof("Successfully linked machine %s to node %s\n",

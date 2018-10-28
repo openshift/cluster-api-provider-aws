@@ -174,6 +174,9 @@ func MachineCRDManifest() *v1beta1.CustomResourceDefinition {
 				Kind:   "Machine",
 			},
 			Scope: "Namespaced",
+			Subresources: &v1beta1.CustomResourceSubresources{
+				Status: &v1beta1.CustomResourceSubresourceStatus{},
+			},
 			Validation: &v1beta1.CustomResourceValidation{
 				OpenAPIV3Schema: &v1beta1.JSONSchemaProps{
 					Properties: map[string]v1beta1.JSONSchemaProps{
@@ -636,74 +639,13 @@ func ClusterRoleManifest() *rbacv1.ClusterRole {
 				},
 				Resources: []string{
 					"clusters",
-				},
-			},
-			rbacv1.PolicyRule{
-				Verbs: []string{
-					"get",
-					"list",
-					"watch",
-					"create",
-					"update",
-					"patch",
-					"delete",
-				},
-				APIGroups: []string{
-					"cluster.k8s.io",
-				},
-				Resources: []string{
 					"machines",
-				},
-			},
-			rbacv1.PolicyRule{
-				Verbs: []string{
-					"get",
-					"list",
-					"watch",
-					"create",
-					"update",
-					"patch",
-					"delete",
-				},
-				APIGroups: []string{
-					"cluster.k8s.io",
-				},
-				Resources: []string{
 					"machinedeployments",
-				},
-			},
-			rbacv1.PolicyRule{
-				Verbs: []string{
-					"get",
-					"list",
-					"watch",
-					"create",
-					"update",
-					"patch",
-					"delete",
-				},
-				APIGroups: []string{
-					"cluster.k8s.io",
-				},
-				Resources: []string{
 					"machinesets",
-				},
-			},
-			rbacv1.PolicyRule{
-				Verbs: []string{
-					"get",
-					"list",
-					"watch",
-					"create",
-					"update",
-					"patch",
-					"delete",
-				},
-				APIGroups: []string{
-					"cluster.k8s.io",
-				},
-				Resources: []string{
-					"machines",
+					"clusters/status",
+					"machines/status",
+					"machinedeployments/status",
+					"machinesets/status",
 				},
 			},
 			rbacv1.PolicyRule{
@@ -721,23 +663,6 @@ func ClusterRoleManifest() *rbacv1.ClusterRole {
 				},
 				Resources: []string{
 					"nodes",
-				},
-			},
-			rbacv1.PolicyRule{
-				Verbs: []string{
-					"get",
-					"list",
-					"watch",
-					"create",
-					"update",
-					"patch",
-					"delete",
-				},
-				APIGroups: []string{
-					"cluster.k8s.io",
-				},
-				Resources: []string{
-					"machines",
 				},
 			},
 		},
@@ -805,6 +730,7 @@ func ManagerManifest(clusterAPINamespace, managerImage string) *appsv1.StatefulS
 							Command: []string{
 								"/manager",
 							},
+							Args: []string{"--alsologtostderr"},
 							Resources: apiv1.ResourceRequirements{
 								Limits: apiv1.ResourceList{
 									"memory": resource.MustParse("30Mi"),
@@ -952,6 +878,7 @@ func ClusterAPIControllersDeployment(clusterAPINamespace, actuatorImage string, 
 							Args: []string{
 								"--log-level=debug",
 								"--kubeconfig=/etc/kubernetes/admin.conf",
+								"--alsologtostderr",
 							},
 							Resources: apiv1.ResourceRequirements{
 								Requests: apiv1.ResourceList{
@@ -979,7 +906,7 @@ func ClusterAPIControllersDeployment(clusterAPINamespace, actuatorImage string, 
 								},
 							},
 							Command: []string{"./nodelink-controller"},
-							Args:    []string{"--kubeconfig=/etc/kubernetes/admin.conf"},
+							Args:    []string{"--kubeconfig=/etc/kubernetes/admin.conf", "--log-level=debug"},
 							Resources: apiv1.ResourceRequirements{
 								Requests: apiv1.ResourceList{
 									"cpu":    resource.MustParse("100m"),
