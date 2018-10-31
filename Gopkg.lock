@@ -388,14 +388,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:a52091fd7ba05f942ce12ca742eeb46a941f28298b8c17d1ec06ba3fd04e0e54"
+  digest = "1:ea834a014de763a2064287a7e3fa68b797dbfbd5493c7d5a5e6b73126f71722c"
   name = "github.com/openshift/cluster-api-actuator-pkg"
   packages = [
     "pkg/e2e/framework",
     "pkg/manifests",
   ]
   pruneopts = "T"
-  revision = "3b8debe0144e98c7d6fb1e1a69e18afddfccbed7"
+  revision = "6670f3ec69594ebbf7d6bb75c293485847b98479"
 
 [[projects]]
   digest = "1:e5d0bd87abc2781d14e274807a470acd180f0499f8bf5bb18606e9ec22ad9de9"
@@ -974,8 +974,6 @@
     "pkg/client/config",
     "pkg/client/fake",
     "pkg/controller",
-    "pkg/envtest",
-    "pkg/envtest/printer",
     "pkg/event",
     "pkg/handler",
     "pkg/internal/controller",
@@ -1048,7 +1046,6 @@
     "github.com/openshift/cluster-api-actuator-pkg/pkg/e2e/framework",
     "github.com/openshift/cluster-api-actuator-pkg/pkg/manifests",
     "github.com/prometheus/common/log",
-    "github.com/sirupsen/logrus",
     "github.com/spf13/cobra",
     "github.com/stretchr/testify/assert",
     "golang.org/x/net/context",
@@ -1061,13 +1058,13 @@
     "k8s.io/apimachinery/pkg/runtime/schema",
     "k8s.io/apimachinery/pkg/runtime/serializer",
     "k8s.io/apimachinery/pkg/types",
+    "k8s.io/apimachinery/pkg/util/diff",
     "k8s.io/apimachinery/pkg/util/uuid",
     "k8s.io/apimachinery/pkg/util/wait",
     "k8s.io/client-go/kubernetes",
     "k8s.io/client-go/kubernetes/fake",
     "k8s.io/client-go/kubernetes/scheme",
     "k8s.io/client-go/plugin/pkg/client/auth/gcp",
-    "k8s.io/client-go/rest",
     "k8s.io/code-generator/cmd/deepcopy-gen",
     "sigs.k8s.io/cluster-api/pkg/apis",
     "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1",
@@ -1079,7 +1076,6 @@
     "sigs.k8s.io/controller-runtime/pkg/client/config",
     "sigs.k8s.io/controller-runtime/pkg/client/fake",
     "sigs.k8s.io/controller-runtime/pkg/controller",
-    "sigs.k8s.io/controller-runtime/pkg/envtest",
     "sigs.k8s.io/controller-runtime/pkg/handler",
     "sigs.k8s.io/controller-runtime/pkg/manager",
     "sigs.k8s.io/controller-runtime/pkg/runtime/scheme",
