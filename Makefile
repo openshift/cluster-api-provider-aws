@@ -46,7 +46,6 @@ vendor:
 	dep ensure -v -update
 	patch -p1 < 0001-Delete-annotated-machines-first-when-scaling-down.patch
 	patch -p1 < 0002-Sort-machines-before-syncing.patch
-	patch -p1 < 0001-use-Update-instead-of-Status.Update-as-CustomResourc.patch
 
 .PHONY: generate
 generate: gendeepcopy generate-mocks
