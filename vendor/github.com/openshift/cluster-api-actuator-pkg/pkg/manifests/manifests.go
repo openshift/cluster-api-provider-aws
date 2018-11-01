@@ -648,74 +648,13 @@ func ClusterRoleManifest() *rbacv1.ClusterRole {
 				},
 				Resources: []string{
 					"clusters",
-				},
-			},
-			{
-				Verbs: []string{
-					"get",
-					"list",
-					"watch",
-					"create",
-					"update",
-					"patch",
-					"delete",
-				},
-				APIGroups: []string{
-					"cluster.k8s.io",
-				},
-				Resources: []string{
+					"clusters/status",
 					"machines",
-				},
-			},
-			{
-				Verbs: []string{
-					"get",
-					"list",
-					"watch",
-					"create",
-					"update",
-					"patch",
-					"delete",
-				},
-				APIGroups: []string{
-					"cluster.k8s.io",
-				},
-				Resources: []string{
-					"machinedeployments",
-				},
-			},
-			{
-				Verbs: []string{
-					"get",
-					"list",
-					"watch",
-					"create",
-					"update",
-					"patch",
-					"delete",
-				},
-				APIGroups: []string{
-					"cluster.k8s.io",
-				},
-				Resources: []string{
+					"machines/status",
 					"machinesets",
-				},
-			},
-			{
-				Verbs: []string{
-					"get",
-					"list",
-					"watch",
-					"create",
-					"update",
-					"patch",
-					"delete",
-				},
-				APIGroups: []string{
-					"cluster.k8s.io",
-				},
-				Resources: []string{
-					"machines",
+					"machinesets/status",
+					"machinedeployments",
+					"machinedeployments/status",
 				},
 			},
 			{
@@ -735,23 +674,7 @@ func ClusterRoleManifest() *rbacv1.ClusterRole {
 					"nodes",
 				},
 			},
-			{
-				Verbs: []string{
-					"get",
-					"list",
-					"watch",
-					"create",
-					"update",
-					"patch",
-					"delete",
-				},
-				APIGroups: []string{
-					"cluster.k8s.io",
-				},
-				Resources: []string{
-					"machines",
-				},
-			},
+
 		},
 	}
 }
