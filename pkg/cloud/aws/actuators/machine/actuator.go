@@ -461,6 +461,11 @@ func (a *Actuator) Delete(cluster *clusterv1.Cluster, machine *clusterv1.Machine
 
 // DeleteMachine deletes an AWS instance
 func (a *Actuator) DeleteMachine(cluster *clusterv1.Cluster, machine *clusterv1.Machine) error {
+	if IsMaster(machine) {
+		glog.Warningf("instance is from type master and can not be deleted")
+		return nil
+	}
+
 	machineProviderConfig, err := ProviderConfigFromMachine(machine)
 	if err != nil {
 		glog.Errorf("error decoding MachineProviderConfig: %v", err)

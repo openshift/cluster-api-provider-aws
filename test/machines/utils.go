@@ -4,6 +4,7 @@ import (
 	. "github.com/onsi/gomega"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	clusterv1alpha1 "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1"
 
@@ -43,4 +44,12 @@ func getMachineCondition(f *framework.Framework, machine *clusterv1alpha1.Machin
 	conditions := getMachineProviderStatus(f, machine).Conditions
 	Expect(len(conditions)).To(Equal(1), "ambiguous conditions: %#v", conditions)
 	return conditions[0]
+}
+
+func deleteMachineAndWait(f *framework.Framework, machine *clusterv1alpha1.Machine, client *awsClientWrapper) {
+	patch := []byte(`[{"op":"remove","path":"/metadata/labels/sigs.k8s.io~1cluster-api-machine-role"}]`)
+	_, err := f.CAPIClient.ClusterV1alpha1().Machines(machine.Namespace).Patch(machine.Name, types.JSONPatchType, patch)
+	Expect(err).NotTo(HaveOccurred())
+
+	f.DeleteMachineAndWait(machine, client)
 }

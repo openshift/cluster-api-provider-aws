@@ -142,8 +142,7 @@ func testMachineAPIResources(clusterID string) (*clusterv1.Machine, *clusterv1.C
 			Namespace: defaultNamespace,
 			Labels: map[string]string{
 				providerconfigv1.ClusterIDLabel:   clusterID,
-				providerconfigv1.MachineRoleLabel: "infra",
-				providerconfigv1.MachineTypeLabel: "master",
+				providerconfigv1.MachineRoleLabel: "master",
 			},
 		},
 

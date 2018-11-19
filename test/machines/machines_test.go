@@ -2,9 +2,11 @@ package machines
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	. "github.com/onsi/ginkgo"
@@ -23,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 
+	providerconfigv1 "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1alpha1"
 	machineutils "sigs.k8s.io/cluster-api-provider-aws/pkg/cloud/aws/actuators/machine"
 	awsclient "sigs.k8s.io/cluster-api-provider-aws/pkg/cloud/aws/client"
 )
@@ -340,6 +343,39 @@ var _ = framework.SigKubeDescribe("Machines", func() {
 			f.DeleteMachineAndWait(masterMachine, acw)
 		})
 
-	})
+		It("Can not delete instances from type master", func() {
+			machineProviderConfig, err := utils.TestingMachineProviderConfig(awsCredSecret.Name, cluster.Name)
+			Expect(err).NotTo(HaveOccurred())
+			masterMachine := manifests.MasterMachine(cluster.Name, cluster.Namespace, machineProviderConfig)
+			masterMachine.ObjectMeta.Labels[providerconfigv1.MachineRoleLabel] = "master"
+			f.CreateMachineAndWait(masterMachine, acw)
+			machinesToDelete.AddMachine(masterMachine, f, acw)
 
+			patch := []byte(`[{"op":"add","path":"/metadata/labels/sigs.k8s.io~1cluster-api-machine-role","value":"master"}]`)
+			_, err = f.CAPIClient.ClusterV1alpha1().Machines(masterMachine.Namespace).Patch(masterMachine.Name, types.JSONPatchType, patch)
+			Expect(err).NotTo(HaveOccurred())
+
+			By(fmt.Sprintf("Deleting %q machine", masterMachine.Name), func() {
+				err := f.CAPIClient.ClusterV1alpha1().Machines(masterMachine.Namespace).Delete(masterMachine.Name, &metav1.DeleteOptions{})
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			By("Verify instance is not terminated", func() {
+				err := wait.Poll(framework.PollInterval, framework.PoolTimeout, func() (bool, error) {
+					_, err := f.CAPIClient.ClusterV1alpha1().Machines(masterMachine.Namespace).Get(masterMachine.Name, metav1.GetOptions{})
+					if err == nil {
+						log.Info("Verify instance is not terminated")
+						return false, nil
+					}
+					if strings.Contains(err.Error(), "not found") {
+						return true, err
+					}
+					return false, nil
+				})
+				Expect(err).To(Equal(wait.ErrWaitTimeout))
+			})
+
+			deleteMachineAndWait(f, masterMachine, acw)
+		})
+	})
 })

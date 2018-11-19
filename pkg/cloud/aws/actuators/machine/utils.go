@@ -204,7 +204,7 @@ func EncodeProviderStatus(codec codec, awsStatus *providerconfigv1.AWSMachinePro
 
 // IsMaster returns true if the machine is part of a cluster's control plane
 func IsMaster(machine *clusterv1.Machine) bool {
-	if machineType, exists := machine.ObjectMeta.Labels[providerconfigv1.MachineTypeLabel]; exists && machineType == "master" {
+	if machineRole, exists := machine.ObjectMeta.Labels[providerconfigv1.MachineRoleLabel]; exists && machineRole == "master" {
 		return true
 	}
 	return false
