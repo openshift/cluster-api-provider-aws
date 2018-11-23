@@ -230,8 +230,8 @@ func (a *Actuator) CreateMachine(cluster *clusterv1.Cluster, machine *clusterv1.
 func (a *Actuator) Delete(context context.Context, cluster *clusterv1.Cluster, machine *clusterv1.Machine) error {
 	glog.Info("deleting machine")
 	if err := a.DeleteMachine(cluster, machine); err != nil {
-		glog.Errorf("error deleting machine: %v", err)
-		return err
+		glog.Errorf("error deleting machine: %v, returning an error to requeue", err)
+		return &clustererror.RequeueAfterError{RequeueAfter: requeueAfterSeconds * time.Second}
 	}
 	return nil
 }
