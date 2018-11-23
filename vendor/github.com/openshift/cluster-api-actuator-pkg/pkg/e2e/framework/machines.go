@@ -23,6 +23,16 @@ type CloudProviderClient interface {
 	GetPublicDNSName(machine *clusterv1alpha1.Machine) (string, error)
 	// Get private IP
 	GetPrivateIP(machine *clusterv1alpha1.Machine) (string, error)
+	// Get secutiry groups
+	GetSecurityGroups(machine *clusterv1alpha1.Machine) ([]string, error)
+	// Get IAM role
+	GetIAMRole(machine *clusterv1alpha1.Machine) (string, error)
+	// Get tags
+	GetTags(machine *clusterv1alpha1.Machine) (map[string]string, error)
+	// Get subnet
+	GetSubnet(machine *clusterv1alpha1.Machine) (string, error)
+	// Get availability zone
+	GetAvailabilityZone(machine *clusterv1alpha1.Machine) (string, error)
 }
 
 func (f *Framework) DeleteMachineAndWait(machine *clusterv1alpha1.Machine, client CloudProviderClient) {

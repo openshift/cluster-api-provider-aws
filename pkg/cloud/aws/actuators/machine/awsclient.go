@@ -1,19 +1,37 @@
-package machines
+package machine
 
 import (
 	"fmt"
 
-	machineutils "sigs.k8s.io/cluster-api-provider-aws/pkg/cloud/aws/actuators/machine"
+	"github.com/aws/aws-sdk-go/service/ec2"
+
 	awsclient "sigs.k8s.io/cluster-api-provider-aws/pkg/cloud/aws/client"
 	clusterv1alpha1 "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1"
+
+	"github.com/openshift/cluster-api-actuator-pkg/pkg/e2e/framework"
 )
 
 type awsClientWrapper struct {
 	client awsclient.Client
 }
 
+// NewAwsClientWrapper returns aws client implementaton of CloudProviderClient
+// used for testing in CI environmet
+func NewAwsClientWrapper(client awsclient.Client) framework.CloudProviderClient {
+	return &awsClientWrapper{client: client}
+}
+
+func (client *awsClientWrapper) getNewestRunningInstance(machine *clusterv1alpha1.Machine) (*ec2.Instance, error) {
+	instances, err := newActuatorRuntime(client.client).getRunningInstances(machine)
+	if err != nil {
+		return nil, err
+	}
+	sortInstances(instances)
+	return instances[0], nil
+}
+
 func (client *awsClientWrapper) GetRunningInstances(machine *clusterv1alpha1.Machine) ([]interface{}, error) {
-	runningInstances, err := machineutils.GetRunningInstances(machine, client.client)
+	runningInstances, err := newActuatorRuntime(client.client).getRunningInstances(machine)
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +45,7 @@ func (client *awsClientWrapper) GetRunningInstances(machine *clusterv1alpha1.Mac
 }
 
 func (client *awsClientWrapper) GetPublicDNSName(machine *clusterv1alpha1.Machine) (string, error) {
-	instance, err := machineutils.GetRunningInstance(machine, client.client)
+	instance, err := client.getNewestRunningInstance(machine)
 	if err != nil {
 		return "", err
 	}
@@ -40,7 +58,7 @@ func (client *awsClientWrapper) GetPublicDNSName(machine *clusterv1alpha1.Machin
 }
 
 func (client *awsClientWrapper) GetPrivateIP(machine *clusterv1alpha1.Machine) (string, error) {
-	instance, err := machineutils.GetRunningInstance(machine, client.client)
+	instance, err := client.getNewestRunningInstance(machine)
 	if err != nil {
 		return "", err
 	}
@@ -53,7 +71,7 @@ func (client *awsClientWrapper) GetPrivateIP(machine *clusterv1alpha1.Machine) (
 }
 
 func (client *awsClientWrapper) GetSecurityGroups(machine *clusterv1alpha1.Machine) ([]string, error) {
-	instance, err := machineutils.GetRunningInstance(machine, client.client)
+	instance, err := client.getNewestRunningInstance(machine)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +85,7 @@ func (client *awsClientWrapper) GetSecurityGroups(machine *clusterv1alpha1.Machi
 }
 
 func (client *awsClientWrapper) GetIAMRole(machine *clusterv1alpha1.Machine) (string, error) {
-	instance, err := machineutils.GetRunningInstance(machine, client.client)
+	instance, err := client.getNewestRunningInstance(machine)
 	if err != nil {
 		return "", err
 	}
@@ -78,7 +96,7 @@ func (client *awsClientWrapper) GetIAMRole(machine *clusterv1alpha1.Machine) (st
 }
 
 func (client *awsClientWrapper) GetTags(machine *clusterv1alpha1.Machine) (map[string]string, error) {
-	instance, err := machineutils.GetRunningInstance(machine, client.client)
+	instance, err := client.getNewestRunningInstance(machine)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +108,7 @@ func (client *awsClientWrapper) GetTags(machine *clusterv1alpha1.Machine) (map[s
 }
 
 func (client *awsClientWrapper) GetSubnet(machine *clusterv1alpha1.Machine) (string, error) {
-	instance, err := machineutils.GetRunningInstance(machine, client.client)
+	instance, err := client.getNewestRunningInstance(machine)
 	if err != nil {
 		return "", err
 	}
@@ -101,7 +119,7 @@ func (client *awsClientWrapper) GetSubnet(machine *clusterv1alpha1.Machine) (str
 }
 
 func (client *awsClientWrapper) GetAvailabilityZone(machine *clusterv1alpha1.Machine) (string, error) {
-	instance, err := machineutils.GetRunningInstance(machine, client.client)
+	instance, err := client.getNewestRunningInstance(machine)
 	if err != nil {
 		return "", err
 	}

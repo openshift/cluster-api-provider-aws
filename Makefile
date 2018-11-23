@@ -78,11 +78,15 @@ check: fmt vet lint test ## Check your code
 
 .PHONY: unit
 unit: # Run unit test
-	$(DOCKER_CMD) go test -race -cover ./cmd/... ./pkg/...
+	$(DOCKER_CMD) go test -v -race -cover ./cmd/... ./pkg/...
 
 .PHONY: integration
 integration: ## Run integration test
 	$(DOCKER_CMD) go test -v sigs.k8s.io/cluster-api-provider-aws/test/integration
+
+.PHONY: build-e2e
+build-e2e:
+	go test -c -o bin/e2e.test sigs.k8s.io/cluster-api-provider-aws/test/machines
 
 .PHONY: test-e2e
 test-e2e: ## Run e2e test
