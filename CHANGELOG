@@ -1,0 +1,18 @@
+## [Unreleased]
+### Changed
+- Migrate to CRD based cluster API stack
+
+### Added
+- Allow to specify availability zone in placement
+- Support for machine classes
+- Record machine events
+
+## [0.1.0] - 2018-10-17
+### Added
+
+- Self-standing binary allows tp bootstrap Kubernetes cluster with cluster API stack deployed
+- Requeue failed machines every 20s until running
+- Security groups and subnets can be specified via filters
+- AMI can be looked up by specifing filters
+- Actuator can be run as self-standing binary (with create, exists and delete operations)
+
