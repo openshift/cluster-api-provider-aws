@@ -254,7 +254,7 @@ func (gl *glogLogger) Logf(format string, v ...interface{}) {
 // DeleteMachine deletes an AWS instance
 func (a *Actuator) DeleteMachine(cluster *clusterv1.Cluster, machine *clusterv1.Machine) error {
 	// Drain node before deleting
-	if machine.ObjectMeta.Annotations["openshift.io/drain-node"] == "True" && machine.Status.NodeRef != nil {
+	if _, exists := machine.ObjectMeta.Annotations["openshift.io/drain-node"]; exists && machine.Status.NodeRef != nil {
 		glog.Infof("Draining node before delete")
 		if a.config == nil {
 			err := fmt.Errorf("missing client config, unable to build kube client")
