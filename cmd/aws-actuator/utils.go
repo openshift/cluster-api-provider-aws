@@ -19,7 +19,7 @@ import (
 	"github.com/openshift/cluster-api-actuator-pkg/pkg/e2e/framework"
 	machinev1 "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	machineactuator "sigs.k8s.io/cluster-api-provider-aws/pkg/actuators/machine"
-	"sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1alpha1"
+	providerconfig "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/openshiftawsproviderconfig/v1beta1"
 	awsclient "sigs.k8s.io/cluster-api-provider-aws/pkg/client"
 )
 
@@ -120,7 +120,7 @@ func createActuator(machine *machinev1.Machine, awsCredentials, userData *apiv1.
 	}
 	fakeClient := fake.NewFakeClient(objList...)
 
-	codec, err := v1alpha1.NewCodec()
+	codec, err := providerconfig.NewCodec()
 	if err != nil {
 		return nil, err
 	}

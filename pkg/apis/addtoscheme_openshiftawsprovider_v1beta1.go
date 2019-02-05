@@ -14,5 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package awsprovider contains awsprovider API versions
-package awsprovider
+package apis
+
+import (
+	"sigs.k8s.io/cluster-api-provider-aws/pkg/apis/openshiftawsproviderconfig/v1beta1"
+)
+
+func init() {
+	// Register the types with the Scheme so the components can map objects to GroupVersionKinds and back
+	AddToSchemes = append(AddToSchemes, v1beta1.SchemeBuilder.AddToScheme)
+}

@@ -35,7 +35,7 @@ import (
 	machinev1 "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	clustererror "github.com/openshift/cluster-api/pkg/controller/error"
 	apierrors "github.com/openshift/cluster-api/pkg/errors"
-	providerconfigv1 "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1alpha1"
+	providerconfigv1 "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/openshiftawsproviderconfig/v1beta1"
 
 	"github.com/aws/aws-sdk-go/service/ec2"
 
@@ -457,6 +457,7 @@ func (a *Actuator) getMachineInstances(cluster *machinev1.Cluster, machine *mach
 func (a *Actuator) updateLoadBalancers(client awsclient.Client, providerConfig *providerconfigv1.AWSMachineProviderConfig, instance *ec2.Instance) error {
 	if len(providerConfig.LoadBalancers) == 0 {
 		glog.V(4).Infof("Instance %q has no load balancers configured. Skipping", *instance.InstanceId)
+		glog.V(4).Infof("providerconfig: %+v", providerConfig)
 		return nil
 	}
 	errs := []error{}

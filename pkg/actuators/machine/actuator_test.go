@@ -2,6 +2,7 @@ package machine
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"strings"
 	"testing"
@@ -14,7 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	machinev1 "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
-	providerconfigv1 "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1alpha1"
+	providerconfigv1 "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/openshiftawsproviderconfig/v1beta1"
 	awsclient "sigs.k8s.io/cluster-api-provider-aws/pkg/client"
 	mockaws "sigs.k8s.io/cluster-api-provider-aws/pkg/client/mock"
 
@@ -37,6 +38,10 @@ const (
 )
 
 func TestMachineEvents(t *testing.T) {
+	flag.Set("alsologtostderr", fmt.Sprintf("%t", true))
+	var logLevel string
+	flag.StringVar(&logLevel, "logLevel", "4", "test")
+	flag.Lookup("v").Value.Set(logLevel)
 	codec, err := providerconfigv1.NewCodec()
 	if err != nil {
 		t.Fatalf("unable to build codec: %v", err)
@@ -105,6 +110,7 @@ func TestMachineEvents(t *testing.T) {
 				actuator.CreateMachine(cluster, machine)
 			},
 			event: "Warning FailedCreate CreateError",
+			//event: "Normal Created Created Machine aws-actuator-testing-machine",
 		},
 		{
 			name:    "Create machine event succeed",
@@ -187,7 +193,7 @@ func TestMachineEvents(t *testing.T) {
 			select {
 			case event := <-eventsChannel:
 				if event != tc.event {
-					t.Errorf("Expected %q event, got %q", tc.event, event)
+					t.Errorf("tc.name %s failed. Expected %q event, got %q", tc.name, tc.event, event)
 				}
 			default:
 				t.Errorf("Expected %q event, got none", tc.event)
@@ -506,7 +512,7 @@ func TestActuator(t *testing.T) {
 			},
 		},
 		{
-			name: "Delete machine failed (error terminating instances)",
+			name:                  "Delete machine failed (error terminating instances)",
 			terminateInstancesErr: fmt.Errorf("error"),
 			operation: func(objectClient client.Client, actuator *Actuator, cluster *machinev1.Cluster, machine *machinev1.Machine) {
 				actuator.Delete(context.TODO(), cluster, machine)
