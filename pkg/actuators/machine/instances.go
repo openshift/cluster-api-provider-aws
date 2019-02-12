@@ -198,11 +198,13 @@ func getBlockDeviceMappings(blockDeviceMappings []providerconfigv1.BlockDeviceMa
 	deviceName := describeAMIResult.Images[0].RootDeviceName
 
 	// Only support one blockDeviceMapping
+	encrypted := blockDeviceMappings[0].EBS.Encrypted
 	volumeSize := blockDeviceMappings[0].EBS.VolumeSize
 	volumeType := blockDeviceMappings[0].EBS.VolumeType
 	blockDeviceMapping := ec2.BlockDeviceMapping{
 		DeviceName: deviceName,
 		Ebs: &ec2.EbsBlockDevice{
+			Encrypted:  encrypted,
 			VolumeSize: volumeSize,
 			VolumeType: volumeType,
 		},
