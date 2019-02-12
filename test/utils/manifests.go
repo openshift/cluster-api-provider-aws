@@ -101,13 +101,14 @@ func TestingMachineProviderSpec(awsCredentialsSecretName string, clusterID strin
 	return *config, nil
 }
 
-func TestingMachineProviderSpecWithEBS(awsCredentialsSecretName string, clusterID string) (machinev1beta1.ProviderSpec, error) {
+func TestingMachineProviderSpecWithEBS(awsCredentialsSecretName string, clusterID string, encrypted bool) (machinev1beta1.ProviderSpec, error) {
 	volumeSize := int64(142)
 	volumeType := "gp2"
 	machinePc := testingAWSMachineProviderSpec(awsCredentialsSecretName, clusterID)
 	machinePc.BlockDevices = []providerconfigv1.BlockDeviceMappingSpec{
 		{
 			EBS: &providerconfigv1.EBSBlockDeviceSpec{
+				Encrypted:  &encrypted,
 				VolumeSize: &volumeSize,
 				VolumeType: &volumeType,
 			},
