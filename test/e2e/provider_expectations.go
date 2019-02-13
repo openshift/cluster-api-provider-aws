@@ -67,7 +67,7 @@ func (tc *testConfig) ExpectAllMachinesLinkedToANode() error {
 	machineList := mapiv1beta1.MachineList{}
 	nodeList := corev1.NodeList{}
 
-	err := wait.PollImmediate(1*time.Second, waitShort, func() (bool, error) {
+	err := wait.PollImmediate(1*time.Second, waitLong, func() (bool, error) {
 		if err := tc.client.List(context.TODO(), &listOptions, &machineList); err != nil {
 			glog.Errorf("error querying api for machineList object: %v, retrying...", err)
 			return false, nil
@@ -77,6 +77,8 @@ func (tc *testConfig) ExpectAllMachinesLinkedToANode() error {
 			return false, nil
 		}
 		glog.Infof("Waiting for %d machines to become nodes", len(machineList.Items))
+		glog.Infof("Nodes: %v ", nodeList)
+		glog.Infof("Machines: %v ", machineList)
 		return len(machineList.Items) == len(nodeList.Items), nil
 	})
 	if err != nil {
