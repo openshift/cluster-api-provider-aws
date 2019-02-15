@@ -202,7 +202,7 @@ var _ = framework.SigKubeDescribe("Machines", func() {
 		})
 
 		It("Can create EBS volumes", func() {
-			testMachineProviderSpec, err := utils.TestingMachineProviderSpecWithEBS(awsCredSecret.Name, cluster.Name, false)
+			testMachineProviderSpec, err := utils.TestingMachineProviderSpecWithEBS(awsCredSecret.Name, cluster.Name, true)
 			Expect(err).NotTo(HaveOccurred())
 			testMachine := manifests.TestingMachine(cluster.Name, cluster.Namespace, testMachineProviderSpec)
 			f.CreateMachineAndWait(testMachine, acw)
