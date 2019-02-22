@@ -51,6 +51,14 @@ const (
 	ExcludeNodeDrainingAnnotation = "machine.openshift.io/exclude-node-draining"
 )
 
+const (
+	terminationProtectionAnnotation = "machine.openshift.io/termination-protection"
+	machineTypeLabelDeprecated      = "sigs.k8s.io/cluster-api-machine-type"
+	machineTypeLabel                = "machine.openshift.io/cluster-api-machine-type"
+	machineRoleLabelDeprecated      = "sigs.k8s.io/cluster-api-machine-role"
+	machineRoleLabel                = "machine.openshift.io/cluster-api-machine-role"
+)
+
 var DefaultActuator Actuator
 
 func AddWithActuator(mgr manager.Manager, actuator Actuator) error {
@@ -141,6 +149,7 @@ func (r *ReconcileMachine) Reconcile(request reconcile.Request) (reconcile.Resul
 	// Add a finalizer to newly created objects.
 	if m.ObjectMeta.DeletionTimestamp.IsZero() &&
 		!util.Contains(m.ObjectMeta.Finalizers, machinev1.MachineFinalizer) {
+		klog.V(4).Infof("Cluster not found, machine actuation might fail: %v", err)
 		m.Finalizers = append(m.Finalizers, machinev1.MachineFinalizer)
 		if err := r.Client.Update(ctx, m); err != nil {
 			klog.Infof("failed to add finalizer to machine object %v due to error %v.", name, err)
@@ -152,6 +161,34 @@ func (r *ReconcileMachine) Reconcile(request reconcile.Request) (reconcile.Resul
 	}
 
 	if !m.ObjectMeta.DeletionTimestamp.IsZero() {
+		if isTerminationProtected(m) {
+			// TODO(alberto)
+			// This is a hack to prevent users from shooting off their foot
+			// This validation and others are being move to a dynamic webhook
+			// https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers
+			klog.Warningf("Deleting machine %s is forbidden!", m.Name)
+
+			klog.V(4).Info("Finalising machine object deletion with out invoking actuator deletion")
+			m.ObjectMeta.Finalizers = util.Filter(m.ObjectMeta.Finalizers, machinev1.MachineFinalizer)
+			if err := r.Client.Update(context.Background(), m); err != nil {
+				klog.Errorf("Error removing finalizer from machine object %v; %v", name, err)
+				return reconcile.Result{}, err
+			}
+
+			klog.V(4).Info("Recreating machine object to re-adopt cloud provider instance")
+			m.ObjectMeta.DeletionTimestamp = nil
+			m.ResourceVersion = ""
+			if err := r.Client.Create(context.Background(), m); err != nil {
+				klog.Warningf("unable to create machine %v: %v", name, err)
+				if requeueErr, ok := err.(*controllerError.RequeueAfterError); ok {
+					klog.Infof("Actuator returned requeue-after error: %v", requeueErr)
+					return reconcile.Result{Requeue: true, RequeueAfter: requeueErr.RequeueAfter}, nil
+				}
+				return reconcile.Result{}, err
+			}
+			return reconcile.Result{}, nil
+		}
+
 		// no-op if finalizer has been removed.
 		if !util.Contains(m.ObjectMeta.Finalizers, machinev1.MachineFinalizer) {
 			klog.Infof("reconciling machine object %v causes a no-op as there is no finalizer.", name)
@@ -322,4 +359,23 @@ func (r *ReconcileMachine) deleteNode(ctx context.Context, name string) error {
 		return err
 	}
 	return r.Client.Delete(ctx, &node)
+}
+
+func isTerminationProtected(machine *machinev1.Machine) bool {
+	if _, exists := machine.ObjectMeta.Annotations[terminationProtectionAnnotation]; exists {
+		return true
+	}
+	if machineType, exists := machine.ObjectMeta.Labels[machineTypeLabelDeprecated]; exists && machineType == "master" {
+		return true
+	}
+	if machineType, exists := machine.ObjectMeta.Labels[machineTypeLabel]; exists && machineType == "master" {
+		return true
+	}
+	if machineRole, exists := machine.ObjectMeta.Labels[machineRoleLabelDeprecated]; exists && machineRole == "master" {
+		return true
+	}
+	if machineRole, exists := machine.ObjectMeta.Labels[machineRoleLabel]; exists && machineRole == "master" {
+		return true
+	}
+	return false
 }
