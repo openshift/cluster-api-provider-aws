@@ -10,11 +10,12 @@ import (
 	o "github.com/onsi/gomega"
 	e2e "github.com/openshift/cluster-api-actuator-pkg/pkg/e2e/framework"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
+	runtimeclient "sigs.k8s.io/controller-runtime/pkg/client"
+	mapiv1beta1 "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/uuid"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/pointer"
-	runtimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var _ = g.Describe("[Feature:Machines] Managed cluster should", func() {
@@ -224,6 +225,40 @@ var _ = g.Describe("[Feature:Machines] Managed cluster should", func() {
 
 		g.By(fmt.Sprintf("waiting for cluster to get back to original size. Final size should be %d nodes", initialClusterSize))
 		waitForClusterSizeToBeHealthy(initialClusterSize)
+	})
+
+	g.It("prevent protected machines from being terminated", func() {
+		client, err := e2e.LoadClient()
+		o.Expect(err).NotTo(o.HaveOccurred())
+
+		var machine mapiv1beta1.Machine
+		var node corev1.Node
+		masterNode, err := getMasterNode(client)
+		o.Expect(err).NotTo(o.HaveOccurred())
+		masterNodeKey := runtimeclient.ObjectKey{Name: masterNode.Name}
+
+		masterMachine, err := getMachineFromNode(client, masterNode)
+		o.Expect(err).NotTo(o.HaveOccurred())
+		masterMachineKey := runtimeclient.ObjectKey{Namespace: masterMachine.Namespace, Name: masterMachine.Name}
+
+		err = deleteMachine(client, masterMachine)
+		o.Expect(err).NotTo(o.HaveOccurred())
+
+		glog.Infof("Verifying protected machine object was recreated")
+		o.Eventually(func() bool {
+			if err := client.Get(context.Background(), masterMachineKey, &machine); err != nil {
+				glog.Errorf("error querying api for machine %q: %v, retrying...", machine.Name, err)
+				return false
+			}
+			glog.Infof("Machine object: %s still exists", machine.Name)
+
+			if err := client.Get(context.Background(), masterNodeKey, &node); err != nil {
+				glog.Errorf("error querying api for node %q: %v, retrying...", node.Name, err)
+				return false
+			}
+			glog.Infof("Node object: %s still exists", machine.Name)
+			return true
+		}, e2e.WaitShort, 5*time.Second).Should(o.BeTrue())
 	})
 })
 

@@ -24,6 +24,7 @@ import (
 
 const (
 	nodeWorkerRoleLabel = "node-role.kubernetes.io/worker"
+	nodeMasterRoleLabel = "node-role.kubernetes.io/master "
 	machineRoleLabel    = "machine.openshift.io/cluster-api-machine-role"
 	machineAPIGroup     = "machine.openshift.io"
 )
@@ -365,4 +366,26 @@ func getNodes(client runtimeclient.Client) ([]corev1.Node, error) {
 		return nil, fmt.Errorf("error getting nodeList: %v", err)
 	}
 	return nodeList.Items, nil
+}
+
+// getMasterNode returns a node with the nodeWorkerRoleLabel label
+func getMasterNode(client runtimeclient.Client) (*corev1.Node, error) {
+	nodeList := corev1.NodeList{}
+	listOptions := runtimeclient.ListOptions{}
+	listOptions.MatchingLabels(map[string]string{nodeMasterRoleLabel: ""})
+	if err := wait.PollImmediate(1*time.Second, time.Minute, func() (bool, error) {
+		if err := client.List(context.TODO(), &listOptions, &nodeList); err != nil {
+			glog.Errorf("Error querying api for nodeList object: %v, retrying...", err)
+			return false, nil
+		}
+		if len(nodeList.Items) < 1 {
+			glog.Errorf("No nodes were found with label %q", nodeMasterRoleLabel)
+			return false, nil
+		}
+		return true, nil
+	}); err != nil {
+		glog.Errorf("Error calling getWorkerMachine: %v", err)
+		return nil, err
+	}
+	return &nodeList.Items[0], nil
 }
