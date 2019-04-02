@@ -49,10 +49,7 @@ func stubProviderConfig() *providerconfigv1.AWSMachineProviderConfig {
 			Name: awsCredentialsSecretName,
 		},
 		InstanceType: "m4.xlarge",
-		Placement: providerconfigv1.Placement{
-			Region:           region,
-			AvailabilityZone: defaultAvailabilityZone,
-		},
+		Region:       region,
 		Subnet: providerconfigv1.AWSResourceReference{
 			ID: aws.String("subnet-0e56b13a64ff8a941"),
 		},

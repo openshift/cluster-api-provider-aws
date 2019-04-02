@@ -82,7 +82,6 @@ func TestAwsClient(t *testing.T) {
 			acw.GetIAMRole(machine)
 			acw.GetTags(machine)
 			acw.GetSubnet(machine)
-			acw.GetAvailabilityZone(machine)
 		})
 	}
 }

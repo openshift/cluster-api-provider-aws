@@ -184,7 +184,7 @@ func (a *Actuator) CreateMachine(cluster *machinev1.Cluster, machine *machinev1.
 	if machineProviderConfig.CredentialsSecret != nil {
 		credentialsSecretName = machineProviderConfig.CredentialsSecret.Name
 	}
-	awsClient, err := a.awsClientBuilder(a.client, credentialsSecretName, machine.Namespace, machineProviderConfig.Placement.Region)
+	awsClient, err := a.awsClientBuilder(a.client, credentialsSecretName, machine.Namespace, machineProviderConfig.Region)
 	if err != nil {
 		glog.Errorf("unable to obtain AWS client: %v", err)
 		return nil, a.handleMachineError(machine, apierrors.CreateMachine("error creating aws services: %v", err), createEventAction)
@@ -259,7 +259,7 @@ func (a *Actuator) DeleteMachine(cluster *machinev1.Cluster, machine *machinev1.
 		return a.handleMachineError(machine, apierrors.InvalidMachineConfiguration("error decoding MachineProviderConfig: %v", err), deleteEventAction)
 	}
 
-	region := machineProviderConfig.Placement.Region
+	region := machineProviderConfig.Region
 	credentialsSecretName := ""
 	if machineProviderConfig.CredentialsSecret != nil {
 		credentialsSecretName = machineProviderConfig.CredentialsSecret.Name
@@ -301,7 +301,7 @@ func (a *Actuator) Update(context context.Context, cluster *machinev1.Cluster, m
 		return a.handleMachineError(machine, apierrors.InvalidMachineConfiguration("error decoding MachineProviderConfig: %v", err), updateEventAction)
 	}
 
-	region := machineProviderConfig.Placement.Region
+	region := machineProviderConfig.Region
 	glog.Info("obtaining EC2 client for region")
 	credentialsSecretName := ""
 	if machineProviderConfig.CredentialsSecret != nil {
@@ -409,7 +409,7 @@ func (a *Actuator) getMachineInstances(cluster *machinev1.Cluster, machine *mach
 		return nil, err
 	}
 
-	region := machineProviderConfig.Placement.Region
+	region := machineProviderConfig.Region
 	credentialsSecretName := ""
 	if machineProviderConfig.CredentialsSecret != nil {
 		credentialsSecretName = machineProviderConfig.CredentialsSecret.Name

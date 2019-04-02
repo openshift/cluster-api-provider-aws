@@ -561,24 +561,24 @@ func TestActuator(t *testing.T) {
 	}
 }
 
-func TestAvailabiltyZone(t *testing.T) {
+func TestRegion(t *testing.T) {
 	cases := []struct {
-		name             string
-		availabilityZone string
-		subnet           string
+		name   string
+		region string
+		subnet string
 	}{
 		{
-			name:             "availability zone only",
-			availabilityZone: "us-east-1a",
+			name:   "Region only",
+			region: "us-east-1",
 		},
 		{
 			name:   "subnet only",
 			subnet: "subnet-b46032ec",
 		},
 		{
-			name:             "availability zone and subnet",
-			availabilityZone: "us-east-1a",
-			subnet:           "subnet-b46032ec",
+			name:   "region and subnet",
+			region: "us-east-1",
+			subnet: "subnet-b46032ec",
 		},
 	}
 
@@ -606,7 +606,6 @@ func TestAvailabiltyZone(t *testing.T) {
 			// no load balancers tested
 			machinePc.LoadBalancers = nil
 
-			machinePc.Placement.AvailabilityZone = tc.availabilityZone
 			if tc.subnet == "" {
 				machinePc.Subnet.ID = nil
 			} else {
@@ -639,12 +638,8 @@ func TestAvailabiltyZone(t *testing.T) {
 				t.Fatalf("Could not create AWS machine actuator: %v", err)
 			}
 
-			var placement *ec2.Placement
-			if tc.availabilityZone != "" && tc.subnet == "" {
-				placement = &ec2.Placement{AvailabilityZone: aws.String(tc.availabilityZone)}
-			}
-
-			mockAWSClient.EXPECT().RunInstances(placementMatcher{placement}).Return(
+			//mockAWSClient.EXPECT().RunInstances(placementMatcher{placement}).Return(
+			mockAWSClient.EXPECT().RunInstances(gomock.Any()).Return(
 				&ec2.Reservation{
 					Instances: []*ec2.Instance{
 						{

@@ -1,6 +1,7 @@
 package machine
 
 import (
+	"flag"
 	"fmt"
 	"reflect"
 	"testing"
@@ -251,6 +252,10 @@ func TestRunningInstance(t *testing.T) {
 }
 
 func TestLaunchInstance(t *testing.T) {
+	flag.Set("alsologtostderr", fmt.Sprintf("%t", true))
+	var logLevel string
+	flag.StringVar(&logLevel, "logLevel", "4", "test")
+	flag.Lookup("v").Value.Set(logLevel)
 	machine, err := stubMachine()
 	if err != nil {
 		t.Fatalf("Unable to build test machine manifest: %v", err)
@@ -336,11 +341,11 @@ func TestLaunchInstance(t *testing.T) {
 			subnetErr: fmt.Errorf("error"),
 		},
 		{
-			name: "Subnet with availability zone with error",
+			name: "Subnet with error",
 			providerConfig: stubPCSubnet(providerconfigv1.AWSResourceReference{
 				Filters: []providerconfigv1.Filter{},
 			}),
-			azErr: fmt.Errorf("error"),
+			subnetErr: fmt.Errorf("error"),
 		},
 		{
 			name: "AMI with filters",
@@ -420,10 +425,11 @@ func TestLaunchInstance(t *testing.T) {
 			mockAWSClient := mockaws.NewMockClient(mockCtrl)
 
 			mockAWSClient.EXPECT().DescribeSecurityGroups(gomock.Any()).Return(tc.securityGroupOutput, tc.securityGroupErr).AnyTimes()
-			mockAWSClient.EXPECT().DescribeAvailabilityZones(gomock.Any()).Return(nil, tc.azErr).AnyTimes()
+			//mockAWSClient.EXPECT().DescribeAvailabilityZones(gomock.Any()).Return(nil, tc.azErr).AnyTimes()
 			mockAWSClient.EXPECT().DescribeSubnets(gomock.Any()).Return(tc.subnetOutput, tc.subnetErr).AnyTimes()
 			mockAWSClient.EXPECT().DescribeImages(gomock.Any()).Return(tc.imageOutput, tc.imageErr).AnyTimes()
 			mockAWSClient.EXPECT().RunInstances(gomock.Any()).Return(tc.instancesOutput, tc.instancesErr).AnyTimes()
+			t.Log("calling launchInstance")
 
 			_, launchErr := launchInstance(machine, tc.providerConfig, nil, mockAWSClient)
 			t.Log(launchErr)

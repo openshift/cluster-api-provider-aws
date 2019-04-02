@@ -117,18 +117,6 @@ func (client *AwsClientWrapper) GetSubnet(machine *machinev1beta1.Machine) (stri
 	return *instance.SubnetId, nil
 }
 
-// GetAvailabilityZone gets availability zone
-func (client *AwsClientWrapper) GetAvailabilityZone(machine *machinev1beta1.Machine) (string, error) {
-	instance, err := getRunningInstance(machine, client.client)
-	if err != nil {
-		return "", err
-	}
-	if instance.Placement == nil {
-		return "", err
-	}
-	return *instance.Placement.AvailabilityZone, nil
-}
-
 // GetVolumes gets volumes attached to instance
 func (client *AwsClientWrapper) GetVolumes(machine *machinev1beta1.Machine) (map[string]map[string]interface{}, error) {
 	instance, err := getRunningInstance(machine, client.client)

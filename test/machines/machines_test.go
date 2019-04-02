@@ -168,12 +168,6 @@ var _ = framework.SigKubeDescribe("Machines", func() {
 				Expect(subnet).To(Equal(subnetID))
 			})
 
-			By("Checking availability zone", func() {
-				availabilityZone, err := acw.GetAvailabilityZone(testMachine)
-				Expect(err).NotTo(HaveOccurred())
-				Expect(availabilityZone).To(Equal("us-east-1a"))
-			})
-
 			By("Checking security groups", func() {
 				securityGroups, err := acw.GetSecurityGroups(testMachine)
 				Expect(err).NotTo(HaveOccurred())

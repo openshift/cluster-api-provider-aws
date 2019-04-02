@@ -48,10 +48,7 @@ func testingAWSMachineProviderSpec(awsCredentialsSecretName string, clusterID st
 			Name: awsCredentialsSecretName,
 		},
 		InstanceType: "m4.xlarge",
-		Placement: providerconfigv1.Placement{
-			Region:           "us-east-1",
-			AvailabilityZone: "us-east-1a",
-		},
+		Region:       "us-east-1",
 		Subnet: providerconfigv1.AWSResourceReference{
 			Filters: []providerconfigv1.Filter{
 				{
@@ -147,10 +144,7 @@ func MasterMachineProviderSpec(awsCredentialsSecretName, masterUserDataSecretNam
 			Name: awsCredentialsSecretName,
 		},
 		InstanceType: "m4.xlarge",
-		Placement: providerconfigv1.Placement{
-			Region:           "us-east-1",
-			AvailabilityZone: "us-east-1a",
-		},
+		Region:       "us-east-1",
 		Subnet: providerconfigv1.AWSResourceReference{
 			Filters: []providerconfigv1.Filter{
 				{
@@ -209,10 +203,7 @@ func WorkerMachineSetProviderSpec(awsCredentialsSecretName, workerUserDataSecret
 			Name: awsCredentialsSecretName,
 		},
 		InstanceType: "m4.xlarge",
-		Placement: providerconfigv1.Placement{
-			Region:           "us-east-1",
-			AvailabilityZone: "us-east-1a",
-		},
+		Region:       "us-east-1",
 		Subnet: providerconfigv1.AWSResourceReference{
 			Filters: []providerconfigv1.Filter{
 				{

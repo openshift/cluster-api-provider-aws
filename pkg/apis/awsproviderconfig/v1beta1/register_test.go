@@ -103,10 +103,7 @@ func TestEncodeAndDecodeProviderSpec(t *testing.T) {
 			Name: awsCredentialsSecretName,
 		},
 		InstanceType: "m4.xlarge",
-		Placement: Placement{
-			Region:           "us-east-1",
-			AvailabilityZone: "us-east-1a",
-		},
+		Region:       "us-east-1",
 		Subnet: AWSResourceReference{
 			Filters: []Filter{
 				{

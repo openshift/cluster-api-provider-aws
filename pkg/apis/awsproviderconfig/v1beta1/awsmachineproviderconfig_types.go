@@ -130,8 +130,8 @@ type AWSMachineProviderConfig struct {
 	// Subnet is a reference to the subnet to use for this instance
 	Subnet AWSResourceReference `json:"subnet"`
 
-	// Placement specifies where to create the instance in AWS
-	Placement Placement `json:"placement"`
+	// Region is the region to use to create the instance
+	Region string `json:"region,omitempty"`
 
 	// LoadBalancers is the set of load balancers to which the new instance
 	// should be added once it is created.
@@ -227,15 +227,6 @@ type AWSResourceReference struct {
 
 	// Filters is a set of filters used to identify a resource
 	Filters []Filter `json:"filters,omitempty"`
-}
-
-// Placement indicates where to create the instance in AWS
-type Placement struct {
-	// Region is the region to use to create the instance
-	Region string `json:"region,omitempty"`
-
-	// AvailabilityZone is the availability zone of the instance
-	AvailabilityZone string `json:"availabilityZone,omitempty"`
 }
 
 // Filter is a filter used to identify an AWS resource

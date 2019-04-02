@@ -77,7 +77,7 @@ func getSecurityGroupsIDs(securityGroups []providerconfigv1.AWSResourceReference
 			}
 			describeSecurityGroupsResult, err := client.DescribeSecurityGroups(&describeSecurityGroupsRequest)
 			if err != nil {
-				glog.Errorf("error describing security groups: %v", err)
+				glog.Errorf("Error describing security groups: %v", err)
 				return nil, fmt.Errorf("error describing security groups: %v", err)
 			}
 			for _, g := range describeSecurityGroupsResult.SecurityGroups {
@@ -94,28 +94,14 @@ func getSecurityGroupsIDs(securityGroups []providerconfigv1.AWSResourceReference
 	return securityGroupIDs, nil
 }
 
-func getSubnetIDs(subnet providerconfigv1.AWSResourceReference, availabilityZone string, client awsclient.Client) ([]*string, error) {
+func getSubnetIDs(subnet providerconfigv1.AWSResourceReference, client awsclient.Client) ([]*string, error) {
 	var subnetIDs []*string
 	// ID has priority
 	if subnet.ID != nil {
 		subnetIDs = append(subnetIDs, subnet.ID)
 	} else {
-		var filters []providerconfigv1.Filter
-		if availabilityZone != "" {
-			// Improve error logging for better user experience.
-			// Otherwise, during the process of minimizing API calls, this is a good
-			// candidate for removal.
-			_, err := client.DescribeAvailabilityZones(&ec2.DescribeAvailabilityZonesInput{
-				ZoneNames: []*string{aws.String(availabilityZone)},
-			})
-			if err != nil {
-				glog.Errorf("error describing availability zones: %v", err)
-				return nil, fmt.Errorf("error describing availability zones: %v", err)
-			}
-			filters = append(filters, providerconfigv1.Filter{Name: "availabilityZone", Values: []string{availabilityZone}})
-		}
-		filters = append(filters, subnet.Filters...)
-		glog.Info("Describing subnets based on filters")
+		filters := subnet.Filters
+		glog.Infof("Describing subnets based on filters %v", filters)
 		describeSubnetRequest := ec2.DescribeSubnetsInput{
 			Filters: buildEC2Filters(filters),
 		}
@@ -215,6 +201,7 @@ func getBlockDeviceMappings(blockDeviceMappings []providerconfigv1.BlockDeviceMa
 }
 
 func launchInstance(machine *machinev1.Machine, machineProviderConfig *providerconfigv1.AWSMachineProviderConfig, userData []byte, client awsclient.Client) (*ec2.Instance, error) {
+	glog.Infof("More than one subnet id returned, only first one will be used")
 	amiID, err := getAMI(machineProviderConfig.AMI, client)
 	if err != nil {
 		return nil, fmt.Errorf("error getting AMI: %v,", err)
@@ -224,7 +211,8 @@ func launchInstance(machine *machinev1.Machine, machineProviderConfig *providerc
 	if err != nil {
 		return nil, fmt.Errorf("error getting security groups IDs: %v,", err)
 	}
-	subnetIDs, err := getSubnetIDs(machineProviderConfig.Subnet, machineProviderConfig.Placement.AvailabilityZone, client)
+
+	subnetIDs, err := getSubnetIDs(machineProviderConfig.Subnet, client)
 	if err != nil {
 		return nil, fmt.Errorf("error getting subnet IDs: %v,", err)
 	}
@@ -281,13 +269,6 @@ func launchInstance(machine *machinev1.Machine, machineProviderConfig *providerc
 		}
 	}
 
-	var placement *ec2.Placement
-	if machineProviderConfig.Placement.AvailabilityZone != "" && machineProviderConfig.Subnet.ID == nil {
-		placement = &ec2.Placement{
-			AvailabilityZone: aws.String(machineProviderConfig.Placement.AvailabilityZone),
-		}
-	}
-
 	inputConfig := ec2.RunInstancesInput{
 		ImageId:      amiID,
 		InstanceType: aws.String(machineProviderConfig.InstanceType),
@@ -299,7 +280,6 @@ func launchInstance(machine *machinev1.Machine, machineProviderConfig *providerc
 		TagSpecifications:  []*ec2.TagSpecification{tagInstance, tagVolume},
 		NetworkInterfaces:  networkInterfaces,
 		UserData:           &userDataEnc,
-		Placement:          placement,
 	}
 
 	if len(blockDeviceMappings) > 0 {

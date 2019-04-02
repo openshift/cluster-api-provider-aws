@@ -37,7 +37,6 @@ func TestProviderConfigFromMachine(t *testing.T) {
 				Values: []string{""},
 			}},
 		},
-		Placement: providerconfigv1.Placement{Region: "", AvailabilityZone: ""},
 		SecurityGroups: []providerconfigv1.AWSResourceReference{{
 			Filters: []providerconfigv1.Filter{{
 				Name:   "tag:Name",
