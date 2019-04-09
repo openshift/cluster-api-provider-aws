@@ -506,7 +506,7 @@ func TestActuator(t *testing.T) {
 			},
 		},
 		{
-			name: "Delete machine failed (error terminating instances)",
+			name:                  "Delete machine failed (error terminating instances)",
 			terminateInstancesErr: fmt.Errorf("error"),
 			operation: func(objectClient client.Client, actuator *Actuator, cluster *machinev1.Cluster, machine *machinev1.Machine) {
 				actuator.Delete(context.TODO(), cluster, machine)
