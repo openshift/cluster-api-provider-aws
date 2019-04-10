@@ -112,6 +112,7 @@ func GetStoppedInstances(machine *clusterv1.Machine, client awsclient.Client) ([
 func GetInstances(machine *clusterv1.Machine, client awsclient.Client, instanceStateFilter []*string) ([]*ec2.Instance, error) {
 
 	machineName := machine.Name
+	owned := "owned"
 
 	clusterID, ok := getClusterID(machine)
 	if !ok {
@@ -124,8 +125,8 @@ func GetInstances(machine *clusterv1.Machine, client awsclient.Client, instanceS
 			Values: []*string{&machineName},
 		},
 		{
-			Name:   aws.String("tag:clusterid"),
-			Values: []*string{&clusterID},
+			Name:   aws.String("tag:kubernetes.io/cluster/" + clusterID),
+			Values: []*string{&owned},
 		},
 	}
 
