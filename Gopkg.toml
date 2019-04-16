@@ -1,23 +1,7 @@
 required = [
-    "github.com/emicklei/go-restful",
-    "k8s.io/client-go/plugin/pkg/client/auth/gcp", # for development against gcp
     "k8s.io/code-generator/cmd/deepcopy-gen", # for go generate
     "sigs.k8s.io/controller-tools/cmd/controller-gen", # for crd/rbac generation
-    "sigs.k8s.io/controller-runtime/pkg/client/config",
-    "sigs.k8s.io/controller-runtime/pkg/controller",
-    "sigs.k8s.io/controller-runtime/pkg/handler",
-    "sigs.k8s.io/controller-runtime/pkg/manager",
-    "sigs.k8s.io/controller-runtime/pkg/runtime/signals",
-    "sigs.k8s.io/controller-runtime/pkg/source",
     "sigs.k8s.io/testing_frameworks/integration", # for integration testing
-	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1",
-    "github.com/openshift/cluster-api-actuator-pkg/pkg/e2e/autoscaler",
-    "github.com/openshift/cluster-api-actuator-pkg/pkg/e2e/infra",
-    "github.com/openshift/cluster-api-actuator-pkg/pkg/e2e/operators",
-    "github.com/openshift/cluster-autoscaler-operator/pkg/apis",
-    "github.com/openshift/api/config/v1",
-    "github.com/onsi/ginkgo",
-    "github.com/onsi/gomega",
     ]
 
 [[constraint]]
@@ -59,10 +43,6 @@ required = [
 [[override]]
   name = "sigs.k8s.io/controller-runtime"
   version = "v0.1.10"
-
-[[constraint]]
-  name="sigs.k8s.io/controller-tools"
-  version="v0.1.1"
 
 # For dependency below: Refer to issue https://github.com/golang/dep/issues/1799
  [[override]]
