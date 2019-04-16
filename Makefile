@@ -35,9 +35,12 @@ else
   IMAGE_BUILD_CMD = docker build
 endif
 
+.PHONY: dep
+dep:
+	type -p dep 2>&1 > /dev/null || go get -u github.com/golang/dep/cmd/dep
+
 .PHONY: depend
-depend:
-	dep version || go get -u github.com/golang/dep/cmd/dep
+depend: dep
 	dep ensure
 
 .PHONY: vendor
@@ -131,3 +134,10 @@ vet: ## Apply go vet to all go files
 .PHONY: help
 help:
 	@grep -E '^[a-zA-Z/0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+
+.PHONY: revendor-test-e2e
+revendor-test-e2e: dep
+	curl --silent -o e2e_test.go https://raw.githubusercontent.com/openshift/cluster-api-actuator-pkg/master/pkg/e2e/e2e_test.go
+	dep ensure -update github.com/openshift/cluster-api-actuator-pkg
+	dep ensure -v
+	$(RM) e2e_test.go
