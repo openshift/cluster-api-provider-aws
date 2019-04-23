@@ -5,7 +5,9 @@ COPY . .
 RUN unset VERSION \
  && GOPROXY=off NO_DOCKER=1 make build
 
-FROM registry.svc.ci.openshift.org/openshift/origin-v4.0:base
+# registry.svc.ci.openshift.org/openshift/origin-v4.0:base contains private yum repos so installation
+# of packages fail. Switching to docker.io/centos:7 where all repos are public.
+FROM docker.io/centos:7
 RUN INSTALL_PKGS=" \
       openssh \
       " && \
