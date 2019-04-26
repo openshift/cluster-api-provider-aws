@@ -112,12 +112,7 @@ k8s-e2e: ## Run k8s specific e2e test
 
 .PHONY: test-e2e
 test-e2e: ## Run openshift specific e2e test
-	go test -timeout 60m \
-		-v ./vendor/github.com/openshift/cluster-api-actuator-pkg/pkg/e2e \
-		-kubeconfig $${KUBECONFIG:-~/.kube/config} \
-		-machine-api-namespace $${NAMESPACE:-openshift-machine-api} \
-		-ginkgo.v \
-		-args -v 5 -logtostderr true
+	$(MAKE) -C ./vendor/github.com/openshift/cluster-api-actuator-pkg test-e2e
 
 
 .PHONY: lint
