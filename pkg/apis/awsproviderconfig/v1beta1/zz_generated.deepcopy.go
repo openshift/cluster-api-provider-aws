@@ -21,6 +21,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	ec2 "github.com/aws/aws-sdk-go/service/ec2"
 	v1 "k8s.io/api/core/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
@@ -99,6 +100,11 @@ func (in *AWSMachineProviderConfig) DeepCopyInto(out *AWSMachineProviderConfig) 
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
+	}
+	if in.InstanceMarketOptions != nil {
+		in, out := &in.InstanceMarketOptions, &out.InstanceMarketOptions
+		*out = new(ec2.InstanceMarketOptionsRequest)
+		(*in).DeepCopyInto(*out)
 	}
 	return
 }
