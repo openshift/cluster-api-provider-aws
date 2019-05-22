@@ -7,8 +7,8 @@ import (
 	machinev1beta1 "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	providerconfigv1 "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
-	awsclient "sigs.k8s.io/cluster-api-provider-aws/pkg/client"
+	providerconfigv1 "github.com/openshift/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
+	awsclient "github.com/openshift/cluster-api-provider-aws/pkg/client"
 )
 
 // GenerateAwsCredentialsSecretFromEnv generates secret with AWS credentials

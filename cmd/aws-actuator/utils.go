@@ -19,9 +19,9 @@ import (
 	"github.com/openshift/cluster-api-actuator-pkg/pkg/e2e/framework"
 	clusterv1 "github.com/openshift/cluster-api/pkg/apis/cluster/v1alpha1"
 	machinev1 "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
-	machineactuator "sigs.k8s.io/cluster-api-provider-aws/pkg/actuators/machine"
-	"sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
-	awsclient "sigs.k8s.io/cluster-api-provider-aws/pkg/client"
+	machineactuator "github.com/openshift/cluster-api-provider-aws/pkg/actuators/machine"
+	"github.com/openshift/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
+	awsclient "github.com/openshift/cluster-api-provider-aws/pkg/client"
 )
 
 type manifestParams struct {

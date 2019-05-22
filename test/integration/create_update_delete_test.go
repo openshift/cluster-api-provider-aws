@@ -16,8 +16,8 @@ import (
 
 	clusterv1 "github.com/openshift/cluster-api/pkg/apis/cluster/v1alpha1"
 	machinev1 "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
-	machineactuator "sigs.k8s.io/cluster-api-provider-aws/pkg/actuators/machine"
-	awsclient "sigs.k8s.io/cluster-api-provider-aws/pkg/client"
+	machineactuator "github.com/openshift/cluster-api-provider-aws/pkg/actuators/machine"
+	awsclient "github.com/openshift/cluster-api-provider-aws/pkg/client"
 
 	"github.com/ghodss/yaml"
 )
@@ -47,7 +47,7 @@ runcmd:
 func testMachineAPIResources(clusterID string) (*machinev1.Machine, *clusterv1.Cluster, *apiv1.Secret, *apiv1.Secret, error) {
 	machine := &machinev1.Machine{}
 
-	bytes, err := ioutil.ReadFile(path.Join(os.Getenv("GOPATH"), "/src/sigs.k8s.io/cluster-api-provider-aws/examples/machine.yaml"))
+	bytes, err := ioutil.ReadFile(path.Join(os.Getenv("GOPATH"), "/src/github.com/openshift/cluster-api-provider-aws/examples/machine.yaml"))
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}

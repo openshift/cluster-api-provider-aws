@@ -19,6 +19,7 @@ package v1beta1
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ec2 "github.com/aws/aws-sdk-go/service/ec2"
 )
 
 // Annotation constants
@@ -140,6 +141,8 @@ type AWSMachineProviderConfig struct {
 	// BlockDevices is the set of block device mapping associated to this instance
 	// https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/block-device-mapping-concepts.html
 	BlockDevices []BlockDeviceMappingSpec `json:"blockDevices,omitempty"`
+
+	InstanceMarketOptions *ec2.InstanceMarketOptionsRequest `type:"structure"`
 }
 
 // BlockDeviceMappingSpec describes a block device mapping

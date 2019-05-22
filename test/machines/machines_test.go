@@ -15,7 +15,7 @@ import (
 
 	"github.com/openshift/cluster-api-actuator-pkg/pkg/e2e/framework"
 	"github.com/openshift/cluster-api-actuator-pkg/pkg/manifests"
-	"sigs.k8s.io/cluster-api-provider-aws/test/utils"
+	"github.com/openshift/cluster-api-provider-aws/test/utils"
 
 	ClusterV1alpha1 "github.com/openshift/cluster-api/pkg/apis/cluster/v1alpha1"
 	machinecontroller "github.com/openshift/cluster-api/pkg/controller/machine"
@@ -25,8 +25,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 
-	machineutils "sigs.k8s.io/cluster-api-provider-aws/pkg/actuators/machine"
-	awsclient "sigs.k8s.io/cluster-api-provider-aws/pkg/client"
+	machineutils "github.com/openshift/cluster-api-provider-aws/pkg/actuators/machine"
+	awsclient "github.com/openshift/cluster-api-provider-aws/pkg/client"
 )
 
 const (

@@ -19,7 +19,7 @@ GOGCFLAGS ?= -gcflags=all="-N -l"
 endif
 
 VERSION     ?= $(shell git describe --always --abbrev=7)
-REPO_PATH   ?= sigs.k8s.io/cluster-api-provider-aws
+REPO_PATH   ?= github.com/openshift/cluster-api-provider-aws
 LD_FLAGS    ?= -X $(REPO_PATH)/pkg/version.Raw=$(VERSION) -extldflags "-static"
 MUTABLE_TAG ?= latest
 IMAGE        = origin-aws-machine-controllers
@@ -33,7 +33,7 @@ ifeq ($(NO_DOCKER), 1)
   IMAGE_BUILD_CMD = imagebuilder
   CGO_ENABLED = 1
 else
-  DOCKER_CMD := docker run --rm -e CGO_ENABLED=1 -v "$(PWD)":/go/src/sigs.k8s.io/cluster-api-provider-aws:Z -w /go/src/sigs.k8s.io/cluster-api-provider-aws openshift/origin-release:golang-1.10
+  DOCKER_CMD := docker run --rm -e CGO_ENABLED=1 -v "$(PWD)":/go/src/github.com/openshift/cluster-api-provider-aws:Z -w /go/src/github.com/openshift/cluster-api-provider-aws openshift/origin-release:golang-1.10
   IMAGE_BUILD_CMD = docker build
 endif
 
@@ -49,7 +49,7 @@ vendor:
 
 .PHONY: generate
 generate:
-	go install $(GOGCFLAGS) -ldflags '-extldflags "-static"' sigs.k8s.io/cluster-api-provider-aws/vendor/github.com/golang/mock/mockgen
+	go install $(GOGCFLAGS) -ldflags '-extldflags "-static"' github.com/openshift/cluster-api-provider-aws/vendor/github.com/golang/mock/mockgen
 	go generate ./pkg/... ./cmd/...
 
 .PHONY: test
@@ -66,7 +66,7 @@ build: ## build binaries
                "$(REPO_PATH)/vendor/github.com/openshift/cluster-api/cmd/manager"
 
 aws-actuator:
-	$(DOCKER_CMD) go build $(GOGCFLAGS) -o bin/aws-actuator sigs.k8s.io/cluster-api-provider-aws/cmd/aws-actuator
+	$(DOCKER_CMD) go build $(GOGCFLAGS) -o bin/aws-actuator github.com/openshift/cluster-api-provider-aws/cmd/aws-actuator
 
 .PHONY: images
 images: ## Create images
@@ -90,17 +90,17 @@ unit: # Run unit test
 
 .PHONY: integration
 integration: ## Run integration test
-	$(DOCKER_CMD) go test -v sigs.k8s.io/cluster-api-provider-aws/test/integration
+	$(DOCKER_CMD) go test -v github.com/openshift/cluster-api-provider-aws/test/integration
 
 .PHONY: build-e2e
 build-e2e:
-	go test -c -o bin/e2e.test sigs.k8s.io/cluster-api-provider-aws/test/machines
+	go test -c -o bin/e2e.test github.com/openshift/cluster-api-provider-aws/test/machines
 
 .PHONY: k8s-e2e
 k8s-e2e: ## Run k8s specific e2e test
 	# KUBECONFIG and SSH_PK dirs needs to be mounted inside a container if tests are run in containers
 	go test -timeout 30m \
-		-v sigs.k8s.io/cluster-api-provider-aws/test/machines \
+		-v github.com/openshift/cluster-api-provider-aws/test/machines \
 		-kubeconfig $${KUBECONFIG:-~/.kube/config} \
 		-ssh-key $${SSH_PK:-~/.ssh/id_rsa} \
 		-machine-controller-image $${ACTUATOR_IMAGE:-gcr.io/k8s-cluster-api/aws-machine-controller:0.0.1} \
@@ -122,7 +122,7 @@ test-e2e: ## Run openshift specific e2e test
 
 .PHONY: lint
 lint: ## Go lint your code
-	hack/go-lint.sh -min_confidence 0.3 $$(go list -f '{{ .ImportPath }}' ./... | grep -v -e 'sigs.k8s.io/cluster-api-provider-aws/test' -e 'sigs.k8s.io/cluster-api-provider-aws/pkg/cloud/aws/client/mock')
+	hack/go-lint.sh -min_confidence 0.3 $$(go list -f '{{ .ImportPath }}' ./... | grep -v -e 'github.com/openshift/cluster-api-provider-aws/test' -e 'github.com/openshift/cluster-api-provider-aws/pkg/cloud/aws/client/mock')
 
 .PHONY: fmt
 fmt: ## Go fmt your code

@@ -29,8 +29,8 @@ import (
 	machinev1 "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	"golang.org/x/net/context"
 	"k8s.io/apimachinery/pkg/types"
-	providerconfigv1 "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
-	awsclient "sigs.k8s.io/cluster-api-provider-aws/pkg/client"
+	providerconfigv1 "github.com/openshift/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
+	awsclient "github.com/openshift/cluster-api-provider-aws/pkg/client"
 )
 
 // getRunningInstance returns the AWS instance for a given machine. If multiple instances match our machine,

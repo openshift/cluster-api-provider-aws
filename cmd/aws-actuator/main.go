@@ -43,9 +43,9 @@ import (
 	"github.com/openshift/cluster-api-actuator-pkg/pkg/manifests"
 	clusterv1 "github.com/openshift/cluster-api/pkg/apis/cluster/v1alpha1"
 	machinev1 "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
-	machineactuator "sigs.k8s.io/cluster-api-provider-aws/pkg/actuators/machine"
-	awsclient "sigs.k8s.io/cluster-api-provider-aws/pkg/client"
-	testutils "sigs.k8s.io/cluster-api-provider-aws/test/utils"
+	machineactuator "github.com/openshift/cluster-api-provider-aws/pkg/actuators/machine"
+	awsclient "github.com/openshift/cluster-api-provider-aws/pkg/client"
+	testutils "github.com/openshift/cluster-api-provider-aws/test/utils"
 )
 
 const (

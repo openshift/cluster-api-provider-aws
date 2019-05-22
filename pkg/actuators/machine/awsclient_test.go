@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/golang/mock/gomock"
-	mockaws "sigs.k8s.io/cluster-api-provider-aws/pkg/client/mock"
+	mockaws "github.com/openshift/cluster-api-provider-aws/pkg/client/mock"
 )
 
 func TestAwsClient(t *testing.T) {

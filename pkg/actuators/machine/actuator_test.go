@@ -15,9 +15,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	clusterv1 "github.com/openshift/cluster-api/pkg/apis/cluster/v1alpha1"
 	machinev1 "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
-	providerconfigv1 "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
-	awsclient "sigs.k8s.io/cluster-api-provider-aws/pkg/client"
-	mockaws "sigs.k8s.io/cluster-api-provider-aws/pkg/client/mock"
+	providerconfigv1 "github.com/openshift/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
+	awsclient "github.com/openshift/cluster-api-provider-aws/pkg/client"
+	mockaws "github.com/openshift/cluster-api-provider-aws/pkg/client/mock"
 
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"

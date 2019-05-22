@@ -15,8 +15,8 @@ import (
 	clusterv1 "github.com/openshift/cluster-api/pkg/apis/cluster/v1alpha1"
 	machinev1 "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	machinecontroller "github.com/openshift/cluster-api/pkg/controller/machine"
-	providerconfigv1 "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-aws/test/utils"
+	providerconfigv1 "github.com/openshift/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
+	"github.com/openshift/cluster-api-provider-aws/test/utils"
 )
 
 const (

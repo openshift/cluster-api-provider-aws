@@ -17,7 +17,7 @@ limitations under the License.
 package apis
 
 import (
-	"sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
+	"github.com/openshift/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
 )
 
 func init() {

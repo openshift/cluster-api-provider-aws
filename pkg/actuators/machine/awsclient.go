@@ -6,7 +6,7 @@ import (
 	"github.com/openshift/cluster-api-actuator-pkg/pkg/types"
 
 	machinev1beta1 "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
-	awsclient "sigs.k8s.io/cluster-api-provider-aws/pkg/client"
+	awsclient "github.com/openshift/cluster-api-provider-aws/pkg/client"
 )
 
 // AwsClientWrapper implements CloudProviderClient for aws e2e framework

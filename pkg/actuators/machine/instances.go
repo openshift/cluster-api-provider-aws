@@ -9,12 +9,12 @@ import (
 	"github.com/golang/glog"
 
 	machinev1 "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
-	providerconfigv1 "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
+	providerconfigv1 "github.com/openshift/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 
-	awsclient "sigs.k8s.io/cluster-api-provider-aws/pkg/client"
+	awsclient "github.com/openshift/cluster-api-provider-aws/pkg/client"
 )
 
 // Scan machine tags, and return a deduped tags list
