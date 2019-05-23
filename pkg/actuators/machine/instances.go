@@ -286,7 +286,7 @@ func launchInstance(machine *machinev1.Machine, machineProviderConfig *providerc
 			AvailabilityZone: aws.String(machineProviderConfig.Placement.AvailabilityZone),
 		}
 	}
-
+	InstanceMarketOptions := buildInstanceMarketOptions(machineProviderConfig)
 	inputConfig := ec2.RunInstancesInput{
 		ImageId:      amiID,
 		InstanceType: aws.String(machineProviderConfig.InstanceType),
@@ -299,6 +299,7 @@ func launchInstance(machine *machinev1.Machine, machineProviderConfig *providerc
 		NetworkInterfaces:  networkInterfaces,
 		UserData:           &userDataEnc,
 		Placement:          placement,
+		InstanceMarketOptions: InstanceMarketOptions,
 	}
 
 	if len(blockDeviceMappings) > 0 {
@@ -316,6 +317,24 @@ func launchInstance(machine *machinev1.Machine, machineProviderConfig *providerc
 	}
 
 	return runResult.Instances[0], nil
+}
+
+func buildInstanceMarketOptions(machineProviderConfig *providerconfigv1.AWSMachineProviderConfig) *ec2.InstanceMarketOptionsRequest {
+	// only support these options for spot types.
+	if machineProviderConfig.MarketType == nil || *machineProviderConfig.MarketType != ec2.MarketTypeSpot{
+		return nil
+	}
+	InstanceMarketOptions := &ec2.InstanceMarketOptionsRequest {
+			MarketType: machineProviderConfig.MarketType,
+		}
+		if machineProviderConfig.SpotOptions != nil {
+			SpotMarketOptions := &ec2.SpotMarketOptions{
+				SpotInstanceType: machineProviderConfig.SpotOptions.SpotInstanceType,
+				MaxPrice: machineProviderConfig.SpotOptions.MaxPrice,
+			}
+			InstanceMarketOptions.SpotOptions = SpotMarketOptions
+		}
+	return InstanceMarketOptions
 }
 
 type instanceList []*ec2.Instance

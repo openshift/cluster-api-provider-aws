@@ -704,3 +704,7 @@ func (m placementMatcher) Matches(input interface{}) bool {
 func (m placementMatcher) String() string {
 	return fmt.Sprintf("is placement: %#v", m.placement)
 }
+
+// const
+// MarketTypeSpot, SpotInstanceTypeOneTime
+// SpotMarketOptions
