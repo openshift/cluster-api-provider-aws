@@ -43,7 +43,7 @@ const (
 	PoolKubeConfigTimeout = 10 * time.Minute
 	PoolNodesReadyTimeout = 10 * time.Minute
 	// Instances are running timeout
-	TimeoutPoolMachineRunningInterval = 10 * time.Minute
+	TimeoutPoolMachineRunningInterval = 15 * time.Minute
 )
 
 // ClusterID set by -cluster-id flag

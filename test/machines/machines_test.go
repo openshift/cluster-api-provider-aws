@@ -139,6 +139,9 @@ var _ = framework.SigKubeDescribe("Machines", func() {
 			}
 			testMachine.Annotations[machinecontroller.ExcludeNodeDrainingAnnotation] = ""
 			f.CreateMachineAndWait(testMachine, acw)
+			testMachine, err = f.CAPIClient.MachineV1beta1().Machines(testMachine.Namespace).Get(testMachine.Name, metav1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(testMachine).NotTo(BeNil())
 			machinesToDelete.AddMachine(testMachine, f, acw)
 
 			By("Checking subnet", func() {
@@ -216,6 +219,9 @@ var _ = framework.SigKubeDescribe("Machines", func() {
 			}
 			testMachine.Annotations[machinecontroller.ExcludeNodeDrainingAnnotation] = ""
 			f.CreateMachineAndWait(testMachine, acw)
+			testMachine, err = f.CAPIClient.MachineV1beta1().Machines(testMachine.Namespace).Get(testMachine.Name, metav1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(testMachine).NotTo(BeNil())
 			machinesToDelete.AddMachine(testMachine, f, acw)
 
 			volumes, err := acw.GetVolumes(testMachine)
@@ -280,6 +286,9 @@ var _ = framework.SigKubeDescribe("Machines", func() {
 			}
 			masterMachine.Annotations[machinecontroller.ExcludeNodeDrainingAnnotation] = ""
 			f.CreateMachineAndWait(masterMachine, acw)
+			masterMachine, err = f.CAPIClient.MachineV1beta1().Machines(masterMachine.Namespace).Get(masterMachine.Name, metav1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(masterMachine).NotTo(BeNil())
 			machinesToDelete.AddMachine(masterMachine, f, acw)
 
 			By("Collecting master kubeconfig")

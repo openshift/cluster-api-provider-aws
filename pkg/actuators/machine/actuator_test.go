@@ -164,6 +164,8 @@ func TestMachineEvents(t *testing.T) {
 			}
 
 			mockAWSClient.EXPECT().RunInstances(gomock.Any()).Return(stubReservation("ami-a9acbbd6", "i-02fcb933c5da7085c"), tc.runInstancesErr).AnyTimes()
+			providerID := "aws:///us-east-1a/i-02fcb933c5da7085c"
+			machine.Spec.ProviderID = &providerID
 			if tc.describeInstancesOutput == nil {
 				mockAWSClient.EXPECT().DescribeInstances(gomock.Any()).Return(stubDescribeInstancesOutput("ami-a9acbbd6", "i-02fcb933c5da7085c"), tc.describeInstancesErr).AnyTimes()
 			} else {
@@ -211,7 +213,7 @@ func TestActuator(t *testing.T) {
 		t.Fatalf("unable to build codec: %v", err)
 	}
 
-	getMachineStatus := func(objectClient client.Client, machine *machinev1.Machine) (*providerconfigv1.AWSMachineProviderStatus, error) {
+	getUpdatedMachine := func(objectClient client.Client, machine *machinev1.Machine) (*machinev1.Machine, error) {
 		// Get updated machine object from the cluster client
 		key := types.NamespacedName{
 			Namespace: machine.Namespace,
@@ -222,9 +224,12 @@ func TestActuator(t *testing.T) {
 		if err != nil {
 			return nil, fmt.Errorf("unable to retrieve machine: %v", err)
 		}
+		return &updatedMachine, nil
+	}
 
+	getMachineStatus := func(machine *machinev1.Machine) (*providerconfigv1.AWSMachineProviderStatus, error) {
 		machineStatus := &providerconfigv1.AWSMachineProviderStatus{}
-		if err := codec.DecodeProviderStatus(updatedMachine.Status.ProviderStatus, machineStatus); err != nil {
+		if err := codec.DecodeProviderStatus(machine.Status.ProviderStatus, machineStatus); err != nil {
 			return nil, fmt.Errorf("error decoding machine provider status: %v", err)
 		}
 		return machineStatus, nil
@@ -258,8 +263,12 @@ func TestActuator(t *testing.T) {
 			operation: func(objectClient client.Client, actuator *Actuator, cluster *clusterv1.Cluster, machine *machinev1.Machine) {
 				createErr := actuator.Create(context.TODO(), cluster, machine)
 				assert.NoError(t, createErr)
+				machine, err := getUpdatedMachine(objectClient, machine)
+				if err != nil {
+					t.Fatalf("Unable to get machine: %v", err)
+				}
 
-				machineStatus, err := getMachineStatus(objectClient, machine)
+				machineStatus, err := getMachineStatus(machine)
 				if err != nil {
 					t.Fatalf("Unable to get machine status: %v", err)
 				}
@@ -298,8 +307,12 @@ func TestActuator(t *testing.T) {
 			operation: func(objectClient client.Client, actuator *Actuator, cluster *clusterv1.Cluster, machine *machinev1.Machine) {
 				createErr := actuator.Create(context.TODO(), cluster, machine)
 				assert.Error(t, createErr)
+				machine, err := getUpdatedMachine(objectClient, machine)
+				if err != nil {
+					t.Fatalf("Unable to get machine: %v", err)
+				}
 
-				machineStatus, err := getMachineStatus(objectClient, machine)
+				machineStatus, err := getMachineStatus(machine)
 				if err != nil {
 					t.Fatalf("Unable to get machine status: %v", err)
 				}

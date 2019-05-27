@@ -64,21 +64,17 @@ func (f *Framework) DeleteMachineAndWait(machine *machinev1beta1.Machine, client
 }
 
 func (f *Framework) waitForMachineToRun(machine *machinev1beta1.Machine, client types.CloudProviderClient) {
-	f.By(fmt.Sprintf("Waiting for %q machine", machine.Name))
+	f.By(fmt.Sprintf("Waiting for %q machine creation and machine's underlying instance is running", machine.Name))
+	var updatedMachine *machinev1beta1.Machine
 	// Verify machine has been deployed
 	err := wait.Poll(PollInterval, TimeoutPoolMachineRunningInterval, func() (bool, error) {
-		if _, err := f.CAPIClient.MachineV1beta1().Machines(machine.Namespace).Get(machine.Name, metav1.GetOptions{}); err != nil {
+		var err error
+		if updatedMachine, err = f.CAPIClient.MachineV1beta1().Machines(machine.Namespace).Get(machine.Name, metav1.GetOptions{}); err != nil {
 			glog.V(2).Infof("Waiting for '%v/%v' machine to be created", machine.Namespace, machine.Name)
 			return false, nil
 		}
-		return true, nil
-	})
-	f.ErrNotExpected(err)
-
-	f.By("Verify machine's underlying instance is running")
-	err = wait.Poll(PollInterval, PoolTimeout, func() (bool, error) {
-		glog.V(2).Info("Waiting for instance to come up")
-		runningInstances, err := client.GetRunningInstances(machine)
+		glog.V(2).Info("Waiting for underlying instance to come up")
+		runningInstances, err := client.GetRunningInstances(updatedMachine)
 		if err != nil {
 			glog.V(2).Infof("unable to get running instances: %v", err)
 			return false, nil

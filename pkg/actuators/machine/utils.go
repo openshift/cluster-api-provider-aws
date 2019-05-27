@@ -18,6 +18,9 @@ package machine
 
 import (
 	"fmt"
+	"net/url"
+	"regexp"
+	"strings"
 
 	"github.com/golang/glog"
 
@@ -48,8 +51,7 @@ func getRunningInstance(machine *machinev1.Machine, client awsclient.Client) (*e
 	return instances[0], nil
 }
 
-// getRunningInstances returns all running instances that have a tag matching our machine name,
-// and cluster ID.
+// getRunningInstancesByProviderID returns all running instances that have a instanceID matched with the machine's ProviderID
 func getRunningInstances(machine *machinev1.Machine, client awsclient.Client) ([]*ec2.Instance, error) {
 	runningInstanceStateFilter := []*string{aws.String(ec2.InstanceStateNameRunning), aws.String(ec2.InstanceStateNamePending)}
 	return getInstances(machine, client, runningInstanceStateFilter)
@@ -62,22 +64,18 @@ func getStoppedInstances(machine *machinev1.Machine, client awsclient.Client) ([
 	return getInstances(machine, client, stoppedInstanceStateFilter)
 }
 
-// getInstances returns all instances that have a tag matching our machine name,
-// and cluster ID.
+// getInstances returns the instances that have instanceID mapped to the machine's providerID
 func getInstances(machine *machinev1.Machine, client awsclient.Client, instanceStateFilter []*string) ([]*ec2.Instance, error) {
-
-	clusterID, ok := getClusterID(machine)
-	if !ok {
-		return []*ec2.Instance{}, fmt.Errorf("unable to get cluster ID for machine: %q", machine.Name)
+	if machine.Spec.ProviderID == nil {
+		glog.Infof("No provider instance found associated with machine %q. ProviderID is nil", machine.Name)
+		return []*ec2.Instance{}, nil
+	}
+	instanceID, err := mapToAWSInstanceID(*machine.Spec.ProviderID)
+	if err != nil {
+		return []*ec2.Instance{}, fmt.Errorf("failed to find instanceid for providerid %q: %v", *machine.Spec.ProviderID, err)
 	}
 
-	requestFilters := []*ec2.Filter{
-		{
-			Name:   awsTagFilter("Name"),
-			Values: aws.StringSlice([]string{machine.Name}),
-		},
-		clusterFilter(clusterID),
-	}
+	requestFilters := []*ec2.Filter{}
 
 	if instanceStateFilter != nil {
 		requestFilters = append(requestFilters, &ec2.Filter{
@@ -88,7 +86,8 @@ func getInstances(machine *machinev1.Machine, client awsclient.Client, instanceS
 
 	// Query instances with our machine's name, and in running/pending state.
 	request := &ec2.DescribeInstancesInput{
-		Filters: requestFilters,
+		Filters:     requestFilters,
+		InstanceIds: []*string{instanceID},
 	}
 
 	result, err := client.DescribeInstances(request)
@@ -276,4 +275,44 @@ func findAWSMachineProviderCondition(conditions []providerconfigv1.AWSMachinePro
 		}
 	}
 	return nil
+}
+
+// awsInstanceRegMatch represents Regex Match for AWS instance.
+var awsInstanceRegMatch = regexp.MustCompile("^i-[^/]*$")
+
+// mapToAWSInstanceID extracts the InstanceID from the KubernetesInstanceID
+// providerID represents the id for an instance in the kubernetes API;
+// the following form
+//  * aws:///<zone>/<awsInstanceId>
+func mapToAWSInstanceID(providerID string) (*string, error) {
+	if !strings.HasPrefix(providerID, "aws:///") {
+		return nil, fmt.Errorf("invalid provider id %q. Must be prefixed with aws:///", providerID)
+	}
+	url, err := url.Parse(providerID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid provider id (%q): %v", providerID, err)
+	}
+	if url.Scheme != "aws" {
+		return nil, fmt.Errorf("invalid scheme for AWS instance (%q)", providerID)
+	}
+
+	// awsID represents the ID of the instance in the AWS API, e.g. i-12345678
+	// The "traditional" format is "i-12345678"
+	// A new longer format is also being introduced: "i-12345678abcdef01"
+	// We should not assume anything about the length or format, though it seems
+	// reasonable to assume that instances will continue to start with "i-".
+	awsID := ""
+	tokens := strings.Split(url.Path, "/")
+	if len(tokens) == 3 {
+		// /az/instanceId
+		awsID = tokens[2]
+	}
+
+	// We sanity check the resulting id; the two known formats are
+	// i-12345678 and i-12345678abcdef01
+	if awsID == "" || !awsInstanceRegMatch.MatchString(awsID) {
+		return nil, fmt.Errorf("invalid format for AWS instance (%q)", providerID)
+	}
+
+	return &awsID, nil
 }
