@@ -213,10 +213,7 @@ func (a *Actuator) CreateMachine(cluster *clusterv1.Cluster, machine *machinev1.
 		return nil, a.handleMachineError(machine, apierrors.InvalidMachineConfiguration("error decoding MachineProviderConfig: %v", err), createEventAction)
 	}
 
-	credentialsSecretName := ""
-	if machineProviderConfig.CredentialsSecret != nil {
-		credentialsSecretName = machineProviderConfig.CredentialsSecret.Name
-	}
+	credentialsSecretName := getSecretName(machineProviderConfig)
 	awsClient, err := a.awsClientBuilder(a.client, credentialsSecretName, machine.Namespace, machineProviderConfig.Placement.Region)
 	if err != nil {
 		glog.Errorf("unable to obtain AWS client: %v", err)
@@ -298,10 +295,7 @@ func (a *Actuator) DeleteMachine(cluster *clusterv1.Cluster, machine *machinev1.
 	}
 
 	region := machineProviderConfig.Placement.Region
-	credentialsSecretName := ""
-	if machineProviderConfig.CredentialsSecret != nil {
-		credentialsSecretName = machineProviderConfig.CredentialsSecret.Name
-	}
+	credentialsSecretName := getSecretName(machineProviderConfig)
 	client, err := a.awsClientBuilder(a.client, credentialsSecretName, machine.Namespace, region)
 	if err != nil {
 		errMsg := fmt.Errorf("error getting EC2 client: %v", err)
@@ -341,10 +335,7 @@ func (a *Actuator) Update(context context.Context, cluster *clusterv1.Cluster, m
 
 	region := machineProviderConfig.Placement.Region
 	glog.Info("obtaining EC2 client for region")
-	credentialsSecretName := ""
-	if machineProviderConfig.CredentialsSecret != nil {
-		credentialsSecretName = machineProviderConfig.CredentialsSecret.Name
-	}
+	credentialsSecretName := getSecretName(machineProviderConfig)
 	client, err := a.awsClientBuilder(a.client, credentialsSecretName, machine.Namespace, region)
 	if err != nil {
 		errMsg := fmt.Errorf("error getting EC2 client: %v", err)
@@ -362,9 +353,19 @@ func (a *Actuator) Update(context context.Context, cluster *clusterv1.Cluster, m
 	// Parent controller should prevent this from ever happening by calling Exists and then Create,
 	// but instance could be deleted between the two calls.
 	if len(instances) == 0 {
-		glog.Warningf("attempted to update machine but no instances found")
+		glog.Warningf("attempted to update machine but no running instances found")
 
-		a.handleMachineError(machine, apierrors.UpdateMachine("no instance found, reason unknown"), updateEventAction)
+		// check for all non-terminated instances, not just running
+		existingInstances, err := a.getExistingMachineInstances(cluster, machine)
+		if err != nil {
+			glog.Errorf("Error getting existing instances: %v", err)
+		} else {
+			if len(existingInstances) > 0 {
+				glog.Errorf("Found non-running instances with same machine name, administrative action may be required.")
+			}
+		}
+
+		a.handleMachineError(machine, apierrors.UpdateMachine("no running instance found, reason unknown"), updateEventAction)
 
 		// Update status to clear out machine details.
 		if err := a.updateStatus(machine, nil); err != nil {
@@ -408,7 +409,7 @@ func (a *Actuator) Update(context context.Context, cluster *clusterv1.Cluster, m
 func (a *Actuator) Exists(context context.Context, cluster *clusterv1.Cluster, machine *machinev1.Machine) (bool, error) {
 	glog.Info("Checking if machine exists")
 
-	instances, err := a.getMachineInstances(cluster, machine)
+	instances, err := a.getExistingMachineInstances(cluster, machine)
 	if err != nil {
 		glog.Errorf("Error getting running instances: %v", err)
 		return false, err
@@ -448,10 +449,7 @@ func (a *Actuator) getMachineInstances(cluster *clusterv1.Cluster, machine *mach
 	}
 
 	region := machineProviderConfig.Placement.Region
-	credentialsSecretName := ""
-	if machineProviderConfig.CredentialsSecret != nil {
-		credentialsSecretName = machineProviderConfig.CredentialsSecret.Name
-	}
+	credentialsSecretName := getSecretName(machineProviderConfig)
 	client, err := a.awsClientBuilder(a.client, credentialsSecretName, machine.Namespace, region)
 	if err != nil {
 		glog.Errorf("Error getting EC2 client: %v", err)
@@ -459,6 +457,24 @@ func (a *Actuator) getMachineInstances(cluster *clusterv1.Cluster, machine *mach
 	}
 
 	return getRunningInstances(machine, client)
+}
+
+func (a *Actuator) getExistingMachineInstances(cluster *clusterv1.Cluster, machine *machinev1.Machine) ([]*ec2.Instance, error) {
+	machineProviderConfig, err := providerConfigFromMachine(machine, a.codec)
+	if err != nil {
+		glog.Errorf("Error decoding MachineProviderConfig: %v", err)
+		return nil, err
+	}
+
+	region := machineProviderConfig.Placement.Region
+	credentialsSecretName := getSecretName(machineProviderConfig)
+	client, err := a.awsClientBuilder(a.client, credentialsSecretName, machine.Namespace, region)
+	if err != nil {
+		glog.Errorf("Error getting EC2 client: %v", err)
+		return nil, fmt.Errorf("error getting EC2 client: %v", err)
+	}
+
+	return getExistingInstances(machine, client)
 }
 
 // updateLoadBalancers adds a given machine instance to the load balancers specified in its provider config
@@ -578,4 +594,12 @@ func getClusterID(machine *machinev1.Machine) (string, bool) {
 		clusterID, ok = machine.Labels["sigs.k8s.io/cluster-api-cluster"]
 	}
 	return clusterID, ok
+}
+
+func getSecretName(machineProviderConfig *providerconfigv1.AWSMachineProviderConfig) string {
+	credentialsSecretName := ""
+	if machineProviderConfig.CredentialsSecret != nil {
+		credentialsSecretName = machineProviderConfig.CredentialsSecret.Name
+	}
+	return credentialsSecretName
 }
