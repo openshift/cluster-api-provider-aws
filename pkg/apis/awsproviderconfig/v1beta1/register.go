@@ -28,7 +28,6 @@ import (
 	"bytes"
 	"fmt"
 
-	machinev1 "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -42,6 +41,20 @@ var (
 	// SchemeBuilder is used to add go types to the GroupVersionKind scheme
 	SchemeBuilder = &scheme.Builder{GroupVersion: SchemeGroupVersion}
 )
+
+// ProviderSpec defines the configuration to use during node creation.
+type ProviderSpec struct {
+
+	// No more than one of the following may be specified.
+
+	// Value is an inlined, serialized representation of the resource
+	// configuration. It is recommended that providers maintain their own
+	// versioned API types that should be serialized/deserialized from this
+	// field, akin to component config.
+	// +optional
+	Value *runtime.RawExtension `json:"value,omitempty"`
+}
+
 
 // AWSProviderConfigCodec is a runtime codec for the provider configuration
 // +k8s:deepcopy-gen=false
@@ -74,7 +87,7 @@ func NewCodec() (*AWSProviderConfigCodec, error) {
 }
 
 // DecodeProviderSpec deserialises an object from the provider config
-func (codec *AWSProviderConfigCodec) DecodeProviderSpec(providerSpec *machinev1.ProviderSpec, out runtime.Object) error {
+func (codec *AWSProviderConfigCodec) DecodeProviderSpec(providerSpec *ProviderSpec, out runtime.Object) error {
 	if providerSpec.Value != nil {
 		if _, _, err := codec.decoder.Decode(providerSpec.Value.Raw, nil, out); err != nil {
 			return fmt.Errorf("decoding failure: %v", err)
@@ -84,12 +97,12 @@ func (codec *AWSProviderConfigCodec) DecodeProviderSpec(providerSpec *machinev1.
 }
 
 // EncodeProviderSpec serialises an object to the provider config
-func (codec *AWSProviderConfigCodec) EncodeProviderSpec(in runtime.Object) (*machinev1.ProviderSpec, error) {
+func (codec *AWSProviderConfigCodec) EncodeProviderSpec(in runtime.Object) (*ProviderSpec, error) {
 	var buf bytes.Buffer
 	if err := codec.encoder.Encode(in, &buf); err != nil {
 		return nil, fmt.Errorf("encoding failed: %v", err)
 	}
-	return &machinev1.ProviderSpec{
+	return &ProviderSpec{
 		Value: &runtime.RawExtension{Raw: buf.Bytes()},
 	}, nil
 }
