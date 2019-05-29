@@ -32,6 +32,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/scheme"
+	machinev1 "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 )
 
 var (
@@ -42,6 +43,7 @@ var (
 	SchemeBuilder = &scheme.Builder{GroupVersion: SchemeGroupVersion}
 )
 
+/*
 // ProviderSpec defines the configuration to use during node creation.
 type ProviderSpec struct {
 
@@ -54,6 +56,7 @@ type ProviderSpec struct {
 	// +optional
 	Value *runtime.RawExtension `json:"value,omitempty"`
 }
+*/
 
 
 // AWSProviderConfigCodec is a runtime codec for the provider configuration
@@ -87,7 +90,7 @@ func NewCodec() (*AWSProviderConfigCodec, error) {
 }
 
 // DecodeProviderSpec deserialises an object from the provider config
-func (codec *AWSProviderConfigCodec) DecodeProviderSpec(providerSpec *ProviderSpec, out runtime.Object) error {
+func (codec *AWSProviderConfigCodec) DecodeProviderSpec(providerSpec *machinev1.ProviderSpec, out runtime.Object) error {
 	if providerSpec.Value != nil {
 		if _, _, err := codec.decoder.Decode(providerSpec.Value.Raw, nil, out); err != nil {
 			return fmt.Errorf("decoding failure: %v", err)
@@ -97,12 +100,12 @@ func (codec *AWSProviderConfigCodec) DecodeProviderSpec(providerSpec *ProviderSp
 }
 
 // EncodeProviderSpec serialises an object to the provider config
-func (codec *AWSProviderConfigCodec) EncodeProviderSpec(in runtime.Object) (*ProviderSpec, error) {
+func (codec *AWSProviderConfigCodec) EncodeProviderSpec(in runtime.Object) (*machinev1.ProviderSpec, error) {
 	var buf bytes.Buffer
 	if err := codec.encoder.Encode(in, &buf); err != nil {
 		return nil, fmt.Errorf("encoding failed: %v", err)
 	}
-	return &ProviderSpec{
+	return &machinev1.ProviderSpec{
 		Value: &runtime.RawExtension{Raw: buf.Bytes()},
 	}, nil
 }

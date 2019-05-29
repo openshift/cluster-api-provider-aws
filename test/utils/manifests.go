@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	machinev1beta1 "github.com/openshift/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	providerconfigv1 "github.com/openshift/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
 	awsclient "github.com/openshift/cluster-api-provider-aws/pkg/client"
+	machinev1 "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 )
 
 // GenerateAwsCredentialsSecretFromEnv generates secret with AWS credentials
@@ -88,20 +88,20 @@ func testingAWSMachineProviderSpec(awsCredentialsSecretName string, clusterID st
 	}
 }
 
-func TestingMachineProviderSpec(awsCredentialsSecretName string, clusterID string) (machinev1beta1.ProviderSpec, error) {
+func TestingMachineProviderSpec(awsCredentialsSecretName string, clusterID string) (machinev1.ProviderSpec, error) {
 	machinePc := testingAWSMachineProviderSpec(awsCredentialsSecretName, clusterID)
 	codec, err := providerconfigv1.NewCodec()
 	if err != nil {
-		return machinev1beta1.ProviderSpec{}, fmt.Errorf("failed creating codec: %v", err)
+		return machinev1.ProviderSpec{}, fmt.Errorf("failed creating codec: %v", err)
 	}
 	config, err := codec.EncodeProviderSpec(machinePc)
 	if err != nil {
-		return machinev1beta1.ProviderSpec{}, fmt.Errorf("EncodeToProviderConfig failed: %v", err)
+		return machinev1.ProviderSpec{}, fmt.Errorf("EncodeToProviderConfig failed: %v", err)
 	}
 	return *config, nil
 }
 
-func TestingMachineProviderSpecWithEBS(awsCredentialsSecretName string, clusterID string) (machinev1beta1.ProviderSpec, error) {
+func TestingMachineProviderSpecWithEBS(awsCredentialsSecretName string, clusterID string) (machinev1.ProviderSpec, error) {
 	volumeSize := int64(142)
 	volumeType := "gp2"
 	machinePc := testingAWSMachineProviderSpec(awsCredentialsSecretName, clusterID)
@@ -115,16 +115,16 @@ func TestingMachineProviderSpecWithEBS(awsCredentialsSecretName string, clusterI
 	}
 	codec, err := providerconfigv1.NewCodec()
 	if err != nil {
-		return machinev1beta1.ProviderSpec{}, fmt.Errorf("failed creating codec: %v", err)
+		return machinev1.ProviderSpec{}, fmt.Errorf("failed creating codec: %v", err)
 	}
 	providerSpec, err := codec.EncodeProviderSpec(machinePc)
 	if err != nil {
-		return machinev1beta1.ProviderSpec{}, fmt.Errorf("codec.EncodeProviderSpec failed: %v", err)
+		return machinev1.ProviderSpec{}, fmt.Errorf("codec.EncodeProviderSpec failed: %v", err)
 	}
 	return *providerSpec, nil
 }
 
-func MasterMachineProviderSpec(awsCredentialsSecretName, masterUserDataSecretName, clusterID string) (machinev1beta1.ProviderSpec, error) {
+func MasterMachineProviderSpec(awsCredentialsSecretName, masterUserDataSecretName, clusterID string) (machinev1.ProviderSpec, error) {
 	publicIP := true
 	machinePc := &providerconfigv1.AWSMachineProviderConfig{
 		AMI: providerconfigv1.AWSResourceReference{
@@ -177,16 +177,16 @@ func MasterMachineProviderSpec(awsCredentialsSecretName, masterUserDataSecretNam
 
 	codec, err := providerconfigv1.NewCodec()
 	if err != nil {
-		return machinev1beta1.ProviderSpec{}, fmt.Errorf("failed creating codec: %v", err)
+		return machinev1.ProviderSpec{}, fmt.Errorf("failed creating codec: %v", err)
 	}
 	providerSpec, err := codec.EncodeProviderSpec(machinePc)
 	if err != nil {
-		return machinev1beta1.ProviderSpec{}, fmt.Errorf("codec.EncodeProviderSpec failed: %v", err)
+		return machinev1.ProviderSpec{}, fmt.Errorf("codec.EncodeProviderSpec failed: %v", err)
 	}
 	return *providerSpec, nil
 }
 
-func WorkerMachineSetProviderSpec(awsCredentialsSecretName, workerUserDataSecretName, clusterID string) (machinev1beta1.ProviderSpec, error) {
+func WorkerMachineSetProviderSpec(awsCredentialsSecretName, workerUserDataSecretName, clusterID string) (machinev1.ProviderSpec, error) {
 	publicIP := true
 	machinePc := &providerconfigv1.AWSMachineProviderConfig{
 		AMI: providerconfigv1.AWSResourceReference{
@@ -239,11 +239,11 @@ func WorkerMachineSetProviderSpec(awsCredentialsSecretName, workerUserDataSecret
 
 	codec, err := providerconfigv1.NewCodec()
 	if err != nil {
-		return machinev1beta1.ProviderSpec{}, fmt.Errorf("failed creating codec: %v", err)
+		return machinev1.ProviderSpec{}, fmt.Errorf("failed creating codec: %v", err)
 	}
 	providerSpec, err := codec.EncodeProviderSpec(machinePc)
 	if err != nil {
-		return machinev1beta1.ProviderSpec{}, fmt.Errorf("codec.EncodeProviderSpec failed: %v", err)
+		return machinev1.ProviderSpec{}, fmt.Errorf("codec.EncodeProviderSpec failed: %v", err)
 	}
 	return *providerSpec, nil
 }
