@@ -41,6 +41,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 
 	awsclient "sigs.k8s.io/cluster-api-provider-aws/pkg/client"
+	"sigs.k8s.io/cluster-api-provider-aws/pkg/metrics"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -264,6 +265,14 @@ func (a *Actuator) CreateMachine(cluster *clusterv1.Cluster, machine *machinev1.
 
 	instance, err := launchInstance(machine, machineProviderConfig, userData, awsClient)
 	if err != nil {
+		labels := metrics.CreateDeleteLabels{
+			MachineName:  machine.Name,
+			Namespace:    machine.Namespace,
+			Reason:       err.Error(),
+			Timestamp:    machine.CreationTimestamp.String(),
+			ProviderName: "aws",
+		}
+		metrics.RegisterFailedInstanceCreate(&labels)
 		return nil, a.handleMachineError(machine, apierrors.CreateMachine("error launching instance: %v", err), createEventAction)
 	}
 
@@ -327,6 +336,14 @@ func (a *Actuator) DeleteMachine(cluster *clusterv1.Cluster, machine *machinev1.
 
 	err = terminateInstances(client, instances)
 	if err != nil {
+		labels := metrics.CreateDeleteLabels{
+			MachineName:  machine.Name,
+			Namespace:    machine.Namespace,
+			Reason:       err.Error(),
+			Timestamp:    machine.CreationTimestamp.String(),
+			ProviderName: "aws",
+		}
+		metrics.RegisterFailedInstanceDelete(&labels)
 		return a.handleMachineError(machine, apierrors.DeleteMachine(err.Error()), noEventAction)
 	}
 	a.eventRecorder.Eventf(machine, corev1.EventTypeNormal, "Deleted", "Deleted machine %v", machine.Name)

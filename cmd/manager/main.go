@@ -27,6 +27,7 @@ import (
 	machineactuator "sigs.k8s.io/cluster-api-provider-aws/pkg/actuators/machine"
 	"sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
 	awsclient "sigs.k8s.io/cluster-api-provider-aws/pkg/client"
+	"sigs.k8s.io/cluster-api-provider-aws/pkg/metrics"
 	"sigs.k8s.io/cluster-api-provider-aws/pkg/version"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -35,6 +36,8 @@ import (
 
 func main() {
 	var printVersion bool
+	// TODO(vikasc): use cmdline flag
+	var metricsBindAddress = ":8080"
 	flag.BoolVar(&printVersion, "version", false, "print version and exit")
 	watchNamespace := flag.String("namespace", "", "Namespace that the controller watches to reconcile machine-api objects. If unspecified, the controller watches for machine-api objects across all namespaces.")
 
@@ -64,7 +67,8 @@ func main() {
 	// Setup a Manager
 	syncPeriod := 10 * time.Minute
 	opts := manager.Options{
-		SyncPeriod: &syncPeriod,
+		SyncPeriod:         &syncPeriod,
+		MetricsBindAddress: metricsBindAddress,
 	}
 	if *watchNamespace != "" {
 		opts.Namespace = *watchNamespace
@@ -89,6 +93,8 @@ func main() {
 	if err := machine.AddWithActuator(mgr, machineActuator); err != nil {
 		glog.Fatalf("Error adding actuator: %v", err)
 	}
+
+	metrics.RegisterAll()
 
 	// Start the Cmd
 	err = mgr.Start(signals.SetupSignalHandler())
