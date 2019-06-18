@@ -28,24 +28,12 @@ import (
 	"os/user"
 	"time"
 
-	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 
-	apiv1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes/scheme"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	"github.com/openshift/cluster-api-actuator-pkg/pkg/e2e/framework"
-	"github.com/openshift/cluster-api-actuator-pkg/pkg/manifests"
-	clusterv1 "github.com/openshift/cluster-api/pkg/apis/cluster/v1alpha1"
 	machinev1 "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
-	machineactuator "sigs.k8s.io/cluster-api-provider-aws/pkg/actuators/machine"
-	awsclient "sigs.k8s.io/cluster-api-provider-aws/pkg/client"
-	testutils "sigs.k8s.io/cluster-api-provider-aws/test/utils"
 )
 
 const (
@@ -75,8 +63,6 @@ func init() {
 	rootCmd.AddCommand(deleteCommand())
 
 	rootCmd.AddCommand(existsCommand())
-
-	rootCmd.AddCommand(bootstrapCommand())
 
 	flag.CommandLine.AddGoFlagSet(goflag.CommandLine)
 
@@ -214,189 +200,6 @@ func existsCommand() *cobra.Command {
 			return nil
 		},
 	}
-}
-
-func bootstrapCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "bootstrap",
-		Short: "Bootstrap kubernetes cluster with kubeadm",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			machinePrefix := cmd.Flag("environment-id").Value.String()
-
-			mastermachinepk := cmd.Flag("master-machine-private-key").Value.String()
-			if mastermachinepk == "" {
-				return fmt.Errorf("--master-machine-private-key needs to be set")
-			}
-
-			if os.Getenv("AWS_ACCESS_KEY_ID") == "" {
-				return fmt.Errorf("AWS_ACCESS_KEY_ID env needs to be set")
-			}
-			if os.Getenv("AWS_SECRET_ACCESS_KEY") == "" {
-				return fmt.Errorf("AWS_SECRET_ACCESS_KEY env needs to be set")
-			}
-
-			testNamespace := &apiv1.Namespace{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test",
-				},
-			}
-
-			testCluster := &clusterv1.Cluster{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      machinePrefix,
-					Namespace: testNamespace.Name,
-				},
-				Spec: clusterv1.ClusterSpec{
-					ClusterNetwork: clusterv1.ClusterNetworkingConfig{
-						Services: clusterv1.NetworkRanges{
-							CIDRBlocks: []string{"10.0.0.1/24"},
-						},
-						Pods: clusterv1.NetworkRanges{
-							CIDRBlocks: []string{"10.0.0.1/24"},
-						},
-						ServiceDomain: "example.com",
-					},
-				},
-			}
-
-			awsCredentialsSecret := testutils.GenerateAwsCredentialsSecretFromEnv(awsCredentialsSecretName, testNamespace.Name)
-
-			// Create master machine and verify the master node is ready
-			masterUserDataSecret, err := manifests.MasterMachineUserDataSecret(
-				"masteruserdatasecret",
-				testNamespace.Name,
-				[]string{"\\$(curl -s http://169.254.169.254/latest/meta-data/public-hostname)", "\\$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)"},
-			)
-			if err != nil {
-				return err
-			}
-
-			masterMachineProviderSpec, err := testutils.MasterMachineProviderSpec(awsCredentialsSecret.Name, masterUserDataSecret.Name, testCluster.Name)
-			if err != nil {
-				return err
-			}
-
-			masterMachine := manifests.MasterMachine(testCluster.Name, testCluster.Namespace, masterMachineProviderSpec)
-
-			glog.Infof("Creating master machine")
-
-			actuator, err := createActuator(masterMachine, awsCredentialsSecret, masterUserDataSecret)
-			if err != nil {
-				return fmt.Errorf("unable to create actuator: %v", err)
-			}
-			result, err := actuator.CreateMachine(testCluster, masterMachine)
-			if err != nil {
-				glog.Errorf("Unable to create machine: %v", err)
-				return fmt.Errorf("unable to create machine: %v", err)
-			}
-
-			glog.Infof("Master machine created with ipv4: %v, InstanceId: %v", *result.PrivateIpAddress, *result.InstanceId)
-
-			masterMachinePrivateIP := ""
-			err = wait.Poll(pollInterval, timeoutPoolAWSInterval, func() (bool, error) {
-				glog.Info("Waiting for master machine PublicDNS")
-				result, err := actuator.Describe(testCluster, masterMachine)
-				if err != nil {
-					glog.Info(err)
-					return false, nil
-				}
-
-				glog.Infof("PublicDNSName: %v", *result.PublicDnsName)
-				if *result.PublicDnsName == "" {
-					return false, nil
-				}
-
-				masterMachinePrivateIP = *result.PrivateIpAddress
-				return true, nil
-			})
-			if err != nil {
-				glog.Errorf("Unable to get DNS name: %v", err)
-				return err
-			}
-
-			f := framework.Framework{
-				SSH: &framework.SSHConfig{
-					Key:  mastermachinepk,
-					User: "ec2-user",
-				},
-			}
-
-			objList := []runtime.Object{awsCredentialsSecret}
-			fakeClient := fake.NewFakeClient(objList...)
-			awsClient, err := awsclient.NewClient(fakeClient, awsCredentialsSecret.Name, awsCredentialsSecret.Namespace, region)
-			if err != nil {
-				glog.Errorf("Unable to create aws client: %v", err)
-				return err
-			}
-
-			acw := machineactuator.NewAwsClientWrapper(awsClient)
-			glog.Infof("Collecting master kubeconfig")
-			restConfig, err := f.GetMasterMachineRestConfig(masterMachine, acw)
-			if err != nil {
-				glog.Errorf("Unable to pull kubeconfig: %v", err)
-				return err
-			}
-
-			clusterFramework, err := framework.NewFrameworkFromConfig(
-				restConfig,
-				&framework.SSHConfig{
-					Key:  mastermachinepk,
-					User: "ec2-user",
-				},
-			)
-			if err != nil {
-				return err
-			}
-
-			clusterFramework.ErrNotExpected = func(err error) {
-				if err != nil {
-					glog.Fatal(err)
-				}
-			}
-
-			clusterFramework.By = func(msg string) {
-				glog.Info(msg)
-			}
-
-			clusterFramework.MachineControllerImage = "openshift/origin-aws-machine-controllers:v4.0.0"
-			clusterFramework.MachineManagerImage = "openshift/origin-aws-machine-controllers:v4.0.0"
-			clusterFramework.NodelinkControllerImage = "registry.svc.ci.openshift.org/openshift/origin-v4.0-2019-01-03-031244@sha256:152c0a4ea7cda1731e45af87e33909421dcde7a8fcf4e973cd098a8bae892c50"
-
-			glog.Info("Waiting for all nodes to come up")
-			err = clusterFramework.WaitForNodesToGetReady(1)
-			if err != nil {
-				return err
-			}
-
-			glog.Infof("Creating %q namespace", testNamespace.Name)
-			if _, err := clusterFramework.KubeClient.CoreV1().Namespaces().Create(testNamespace); err != nil {
-				return err
-			}
-
-			clusterFramework.DeployClusterAPIStack(testNamespace.Name, "")
-			clusterFramework.CreateClusterAndWait(testCluster)
-			createSecretAndWait(clusterFramework, awsCredentialsSecret)
-
-			workerUserDataSecret, err := manifests.WorkerMachineUserDataSecret("workeruserdatasecret", testNamespace.Name, masterMachinePrivateIP)
-			if err != nil {
-				return err
-			}
-
-			createSecretAndWait(clusterFramework, workerUserDataSecret)
-			workerMachineSetProviderSpec, err := testutils.WorkerMachineSetProviderSpec(awsCredentialsSecret.Name, workerUserDataSecret.Name, testCluster.Name)
-			if err != nil {
-				return err
-			}
-			workerMachineSet := manifests.WorkerMachineSet(testCluster.Name, testCluster.Namespace, workerMachineSetProviderSpec)
-			clusterFramework.CreateMachineSetAndWait(workerMachineSet, acw)
-
-			return nil
-		},
-	}
-
-	cmd.PersistentFlags().StringP("manifests", "", "", "Directory with bootstrapping manifests")
-	cmd.PersistentFlags().StringP("master-machine-private-key", "", "", "Private key file of the master machine to pull kubeconfig")
-	return cmd
 }
 
 func main() {

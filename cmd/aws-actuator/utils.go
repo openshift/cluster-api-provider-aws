@@ -10,13 +10,10 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	apiv1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	"github.com/openshift/cluster-api-actuator-pkg/pkg/e2e/framework"
 	clusterv1 "github.com/openshift/cluster-api/pkg/apis/cluster/v1alpha1"
 	machinev1 "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	machineactuator "sigs.k8s.io/cluster-api-provider-aws/pkg/actuators/machine"
@@ -95,19 +92,6 @@ func readClusterResources(manifestParams *manifestParams, clusterLoc, machineLoc
 	}
 
 	return cluster, machine, awsCredentialsSecret, userDataSecret, nil
-}
-
-func createSecretAndWait(f *framework.Framework, secret *apiv1.Secret) error {
-	_, err := f.KubeClient.CoreV1().Secrets(secret.Namespace).Create(secret)
-	if err != nil {
-		return err
-	}
-
-	err = wait.Poll(framework.PollInterval, framework.PoolTimeout, func() (bool, error) {
-		_, err := f.KubeClient.CoreV1().Secrets(secret.Namespace).Get(secret.Name, metav1.GetOptions{})
-		return err == nil, nil
-	})
-	return err
 }
 
 // CreateActuator creates actuator with fake clientsets
