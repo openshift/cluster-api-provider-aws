@@ -49,6 +49,10 @@ const (
 
 	// ExcludeNodeDrainingAnnotation annotation explicitly skips node draining if set
 	ExcludeNodeDrainingAnnotation = "machine.openshift.io/exclude-node-draining"
+	DeleteFailureLabel = "machine.openshift.io/delete-failure"
+	CreateFailureLabel = "machine.openshift.io/create-failure"
+	NodeRefFailureLabel = "machine.openshift.io/noderef-failure"
+	ProblemDetectedLabel = "machine.openshift.io/problem-detected"
 )
 
 var DefaultActuator Actuator
@@ -66,6 +70,7 @@ func newReconciler(mgr manager.Manager, actuator Actuator) reconcile.Reconciler 
 		scheme:        mgr.GetScheme(),
 		nodeName:      os.Getenv(NodeNameEnvVar),
 		actuator:      actuator,
+		startTime: 	   time.Now(),
 	}
 
 	if r.nodeName == "" {
@@ -102,6 +107,72 @@ type ReconcileMachine struct {
 
 	// nodeName is the name of the node on which the machine controller is running, if not present, it is loaded from NODE_NAME.
 	nodeName string
+	startTime time.Time
+}
+
+func checkDelete(m *machinev1.Machine, labelsToAdd *[]string, labelsToRemove *[]string) {
+	if m.ObjectMeta.DeletionTimestamp.IsZero() {
+		return
+	} else if time.Now().Sub(m.ObjectMeta.GetDeletionTimestamp().Time).Minutes() > 1 {
+		*labelsToAdd = append(*labelsToAdd, DeleteFailureLabel)
+	}
+}
+
+func checkNodeRef(_ *machinev1.Machine, labelsToAdd *[]string, _ *[]string) {
+	*labelsToAdd = append(*labelsToAdd, NodeRefFailureLabel)
+}
+
+func checkCreate(_ *machinev1.Machine, labelsToAdd *[]string, _ *[]string) {
+	*labelsToAdd = append(*labelsToAdd, CreateFailureLabel)
+}
+
+func (r *ReconcileMachine) checkStatusAndLabels(m *machinev1.Machine) (bool, error) {
+	klog.Infof("Doing the do %v", 1)
+	changed := false
+	mLabels := m.ObjectMeta.GetLabels()
+	labelsToAdd := make([]string, 0)
+	labelsToRemove := make([]string, 0)
+	// We only want to add failure labels if we have been up for enough time
+	// In case we were shut down before, this will give us time to bring things
+	// back inline.
+	upLongEnough := time.Now().Sub(r.startTime).Minutes() > 5
+
+	checkDelete(m, &labelsToAdd, &labelsToRemove)
+	checkNodeRef(m, &labelsToAdd, &labelsToRemove)
+
+	// If we haven't detected any current problems, we should remove global
+	// ProblemDetectedLabel
+	if len(labelsToAdd) == 0 {
+		labelsToRemove = append(labelsToRemove, ProblemDetectedLabel)
+	}
+	for _, label := range labelsToRemove {
+		_, ok := mLabels[label]
+		if ok {
+			delete(mLabels, DeleteFailureLabel)
+			changed = true
+		}
+	}
+	klog.Infof("labelsToRemove %v", labelsToRemove)
+	klog.Infof("labelsToAdd %v", labelsToAdd)
+	// We only add labels if we've been up long enough to allow time processing
+	// after a long stop.
+    if upLongEnough {
+		if len(labelsToAdd) > 0 {
+			// If there's anything wrong, add global ProblemDetectedLabel.
+			labelsToAdd = append(labelsToAdd, ProblemDetectedLabel)
+		}
+		for _, label := range labelsToAdd {
+			_, ok := mLabels[label]
+			if !ok {
+				mLabels[label] = "active"
+				changed = true
+			}
+		}
+	}
+	if changed {
+		m.ObjectMeta.SetLabels(mLabels)
+	}
+	return changed, nil
 }
 
 // Reconcile reads that state of the cluster for a Machine object and makes changes based on the state read
@@ -127,6 +198,20 @@ func (r *ReconcileMachine) Reconcile(request reconcile.Request) (reconcile.Resul
 	// Implement controller logic here
 	name := m.Name
 	klog.Infof("Reconciling Machine %q", name)
+
+	// Set/unset failing labels
+	changed, err := r.checkStatusAndLabels(m)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+	if changed {
+		if err := r.Client.Update(context.Background(), m); err != nil {
+			klog.Errorf("Failed to add/remove problem detection labels %q: %v", name, err)
+			return reconcile.Result{}, err
+		}
+		// Since changing lables updates the object return to avoid later update issues
+		return reconcile.Result{}, nil
+	}
 
 	if errList := m.Validate(); len(errList) > 0 {
 		err := fmt.Errorf("%q machine validation failed: %v", m.Name, errList.ToAggregate().Error())
