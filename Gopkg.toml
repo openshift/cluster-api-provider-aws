@@ -27,7 +27,8 @@ required = [
 
 [[override]]
   name = "github.com/openshift/cluster-api"
-  branch = "openshift-4.2-cluster-api-0.1.0"
+  branch = "drop-node-controller"
+  source = "git@github.com:enxebre/cluster-api.git"
 
 [[override]]
   name = "k8s.io/code-generator"
