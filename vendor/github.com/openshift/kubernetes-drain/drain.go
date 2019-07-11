@@ -401,16 +401,19 @@ func deleteOrEvictPods(client kubernetes.Interface, pods []corev1.Pod, options *
 	getPodFn := func(namespace, name string) (*corev1.Pod, error) {
 		return client.CoreV1().Pods(options.Namespace).Get(name, metav1.GetOptions{})
 	}
+	getPodFn2 := func(namespace, name string) (*corev1.Pod, error) {
+		return client.CoreV1().Pods(namespace).Get(name, metav1.GetOptions{})
+	}
 
 	if len(policyGroupVersion) > 0 {
 		// Remember to change change the URL manipulation func when Evction's version change
-		return evictPods(client.PolicyV1beta1(), pods, policyGroupVersion, options, getPodFn)
+		return evictPods(client.PolicyV1beta1(), pods, policyGroupVersion, options, getPodFn, getPodFn2)
 	} else {
-		return deletePods(client.CoreV1(), pods, options, getPodFn)
+		return deletePods(client.CoreV1(), pods, options, getPodFn, getPodFn2)
 	}
 }
 
-func evictPods(client typedpolicyv1beta1.PolicyV1beta1Interface, pods []corev1.Pod, policyGroupVersion string, options *DrainOptions, getPodFn func(namespace, name string) (*corev1.Pod, error)) error {
+func evictPods(client typedpolicyv1beta1.PolicyV1beta1Interface, pods []corev1.Pod, policyGroupVersion string, options *DrainOptions, getPodFn func(namespace, name string) (*corev1.Pod, error), getPodFn2 func(namespace, name string) (*corev1.Pod, error)) error {
 	returnCh := make(chan error, 1)
 
 	for _, pod := range pods {
@@ -432,7 +435,7 @@ func evictPods(client typedpolicyv1beta1.PolicyV1beta1Interface, pods []corev1.P
 				}
 			}
 			podArray := []corev1.Pod{pod}
-			_, err = waitForDelete(podArray, 1*time.Second, time.Duration(math.MaxInt64), true, options.Logger, getPodFn)
+			_, err = waitForDelete(podArray, 1*time.Second, time.Duration(math.MaxInt64), true, options.Logger, getPodFn, getPodFn2)
 			if err == nil {
 				returnCh <- nil
 			} else {
@@ -467,7 +470,7 @@ func evictPods(client typedpolicyv1beta1.PolicyV1beta1Interface, pods []corev1.P
 	return utilerrors.NewAggregate(errors)
 }
 
-func deletePods(client typedcorev1.CoreV1Interface, pods []corev1.Pod, options *DrainOptions, getPodFn func(namespace, name string) (*corev1.Pod, error)) error {
+func deletePods(client typedcorev1.CoreV1Interface, pods []corev1.Pod, options *DrainOptions, getPodFn func(namespace, name string) (*corev1.Pod, error), getPodFn2 func(namespace, name string) (*corev1.Pod, error)) error {
 	// 0 timeout means infinite, we use MaxInt64 to represent it.
 	var globalTimeout time.Duration
 	if options.Timeout == 0 {
@@ -486,11 +489,11 @@ func deletePods(client typedcorev1.CoreV1Interface, pods []corev1.Pod, options *
 			return err
 		}
 	}
-	_, err := waitForDelete(pods, 1*time.Second, globalTimeout, false, options.Logger, getPodFn)
+	_, err := waitForDelete(pods, 1*time.Second, globalTimeout, false, options.Logger, getPodFn, getPodFn2)
 	return err
 }
 
-func waitForDelete(pods []corev1.Pod, interval, timeout time.Duration, usingEviction bool, logger golog.Logger, getPodFn func(string, string) (*corev1.Pod, error)) ([]corev1.Pod, error) {
+func waitForDelete(pods []corev1.Pod, interval, timeout time.Duration, usingEviction bool, logger golog.Logger, getPodFn func(string, string) (*corev1.Pod, error), getPodFn2 func(namespace, name string) (*corev1.Pod, error)) ([]corev1.Pod, error) {
 	var verbStr string
 	if usingEviction {
 		verbStr = "evicted"
@@ -501,8 +504,17 @@ func waitForDelete(pods []corev1.Pod, interval, timeout time.Duration, usingEvic
 	err := wait.PollImmediate(interval, timeout, func() (bool, error) {
 		pendingPods := []corev1.Pod{}
 		for i, pod := range pods {
+
 			p, err := getPodFn(pod.Namespace, pod.Name)
+			logf(logger, "getting pod %v . %v; %v; %v", pod.Namespace, pod.Name, p, err)
+			p2, err2 := getPodFn2(pod.Namespace, pod.Name)
+			logf(logger, "getting pod2 %v . %v; %v; %v", pod.Namespace, pod.Name, p2, err2)
+
 			if apierrors.IsNotFound(err) || (p != nil && p.ObjectMeta.UID != pod.ObjectMeta.UID) {
+				logf(logger, "p1 404")
+					if apierrors.IsNotFound(err2) || (p2 != nil && p2.ObjectMeta.UID != pod.ObjectMeta.UID) {
+						logf(logger, "p2 404")
+					}
 				logf(logger, "pod %q removed (%s)", pod.Name, verbStr)
 				continue
 			} else if err != nil {
