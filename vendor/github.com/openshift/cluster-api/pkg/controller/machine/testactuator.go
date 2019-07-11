@@ -91,6 +91,12 @@ func (a *TestActuator) Exists(context.Context, *v1alpha1.Cluster, *v1beta1.Machi
 	return a.ExistsValue, nil
 }
 
+func (a *TestActuator) GetInstanceTypeDetails(_ context.Context, _ *v1beta1.MachineSet) (map[string]string, error) {
+	return map[string]string{
+	    "testactuator": "testing",
+	}, nil
+}
+
 func newTestActuator() *TestActuator {
 	ta := new(TestActuator)
 	ta.unblock = make(chan string)

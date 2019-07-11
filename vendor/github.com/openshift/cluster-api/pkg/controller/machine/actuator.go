@@ -35,6 +35,8 @@ type Actuator interface {
 	Update(context.Context, *clusterv1.Cluster, *machinev1.Machine) error
 	// Checks if the machine currently exists.
 	Exists(context.Context, *clusterv1.Cluster, *machinev1.Machine) (bool, error)
+	// GetInstanceTypeDetails returns a struct of instance size details.
+	GetInstanceTypeDetails(context.Context, *machinev1.MachineSet) (map[string]string, error)
 }
 
 /// [Actuator]
