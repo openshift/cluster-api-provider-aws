@@ -106,6 +106,12 @@ func (a *Actuator) handleMachineError(machine *machinev1.Machine, err *apierrors
 	return err
 }
 
+func (a *Actuator) GetInstanceTypeDetails(_ context.Context, _ *machinev1.MachineSet) (map[string]string, error) {
+	return map[string]string{
+	    "mgugino": "testing",
+	}, nil
+}
+
 // Create runs a new EC2 instance
 func (a *Actuator) Create(context context.Context, cluster *clusterv1.Cluster, machine *machinev1.Machine) error {
 	glog.Infof("%s: creating machine", machine.Name)

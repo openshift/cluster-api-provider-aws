@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"reflect"
 	"time"
 
 	"github.com/go-log/log/info"
@@ -54,11 +55,12 @@ const (
 var DefaultActuator Actuator
 
 func AddWithActuator(mgr manager.Manager, actuator Actuator) error {
-	return add(mgr, newReconciler(mgr, actuator))
+	r := newReconciler(mgr, actuator)
+	return add(mgr, r, r.AnnotateMachineSets)
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager, actuator Actuator) reconcile.Reconciler {
+func newReconciler(mgr manager.Manager, actuator Actuator) *ReconcileMachine {
 	r := &ReconcileMachine{
 		Client:        mgr.GetClient(),
 		eventRecorder: mgr.GetEventRecorderFor("machine-controller"),
@@ -76,18 +78,74 @@ func newReconciler(mgr manager.Manager, actuator Actuator) reconcile.Reconciler 
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
-func add(mgr manager.Manager, r reconcile.Reconciler) error {
+func add(mgr manager.Manager, r reconcile.Reconciler, mapFn handler.ToRequestsFunc) error {
 	// Create a new controller
 	c, err := controller.New("machine_controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
 		return err
 	}
-
+	// Map Machine changes to MachineSets by machining labels.
+	err = c.Watch(
+		&source.Kind{Type: &machinev1.MachineSet{}},
+		&handler.EnqueueRequestsFromMapFunc{ToRequests: mapFn},
+	)
+	if err != nil {
+		return err
+	}
 	// Watch for changes to Machine
 	return c.Watch(
 		&source.Kind{Type: &machinev1.Machine{}},
 		&handler.EnqueueRequestForObject{},
 	)
+}
+
+func (r *ReconcileMachine) AnnotateMachineSets(o handler.MapObject) []reconcile.Request {
+	ms := &machinev1.MachineSet{}
+	key := client.ObjectKey{Namespace: o.Meta.GetNamespace(), Name: o.Meta.GetName()}
+	name := client.ObjectKey{Namespace: ms.Namespace, Name: ms.Name}
+	errResult := []reconcile.Request{
+		{
+			NamespacedName: name,
+		},
+	}
+
+	err := r.Client.Get(context.Background(), key, ms)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			// Object not found, return.  Created objects are automatically garbage collected.
+			// For additional cleanup logic use finalizers.
+			return nil
+		}
+		klog.Errorf("Unable to retrieve MachineSet %v from store: %v", key, err)
+		return errResult
+	}
+	annotationsNeeded, err := r.actuator.GetInstanceTypeDetails(context.Background(), ms)
+	if err != nil {
+		klog.Errorf("xxx%s Cannot GetInstanceTypeDetails: %v", ms.Name, err)
+		return errResult
+	}
+	previousAnnotations := ms.ObjectMeta.GetAnnotations()
+	if previousAnnotations == nil {
+		previousAnnotations = map[string]string{}
+	}
+	// need to copy our map for comparison later.
+	currentAnnotations := map[string]string{}
+	for key, value := range previousAnnotations {
+		currentAnnotations[key] = value
+	}
+	for key, value := range annotationsNeeded {
+	    currentAnnotations[key] = value
+	}
+
+	if !reflect.DeepEqual(currentAnnotations, previousAnnotations) {
+		ms.ObjectMeta.SetAnnotations(currentAnnotations)
+		klog.Infof("%s: updating InstanceType Annotations", ms.Name)
+		if err := r.Client.Update(context.Background(), ms); err != nil {
+			klog.Errorf("Failed to add/remove type detail annotations %q: %v", ms.Name, err)
+			return errResult
+		}
+	}
+	return nil
 }
 
 // ReconcileMachine reconciles a Machine object
