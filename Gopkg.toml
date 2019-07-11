@@ -60,10 +60,15 @@ required = [
   version="v0.1.1"
 
 # For dependency below: Refer to issue https://github.com/golang/dep/issues/1799
- [[override]]
-   name = "gopkg.in/fsnotify.v1"
-   source = "https://github.com/fsnotify/fsnotify.git"
-   version="v1.4.7"
+[[override]]
+  name = "gopkg.in/fsnotify.v1"
+  source = "https://github.com/fsnotify/fsnotify.git"
+  version="v1.4.7"
+
+[[override]]
+  name = "github.com/openshift/kubernetes-drain"
+  source = "https://github.com/mgugino-upstream-stage/kubernetes-drain.git"
+  branch = "fix-get-namespace"
 
 [prune]
   go-tests = true
