@@ -20,14 +20,15 @@ import (
 	"context"
 	"fmt"
 	"os"
+	// "strings"
 	"time"
 
-	"github.com/go-log/log/info"
+	//"github.com/go-log/log/info"
 	clusterv1 "github.com/openshift/cluster-api/pkg/apis/cluster/v1alpha1"
 	machinev1 "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	controllerError "github.com/openshift/cluster-api/pkg/controller/error"
+	kubedrain "github.com/openshift/cluster-api/pkg/controller/machine/drain"
 	"github.com/openshift/cluster-api/pkg/util"
-	kubedrain "github.com/openshift/kubernetes-drain"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -268,22 +269,30 @@ func (r *ReconcileMachine) drainNode(machine *machinev1.Machine) error {
 		return fmt.Errorf("unable to get node %q: %v", machine.Status.NodeRef.Name, err)
 	}
 
-	if err := kubedrain.Drain(
-		kubeClient,
-		[]*corev1.Node{node},
-		&kubedrain.DrainOptions{
-			Force:              true,
-			IgnoreDaemonsets:   true,
-			DeleteLocalData:    true,
-			GracePeriodSeconds: -1,
-			Logger:             info.New(klog.V(0)),
-			// If a pod is not evicted in 20 second, retry the eviction next time the
-			// machine gets reconciled again (to allow other machines to be reconciled)
-			Timeout: 20 * time.Second,
-		},
-	); err != nil {
+	drainer := &kubedrain.Helper{
+		Client:              kubeClient,
+		Force:               true,
+		IgnoreAllDaemonSets: true,
+		DeleteLocalData:     true,
+		GracePeriodSeconds:  -1,
+		// If a pod is not evicted in 20 second, retry the eviction next time the
+		// machine gets reconciled again (to allow other machines to be reconciled)
+		Timeout:               20 * time.Second,
+		OnPodDeletedOrEvicted: onPodDeletedOrEvicted,
+		Out:                   InfoWriter{},
+		ErrOut:                ErrorWriter{},
+		DryRun:                false,
+	}
+
+	if err := kubedrain.RunCordonOrUncordon(drainer, node, true); err != nil {
 		// Machine still tries to terminate after drain failure
-		klog.Warningf("drain failed for machine %q: %v", machine.Name, err)
+		klog.Warningf("%q: node cordon failed %q; %v", machine.Name, node.Name, err)
+		return &controllerError.RequeueAfterError{RequeueAfter: 20 * time.Second}
+	}
+
+	if err := kubedrain.RunNodeDrain(drainer, node.Name); err != nil {
+		// Machine still tries to terminate after drain failure
+		klog.Warningf("%q: drain failed for node %q; %v", machine.Name, err)
 		return &controllerError.RequeueAfterError{RequeueAfter: 20 * time.Second}
 	}
 
@@ -291,6 +300,31 @@ func (r *ReconcileMachine) drainNode(machine *machinev1.Machine) error {
 	r.eventRecorder.Eventf(machine, corev1.EventTypeNormal, "Deleted", "Node %q drained", node.Name)
 
 	return nil
+}
+
+type InfoWriter struct{}
+
+func (w InfoWriter) Write(p []byte) (n int, err error) {
+	klog.Infof(string(p))
+	return len(p), nil
+}
+
+type ErrorWriter struct{}
+
+func (w ErrorWriter) Write(p []byte) (n int, err error) {
+	klog.Errorf(string(p))
+	return len(p), nil
+}
+
+// onPodDeletedOrEvicted is called by drain.Helper, when the pod has been deleted or evicted
+func onPodDeletedOrEvicted(pod *corev1.Pod, usingEviction bool) {
+	var verbStr string
+	if usingEviction {
+		verbStr = "evicted"
+	} else {
+		verbStr = "deleted"
+	}
+	klog.Infof("pod %s/%s %s\n", pod.Namespace, pod.Name, verbStr)
 }
 
 func (r *ReconcileMachine) getCluster(ctx context.Context, machine *machinev1.Machine) (*clusterv1.Cluster, error) {
