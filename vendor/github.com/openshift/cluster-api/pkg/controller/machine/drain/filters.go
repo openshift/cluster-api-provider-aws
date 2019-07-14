@@ -176,9 +176,9 @@ func (d *Helper) daemonSetFilter(pod corev1.Pod) podDeleteStatus {
         // Requestor might not have permissions to get DaemonSets when ignoring
         if apierrors.IsForbidden(err) && d.IgnoreAllDaemonSets {
 			fmt.Fprintf(d.ErrOut, "get daemonset 403 for pod %q\n", pod.Name)
-            makePodDeleteStatusWithWarning(false, daemonSetWarning)
+            return makePodDeleteStatusWithWarning(false, daemonSetWarning)
         }
-
+		fmt.Fprintf(d.ErrOut, "filter daemonset get error unknown %q\n", pod.Name)
 		return makePodDeleteStatusWithError(err.Error())
 	}
 	fmt.Fprintf(d.ErrOut, "daemonset got okay for pod %q\n", pod.Name)
@@ -206,6 +206,7 @@ func (d *Helper) localStorageFilter(pod corev1.Pod) podDeleteStatus {
 		return makePodDeleteStatusOkay()
 	}
 	if !d.DeleteLocalData {
+		fmt.Fprintf(d.ErrOut, "pod has local data and not delete %q\n", pod.Name)
 		return makePodDeleteStatusWithError(localStorageFatal)
 	}
 
@@ -225,5 +226,6 @@ func (d *Helper) unreplicatedFilter(pod corev1.Pod) podDeleteStatus {
 	if d.Force {
 		return makePodDeleteStatusWithWarning(true, unmanagedWarning)
 	}
+	fmt.Fprintf(d.ErrOut, "pod is unmanaged fatal %q\n", pod.Name)
 	return makePodDeleteStatusWithError(unmanagedFatal)
 }

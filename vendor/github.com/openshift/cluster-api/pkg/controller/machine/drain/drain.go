@@ -160,6 +160,7 @@ func (d *Helper) GetPodsForDeletion(nodeName string) (*podDeleteList, []error) {
 	list := &podDeleteList{items: pods}
 
 	if errs := list.errors(); len(errs) > 0 {
+		fmt.Fprintf(d.ErrOut, "Found errors during GetPodsForDeletion")
 		return list, errs
 	}
 
