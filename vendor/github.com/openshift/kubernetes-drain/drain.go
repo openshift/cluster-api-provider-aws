@@ -31,6 +31,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/klog"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -255,19 +256,23 @@ func (o *DaemonSetFilterOptions) daemonSetFilter(pod corev1.Pod) (bool, *warning
 	if controllerRef == nil || controllerRef.Kind != "DaemonSet" {
 		return true, nil, nil
 	}
-
+	klog.Infof("daemonset pod found")
 	if _, err := o.client.DaemonSets(pod.Namespace).Get(controllerRef.Name, metav1.GetOptions{}); err != nil {
 		// remove orphaned pods with a warning if Force is used
+		klog.Infof("daemonset get error")
 		if apierrors.IsNotFound(err) && o.force {
+			klog.Infof("daemonset 404 error")
 			return true, &warning{err.Error()}, nil
 		}
+		klog.Infof("daemonset return fatal error")
 		return false, nil, &fatal{err.Error()}
 	}
-
+	klog.Infof("daemonset get not error")
 	if !o.ignoreDaemonSets {
+		klog.Infof("not ignore daemonset")
 		return false, nil, &fatal{kDaemonsetFatal}
 	}
-
+	klog.Infof("daemonset filter final return")
 	return false, &warning{kDaemonsetWarning}, nil
 }
 
@@ -343,6 +348,7 @@ func getPodsForDeletion(client kubernetes.Interface, node *corev1.Node, options 
 				ws[w.string] = append(ws[w.string], pod.Name)
 			}
 			if f != nil {
+				klog.Infof("fatal filter failure found")
 				fs[f.string] = append(fs[f.string], pod.Name)
 			}
 
@@ -359,11 +365,13 @@ func getPodsForDeletion(client kubernetes.Interface, node *corev1.Node, options 
 	}
 
 	if len(fs) > 0 {
+		klog.Infof("returning fatal")
 		return []corev1.Pod{}, errors.New(fs.message())
 	}
 	if len(ws) > 0 {
 		log(options.Logger, ws.message())
 	}
+	klog.Infof("returning some actual pods")
 	return pods, nil
 }
 
