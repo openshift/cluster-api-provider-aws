@@ -419,6 +419,10 @@ func (r *ReconcileMachineSetAnnotations) Reconcile(request reconcile.Request) (r
 		klog.Errorf("xxx%s Cannot GetInstanceTypeDetails: %v", ms.Name, err)
 		return reconcile.Result{}, err
 	}
+	if annotationsNeeded == nil {
+		// Nothing to do here.
+		return reconcile.Result{}, nil
+	}
 	previousAnnotations := ms.ObjectMeta.GetAnnotations()
 	if previousAnnotations == nil {
 		previousAnnotations = map[string]string{}
@@ -429,8 +433,12 @@ func (r *ReconcileMachineSetAnnotations) Reconcile(request reconcile.Request) (r
 		currentAnnotations[key] = value
 	}
 	for key, value := range annotationsNeeded {
-	    currentAnnotations[key] = value
+	    currentAnnotations["machine.openshift.io/instance-" + key + "-capacity"] = value
 	}
+	// We should maybe gate on this?  Or always get the capacity details
+	// and user needs to set scale-from-zero at MS creation time or otherwise
+	// add it.
+	currentAnnotations["machine.openshift.io/scale-from-zero"] = "true"
 
 	if !reflect.DeepEqual(currentAnnotations, previousAnnotations) {
 		ms.ObjectMeta.SetAnnotations(currentAnnotations)
