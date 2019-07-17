@@ -36,6 +36,7 @@ import (
 	clustererror "github.com/openshift/cluster-api/pkg/controller/error"
 	apierrors "github.com/openshift/cluster-api/pkg/errors"
 	providerconfigv1 "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
+	pricing "sigs.k8s.io/cluster-api-provider-aws/pkg/actuator/machine/pricing"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -107,9 +108,13 @@ func (a *Actuator) handleMachineError(machine *machinev1.Machine, err *apierrors
 }
 
 func (a *Actuator) GetInstanceTypeDetails(_ context.Context, _ *machinev1.MachineSet) (map[string]string, error) {
-	return map[string]string{
-	    "mgugino": "testing",
-	}, nil
+	values := pricing.doit("p2.16xlarge")
+	if values == nil {
+		values = map[string]string{
+			"mgugino": "nothing found"
+		}
+	}
+	return values, nil
 }
 
 // Create runs a new EC2 instance

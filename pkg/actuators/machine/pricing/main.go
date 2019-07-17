@@ -5,8 +5,22 @@ import "github.com/aws/aws-sdk-go/aws/session"
 import "github.com/aws/aws-sdk-go/aws/awserr"
 import "github.com/aws/aws-sdk-go/aws"
 import "fmt"
+import "io/ioutil"
+import "encoding/json"
+
+type awsAttribute map[string]string
+type awsProduct struct {
+    Attributes awsAttribute
+    ProductFamily string
+    Sku string
+}
 
 func main() {
+    doit("p2.16xlarge")
+}
+
+func doit(instanceType string) map[string]string {
+
     // Specify profile for config and region for requests
     sess := session.Must(session.NewSessionWithOptions(session.Options{
          Config: aws.Config{Region: aws.String("us-east-1")},
@@ -23,7 +37,7 @@ func main() {
             {
                 Field: aws.String("instanceType"),
                 Type:  aws.String("TERM_MATCH"),
-                Value: aws.String("r4.8xlarge"),
+                Value: aws.String(instanceType),
             },
         },
         FormatVersion: aws.String("aws_v1"),
@@ -55,6 +69,25 @@ func main() {
         return
     }
     product := result.PriceList[0]["product"]
-    fmt.Println(product)
+    s, ok := product.(map[string]interface{})
+    if ok {
+        a, ok2 := s["attributes"].(map[string]interface{})
+        if ok2 {
+            fmt.Println(a["gpu"])
+        }
+    }
+    return nil
+    // This is a little handier but probably much less efficient
+    /*
+    jsonString, _ := json.Marshal(product)
+
+    var p awsProduct
+    //var p2 awsProduct
+    if err := json.Unmarshal(jsonString, &p); err != nil {
+        fmt.Println(err)
+    }
+    fmt.Println(p.Attributes["gpu"])
+
+    */
 
 }
