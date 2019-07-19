@@ -107,16 +107,6 @@ func (a *Actuator) handleMachineError(machine *machinev1.Machine, err *apierrors
 	return err
 }
 
-func (a *Actuator) GetInstanceTypeDetails(_ context.Context, _ *machinev1.MachineSet) (map[string]string, error) {
-	values := pricing.Doit("p2.16xlarge")
-	if values == nil {
-		values = map[string]string{
-			"mgugino": "nothing found",
-		}
-	}
-	return values, nil
-}
-
 // Create runs a new EC2 instance
 func (a *Actuator) Create(context context.Context, cluster *clusterv1.Cluster, machine *machinev1.Machine) error {
 	glog.Infof("%s: creating machine", machine.Name)
@@ -595,4 +585,61 @@ func getClusterID(machine *machinev1.Machine) (string, bool) {
 		clusterID, ok = machine.Labels["sigs.k8s.io/cluster-api-cluster"]
 	}
 	return clusterID, ok
+}
+
+func (a *Actuator) getSecret (secretName string, namespace string) (*pricing.AwsCreds, error) {
+	if secretName != "" {
+		var secret corev1.Secret
+		if err := a.client.Get(context.Background(), client.ObjectKey{Namespace: namespace, Name: secretName}, &secret); err != nil {
+			return nil, err
+		}
+		accessKeyID, ok := secret.Data[AwsCredsSecretIDKey]
+		if !ok {
+			return nil, fmt.Errorf("AWS credentials secret %v did not contain key %v",
+				secretName, AwsCredsSecretIDKey)
+		}
+		secretAccessKey, ok := secret.Data[AwsCredsSecretAccessKey]
+		if !ok {
+			return nil, fmt.Errorf("AWS credentials secret %v did not contain key %v",
+				secretName, AwsCredsSecretAccessKey)
+		}
+		return &pricing.AwsCreds{
+			AccessKeyID: string(accessKeyID),
+			SecretAccessKey: string(secretAccessKey),
+		}, nil
+	}
+	return nil, nil
+}
+
+const (
+	// AwsCredsSecretIDKey is secret key containing AWS KeyId
+	AwsCredsSecretIDKey = "aws_access_key_id"
+	// AwsCredsSecretAccessKey is secret key containing AWS Secret Key
+	AwsCredsSecretAccessKey = "aws_secret_access_key"
+)
+
+func (a *Actuator) GetInstanceTypeDetails(_ context.Context, ms *machinev1.MachineSet) (map[string]string, error) {
+	credentialsSecretName := ""
+	machineSpec := ms.Spec.Template.Spec
+	machine := &machinev1.Machine{
+		Spec: machineSpec,
+	}
+	machineProviderConfig, err := providerConfigFromMachine(machine, a.codec)
+	if err != nil {
+		return nil, a.handleMachineError(machine, apierrors.InvalidMachineConfiguration("error decoding MachineProviderConfig: %v", err), createEventAction)
+	}
+	if machineProviderConfig.CredentialsSecret != nil {
+		credentialsSecretName = machineProviderConfig.CredentialsSecret.Name
+	}
+	var values map[string]string
+	awsSecrets, err := a.getSecret(credentialsSecretName, machineset.Namespace)
+	if err == nil {
+		values = pricing.Doit(awsSecrets, "p2.16xlarge")
+	}
+	if values == nil {
+		values = map[string]string{
+			"mgugino": "nothing found",
+		}
+	}
+	return values, err
 }

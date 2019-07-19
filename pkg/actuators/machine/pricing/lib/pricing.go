@@ -4,6 +4,7 @@ import "github.com/aws/aws-sdk-go/service/pricing"
 import "github.com/aws/aws-sdk-go/aws/session"
 import "github.com/aws/aws-sdk-go/aws/awserr"
 import "github.com/aws/aws-sdk-go/aws"
+import "github.com/aws/aws-sdk-go/aws/credentials"
 import "fmt"
 //import "io/ioutil"
 // import "encoding/json"
@@ -15,15 +16,24 @@ type awsProduct struct {
     Sku string
 }
 
+type AwsCreds struct {
+	AccessKeyID string
+	SecretAccessKey string
+}
+
 var (
     attributesToReturn = []string{"gpu", "memory", "vcpu"}
 )
 
-func Doit(instanceType string) map[string]string {
-
+func Doit(creds *AwsCreds, instanceType string) map[string]string {
+    awsConfig := aws.Config{Region: aws.String("us-east-1")}
+    if creds != nil {
+        awsConfig.Credentials = credentials.NewStaticCredentials(
+            creds.AccessKeyID, creds.AccessKeyID, "")
+    }
     // Specify profile for config and region for requests
     sess := session.Must(session.NewSessionWithOptions(session.Options{
-         Config: aws.Config{Region: aws.String("us-east-1")},
+         Config: awsConfig,
     }))
     svc := pricing.New(sess)
     input := &pricing.GetProductsInput{
