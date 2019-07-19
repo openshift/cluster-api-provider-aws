@@ -19,4 +19,6 @@ var (
 func main() {
     resMap := lib.Doit(nil, "p2.16xlarge")
     fmt.Println(resMap)
+
+    // lib.Doit2("p2.8xlarge")
 }

@@ -629,12 +629,14 @@ func (a *Actuator) GetInstanceTypeDetails(_ context.Context, ms *machinev1.Machi
 		return nil, a.handleMachineError(machine, apierrors.InvalidMachineConfiguration("error decoding MachineProviderConfig: %v", err), createEventAction)
 	}
 	if machineProviderConfig.CredentialsSecret != nil {
-		credentialsSecretName = machineProviderConfig.CredentialsSecret.Name
+		credentialsSecretName = machineProviderConfig.CredentialsSecret.Name + "-pricing"
 	}
 	var values map[string]string
-	awsSecrets, err := a.getSecret(credentialsSecretName, machineset.Namespace)
+	awsSecrets, err := a.getSecret(credentialsSecretName, ms.Namespace)
 	if err == nil {
 		values = pricing.Doit(awsSecrets, "p2.16xlarge")
+	} else {
+		fmt.Println("priciingxxx getSecret failed", err)
 	}
 	if values == nil {
 		values = map[string]string{
