@@ -200,11 +200,13 @@ func getBlockDeviceMappings(blockDeviceMappings []providerconfigv1.BlockDeviceMa
 	// Only support one blockDeviceMapping
 	volumeSize := blockDeviceMappings[0].EBS.VolumeSize
 	volumeType := blockDeviceMappings[0].EBS.VolumeType
+	encrypted := true
 	blockDeviceMapping := ec2.BlockDeviceMapping{
 		DeviceName: deviceName,
 		Ebs: &ec2.EbsBlockDevice{
 			VolumeSize: volumeSize,
 			VolumeType: volumeType,
+			Encrypted:  &encrypted,
 		},
 	}
 	if *volumeType == "io1" {
