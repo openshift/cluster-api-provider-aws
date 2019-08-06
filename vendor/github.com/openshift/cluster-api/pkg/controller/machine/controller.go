@@ -197,11 +197,6 @@ func (r *ReconcileMachine) Reconcile(request reconcile.Request) (reconcile.Resul
 			return reconcile.Result{}, nil
 		}
 
-		if !r.isDeleteAllowed(m) {
-			klog.Infof("Deleting machine hosting this controller is not allowed. Skipping reconciliation of machine %q", name)
-			return reconcile.Result{}, nil
-		}
-
 		klog.Infof("Reconciling machine %q triggers delete", name)
 
 		// Drain node before deletion
@@ -240,18 +235,8 @@ func (r *ReconcileMachine) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, nil
 	}
 
-	exist, err := r.actuator.Exists(ctx, cluster, m)
-	if err != nil {
-		klog.Errorf("Failed to check if machine %q exists: %v", name, err)
-		return reconcile.Result{}, err
-	}
-
-	if exist {
-		klog.Infof("Reconciling machine %q triggers idempotent update", name)
-		if err := r.actuator.Update(ctx, cluster, m); err != nil {
-			klog.Errorf(`Error updating machine "%s/%s": %v`, m.Namespace, name, err)
-			return delayIfRequeueAfterError(err)
-		}
+	if len(m.Status.Addresses) > 0 {
+		// Already have addresses, don't need to do anything.
 		return reconcile.Result{}, nil
 	}
 
