@@ -17,6 +17,7 @@ type ClusterOperator struct {
 	metav1.ObjectMeta `json:"metadata"`
 
 	// spec hold the intent of how this operator should behave.
+	// +kubebuilder:validation:Required
 	// +required
 	Spec ClusterOperatorSpec `json:"spec"`
 
@@ -126,9 +127,6 @@ const (
 	// Progressing indicates that the operator is actively making changes to the binary maintained by the
 	// operator (eg: openshift-apiserver for the openshift-apiserver-operator).
 	OperatorProgressing ClusterStatusConditionType = "Progressing"
-
-	// OperatorFailing is DEPRECATED
-	OperatorFailing ClusterStatusConditionType = "Failing"
 
 	// Degraded indicates that the operand is not functioning completely. An example of a degraded state
 	// would be if there should be 5 copies of the operand running but only 4 are running. It may still be available,

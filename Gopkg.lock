@@ -477,15 +477,16 @@
   version = "v1.4.2"
 
 [[projects]]
-  digest = "1:bec734dc3474457e6cfa4b2723db944c81d2b354ca3a55200ee551d7ad5d1eea"
+  branch = "master"
+  digest = "1:7b36831de5e3fc484a2812d6dbc00d2e198049f89e530c3342f3facdab1a78e2"
   name = "github.com/openshift/api"
   packages = ["config/v1"]
   pruneopts = "T"
-  revision = "8e476cb7322e59919cbb6482fd076ec5a214df25"
+  revision = "58aab2885e38fd7f4fd57f2615f5f9fe38039e22"
 
 [[projects]]
-  branch = "openshift-4.0-cluster-api-0.0.0-alpha.4"
-  digest = "1:4700944f85b629a06b45a541430c0e6d3e7fe8bf1d757511448e27c7b0e5f701"
+  branch = "openshift-4.1-cluster-api-0.0.0-alpha.4"
+  digest = "1:73619f9a971bb6b4c577902ea24c5c708807154170e45aaeec15f0f9404df21f"
   name = "github.com/openshift/cluster-api"
   packages = [
     "pkg/apis",
@@ -501,11 +502,12 @@
     "pkg/controller/machine",
     "pkg/controller/node",
     "pkg/controller/noderefutil",
+    "pkg/drain",
     "pkg/errors",
     "pkg/util",
   ]
   pruneopts = "T"
-  revision = "0b649f443f830353db113f92aa86db2d4d34943a"
+  revision = "53b696be18ad63f7a21f603a4311044a9697807c"
 
 [[projects]]
   branch = "master"
@@ -533,14 +535,6 @@
   ]
   pruneopts = "T"
   revision = "17350a84b40565851a3f1bd21c6f8a6763b8eacb"
-
-[[projects]]
-  branch = "master"
-  digest = "1:b79de44700bc7fc32b4f898e283754fa027616f87074be1cf65a7be5a961cc85"
-  name = "github.com/openshift/kubernetes-drain"
-  packages = ["."]
-  pruneopts = "T"
-  revision = "4b061affbd00bfc62036a5cd3a57493db6c94151"
 
 [[projects]]
   branch = "master"
@@ -1258,7 +1252,6 @@
     "github.com/openshift/cluster-api-actuator-pkg/pkg/types",
     "github.com/openshift/cluster-api/pkg/apis",
     "github.com/openshift/cluster-api/pkg/apis/cluster/v1alpha1",
-    "github.com/openshift/cluster-api/pkg/apis/machine/common",
     "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1",
     "github.com/openshift/cluster-api/pkg/controller/error",
     "github.com/openshift/cluster-api/pkg/controller/machine",
@@ -1274,16 +1267,13 @@
     "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1",
     "k8s.io/apimachinery/pkg/api/equality",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
-    "k8s.io/apimachinery/pkg/apis/meta/v1/validation",
     "k8s.io/apimachinery/pkg/labels",
     "k8s.io/apimachinery/pkg/runtime",
     "k8s.io/apimachinery/pkg/runtime/schema",
     "k8s.io/apimachinery/pkg/runtime/serializer",
     "k8s.io/apimachinery/pkg/types",
     "k8s.io/apimachinery/pkg/util/errors",
-    "k8s.io/apimachinery/pkg/util/intstr",
     "k8s.io/apimachinery/pkg/util/uuid",
-    "k8s.io/apimachinery/pkg/util/validation/field",
     "k8s.io/apimachinery/pkg/util/wait",
     "k8s.io/client-go/kubernetes",
     "k8s.io/client-go/kubernetes/scheme",
