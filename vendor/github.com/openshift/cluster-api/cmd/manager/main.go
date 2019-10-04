@@ -50,6 +50,8 @@ func main() {
 	// Create a new Cmd to provide shared dependencies and start components
 	syncPeriod := 10 * time.Minute
 	mgr, err := manager.New(cfg, manager.Options{
+		// Disable metrics serving
+		MetricsBindAddress: "0",
 		SyncPeriod: &syncPeriod,
 		Namespace:  *watchNamespace,
 	})
