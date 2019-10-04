@@ -31,7 +31,6 @@ import (
 	prettyhelp "sigs.k8s.io/controller-tools/pkg/genall/help/pretty"
 	"sigs.k8s.io/controller-tools/pkg/markers"
 	"sigs.k8s.io/controller-tools/pkg/rbac"
-	"sigs.k8s.io/controller-tools/pkg/schemapatcher"
 	"sigs.k8s.io/controller-tools/pkg/webhook"
 )
 
@@ -47,11 +46,10 @@ var (
 	// each turns into a command line option,
 	// and has options for output forms.
 	allGenerators = map[string]genall.Generator{
-		"crd":         crd.Generator{},
-		"rbac":        rbac.Generator{},
-		"object":      deepcopy.Generator{},
-		"webhook":     webhook.Generator{},
-		"schemapatch": schemapatcher.Generator{},
+		"crd":     crd.Generator{},
+		"rbac":    rbac.Generator{},
+		"object":  deepcopy.Generator{},
+		"webhook": webhook.Generator{},
 	}
 
 	// allOutputRules defines the list of all known output rules, giving
@@ -135,9 +133,6 @@ func main() {
 
 	# Generate deepcopy/runtime.Object implementations for a particular file
 	controller-gen object paths=./apis/v1beta1/some_types.go
-
-	# Generate OpenAPI v3 schemas for API packages and merge them into existing CRD manifests
-	controller-gen schemapatch:manifests=./manifests output:dir=./manifests paths=./pkg/apis/... 
 
 	# Run all the generators for a given project
 	controller-gen paths=./apis/...

@@ -2,20 +2,21 @@ package machine
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/elbv2"
-	clusterv1 "github.com/openshift/cluster-api/pkg/apis/cluster/v1alpha1"
-	machinev1 "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
-	machinecontroller "github.com/openshift/cluster-api/pkg/controller/machine"
+
 	apiv1 "k8s.io/api/core/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	clusterv1 "github.com/openshift/cluster-api/pkg/apis/cluster/v1alpha1"
+	machinev1 "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
+	machinecontroller "github.com/openshift/cluster-api/pkg/controller/machine"
 	providerconfigv1 "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
-	awsclient "sigs.k8s.io/cluster-api-provider-aws/pkg/client"
+	"sigs.k8s.io/cluster-api-provider-aws/test/utils"
 )
 
 const (
@@ -158,21 +159,7 @@ func stubUserDataSecret() *corev1.Secret {
 }
 
 func stubAwsCredentialsSecret() *corev1.Secret {
-	return GenerateAwsCredentialsSecretFromEnv(awsCredentialsSecretName, defaultNamespace)
-}
-
-// GenerateAwsCredentialsSecretFromEnv generates secret with AWS credentials
-func GenerateAwsCredentialsSecretFromEnv(secretName, namespace string) *apiv1.Secret {
-	return &apiv1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      secretName,
-			Namespace: namespace,
-		},
-		Data: map[string][]byte{
-			awsclient.AwsCredsSecretIDKey:     []byte(os.Getenv("AWS_ACCESS_KEY_ID")),
-			awsclient.AwsCredsSecretAccessKey: []byte(os.Getenv("AWS_SECRET_ACCESS_KEY")),
-		},
-	}
+	return utils.GenerateAwsCredentialsSecretFromEnv(awsCredentialsSecretName, defaultNamespace)
 }
 
 func stubInstance(imageID, instanceID string) *ec2.Instance {

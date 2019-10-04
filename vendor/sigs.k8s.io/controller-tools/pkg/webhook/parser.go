@@ -23,7 +23,6 @@ limitations under the License.
 package webhook
 
 import (
-	"fmt"
 	"strings"
 
 	admissionreg "k8s.io/api/admissionregistration/v1beta1"
@@ -95,37 +94,8 @@ func verbToAPIVariant(verbRaw string) admissionreg.OperationType {
 	}
 }
 
-// ToMutatingWebhook converts this rule to its Kubernetes API form.
-func (c Config) ToMutatingWebhook() (admissionreg.MutatingWebhook, error) {
-	if !c.Mutating {
-		return admissionreg.MutatingWebhook{}, fmt.Errorf("%s is a validating webhook", c.Name)
-	}
-
-	return admissionreg.MutatingWebhook{
-		Name:          c.Name,
-		Rules:         c.rules(),
-		FailurePolicy: c.failurePolicy(),
-		ClientConfig:  c.clientConfig(),
-	}, nil
-}
-
-// ToValidatingWebhook converts this rule to its Kubernetes API form.
-func (c Config) ToValidatingWebhook() (admissionreg.ValidatingWebhook, error) {
-	if c.Mutating {
-		return admissionreg.ValidatingWebhook{}, fmt.Errorf("%s is a mutating webhook", c.Name)
-	}
-
-	return admissionreg.ValidatingWebhook{
-		Name:          c.Name,
-		Rules:         c.rules(),
-		FailurePolicy: c.failurePolicy(),
-		ClientConfig:  c.clientConfig(),
-	}, nil
-}
-
-// rules returns the configuration of what operations on what
-// resources/subresources a webhook should care about.
-func (c Config) rules() []admissionreg.RuleWithOperations {
+// ToRule converts this rule to its Kubernetes API form.
+func (c Config) ToWebhook() admissionreg.Webhook {
 	whConfig := admissionreg.RuleWithOperations{
 		Rule: admissionreg.Rule{
 			APIGroups:   c.Groups,
@@ -146,12 +116,6 @@ func (c Config) rules() []admissionreg.RuleWithOperations {
 		}
 	}
 
-	return []admissionreg.RuleWithOperations{whConfig}
-}
-
-// failurePolicy converts the string value to the proper value for the API.
-// Unrecognized values are passed through.
-func (c Config) failurePolicy() *admissionreg.FailurePolicyType {
 	var failurePolicy admissionreg.FailurePolicyType
 	switch strings.ToLower(c.FailurePolicy) {
 	case strings.ToLower(string(admissionreg.Ignore)):
@@ -161,22 +125,22 @@ func (c Config) failurePolicy() *admissionreg.FailurePolicyType {
 	default:
 		failurePolicy = admissionreg.FailurePolicyType(c.FailurePolicy)
 	}
-	return &failurePolicy
-}
-
-// clientConfig returns the client config for a webhook.
-func (c Config) clientConfig() admissionreg.WebhookClientConfig {
 	path := c.Path
-	return admissionreg.WebhookClientConfig{
-		Service: &admissionreg.ServiceReference{
-			Name:      "webhook-service",
-			Namespace: "system",
-			Path:      &path,
+	return admissionreg.Webhook{
+		Name:          c.Name,
+		Rules:         []admissionreg.RuleWithOperations{whConfig},
+		FailurePolicy: &failurePolicy,
+		ClientConfig: admissionreg.WebhookClientConfig{
+			Service: &admissionreg.ServiceReference{
+				Name:      "webhook-service",
+				Namespace: "system",
+				Path:      &path,
+			},
+			// OpenAPI marks the field as required before 1.13 because of a bug that got fixed in
+			// https://github.com/kubernetes/api/commit/e7d9121e9ffd63cea0288b36a82bcc87b073bd1b
+			// Put "\n" as an placeholder as a workaround til 1.13+ is almost everywhere.
+			CABundle: []byte("\n"),
 		},
-		// OpenAPI marks the field as required before 1.13 because of a bug that got fixed in
-		// https://github.com/kubernetes/api/commit/e7d9121e9ffd63cea0288b36a82bcc87b073bd1b
-		// Put "\n" as an placeholder as a workaround til 1.13+ is almost everywhere.
-		CABundle: []byte("\n"),
 	}
 }
 
@@ -194,8 +158,8 @@ func (Generator) RegisterMarkers(into *markers.Registry) error {
 }
 
 func (Generator) Generate(ctx *genall.GenerationContext) error {
-	var mutatingCfgs []admissionreg.MutatingWebhook
-	var validatingCfgs []admissionreg.ValidatingWebhook
+	var mutatingCfgs []admissionreg.Webhook
+	var validatingCfgs []admissionreg.Webhook
 	for _, root := range ctx.Roots {
 		markerSet, err := markers.PackageMarkers(ctx.Collector, root)
 		if err != nil {
@@ -205,11 +169,9 @@ func (Generator) Generate(ctx *genall.GenerationContext) error {
 		for _, cfg := range markerSet[ConfigDefinition.Name] {
 			cfg := cfg.(Config)
 			if cfg.Mutating {
-				w, _ := cfg.ToMutatingWebhook()
-				mutatingCfgs = append(mutatingCfgs, w)
+				mutatingCfgs = append(mutatingCfgs, cfg.ToWebhook())
 			} else {
-				w, _ := cfg.ToValidatingWebhook()
-				validatingCfgs = append(validatingCfgs, w)
+				validatingCfgs = append(validatingCfgs, cfg.ToWebhook())
 			}
 		}
 	}

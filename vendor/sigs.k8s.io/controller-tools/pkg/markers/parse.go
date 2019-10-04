@@ -18,6 +18,7 @@ package markers
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -37,15 +38,6 @@ func expect(scanner *sc.Scanner, expected rune, errDesc string) bool {
 		return false
 	}
 	return true
-}
-
-// peekNoSpace is equivalent to scanner.Peek, except that it will consume intervening whitespace.
-func peekNoSpace(scanner *sc.Scanner) rune {
-	hint := scanner.Peek()
-	for ; hint <= rune(' ') && ((1<<uint64(hint))&scanner.Whitespace) != 0; hint = scanner.Peek() {
-		scanner.Next() // skip the whitespace
-	}
-	return hint
 }
 
 var (
@@ -92,9 +84,6 @@ const (
 	AnyType
 	// SliceType is any slice constructed of the ArgumentTypes
 	SliceType
-	// MapType is any map constructed of string keys, and ArgumentType values.
-	// Keys are strings, and it's common to see AnyType (non-uniform) values.
-	MapType
 	// RawType represents content that gets passed directly to the marker
 	// without any parsing. It should *only* be used with anonymous markers.
 	RawType
@@ -102,17 +91,10 @@ const (
 
 // Argument is the type of a marker argument.
 type Argument struct {
-	// Type is the type of this argument For non-scalar types (map and slice),
-	// further information is specified in ItemType.
-	Type ArgumentType
-	// Optional indicates if this argument is optional.
+	Type     ArgumentType
 	Optional bool
-	// Pointer indicates if this argument was a pointer (this is really only
-	// needed for deserialization, and should alway imply optional)
-	Pointer bool
+	Pointer  bool
 
-	// ItemType is the type of the slice item for slices, and the value type
-	// for maps.
 	ItemType *Argument
 }
 
@@ -136,9 +118,6 @@ func (a Argument) typeString(out *strings.Builder) {
 	case SliceType:
 		out.WriteString("[]")
 		// arguments can't be non-pointer optional, so just call into typeString again.
-		a.ItemType.typeString(out)
-	case MapType:
-		out.WriteString("map[string]")
 		a.ItemType.typeString(out)
 	case RawType:
 		out.WriteString("<raw>")
@@ -190,13 +169,6 @@ func makeSliceType(itemType Argument) (reflect.Type, error) {
 			return nil, err
 		}
 		itemReflectedType = subItemType
-	case MapType:
-		subItemType, err := makeMapType(*itemType.ItemType)
-		if err != nil {
-			return nil, err
-		}
-		itemReflectedType = subItemType
-	// TODO(directxman12): support non-uniform slices?  (probably not)
 	default:
 		return nil, fmt.Errorf("invalid type when constructing guessed slice out: %v", itemType.Type)
 	}
@@ -208,50 +180,10 @@ func makeSliceType(itemType Argument) (reflect.Type, error) {
 	return reflect.SliceOf(itemReflectedType), nil
 }
 
-// makeMapType makes a reflect.Type for a map of the given item type.
-// Useful for constructing the out value for when AnyType's guess returns a map.
-func makeMapType(itemType Argument) (reflect.Type, error) {
-	var itemReflectedType reflect.Type
-	switch itemType.Type {
-	case IntType:
-		itemReflectedType = reflect.TypeOf(int(0))
-	case StringType:
-		itemReflectedType = reflect.TypeOf("")
-	case BoolType:
-		itemReflectedType = reflect.TypeOf(false)
-	case SliceType:
-		subItemType, err := makeSliceType(*itemType.ItemType)
-		if err != nil {
-			return nil, err
-		}
-		itemReflectedType = subItemType
-	// TODO(directxman12): support non-uniform slices?  (probably not)
-	case MapType:
-		subItemType, err := makeMapType(*itemType.ItemType)
-		if err != nil {
-			return nil, err
-		}
-		itemReflectedType = subItemType
-	case AnyType:
-		// NB(directxman12): maps explicitly allow non-uniform item types, unlike slices at the moment
-		itemReflectedType = interfaceType
-	default:
-		return nil, fmt.Errorf("invalid type when constructing guessed slice out: %v", itemType.Type)
-	}
-
-	if itemType.Pointer {
-		itemReflectedType = reflect.PtrTo(itemReflectedType)
-	}
-
-	return reflect.MapOf(reflect.TypeOf(""), itemReflectedType), nil
-}
-
 // guessType takes an educated guess about the type of the next field.  If allowSlice
 // is false, it will not guess slices.  It's less efficient than parsing with actual
 // type information, since we need to allocate to peek ahead full tokens, and the scanner
 // only allows peeking ahead one character.
-// Maps are *always* non-uniform (i.e. type the AnyType item type), since they're frequently
-// used to represent things like defaults for an object in JSON.
 func guessType(scanner *sc.Scanner, raw string, allowSlice bool) *Argument {
 	if allowSlice {
 		maybeItem := guessType(scanner, raw, false)
@@ -275,49 +207,25 @@ func guessType(scanner *sc.Scanner, raw string, allowSlice bool) *Argument {
 		return maybeItem
 	}
 
+	// first, try the easy case -- quoted strings strings
+	hint := scanner.Peek()
+	switch hint {
+	case '"', '\'', '`':
+		return &Argument{Type: StringType}
+	}
+
 	// everything else needs a duplicate scanner to scan properly
 	// (so we don't consume our scanner tokens until we actually
 	// go to use this -- Go doesn't like scanners that can be rewound).
 	subRaw := raw[scanner.Pos().Offset:]
 	subScanner := parserScanner(subRaw, scanner.Error)
 
-	// skip whitespace
-	hint := peekNoSpace(subScanner)
-
-	// first, try the easy case -- quoted strings strings
-	switch hint {
-	case '"', '\'', '`':
-		return &Argument{Type: StringType}
-	}
-
-	// next, check for slices or maps
+	// next, check for slices
 	if hint == '{' {
 		subScanner.Scan()
-
-		// TODO(directxman12): this can't guess at empty objects, but that's generally ok.
-		// We'll cross that bridge when we get there.
-
-		// look ahead till we can figure out if this is a map or a slice
-		firstElemType := guessType(subScanner, subRaw, false)
-		if firstElemType.Type == StringType {
-			// might be a map or slice, parse the string and check for colon
-			// (blech, basically arbitrary look-ahead due to raw strings).
-			var keyVal string // just ignore this
-			(&Argument{Type: StringType}).parseString(subScanner, raw, reflect.Indirect(reflect.ValueOf(&keyVal)))
-
-			if subScanner.Scan() == ':' {
-				// it's got a string followed by a colon -- it's a map
-				return &Argument{
-					Type:     MapType,
-					ItemType: &Argument{Type: AnyType},
-				}
-			}
-		}
-
-		// definitely a slice -- maps have to have string keys and have a value followed by a colon
 		return &Argument{
 			Type:     SliceType,
-			ItemType: firstElemType,
+			ItemType: guessType(subScanner, subRaw, false),
 		}
 	}
 
@@ -368,10 +276,10 @@ func (a *Argument) parseString(scanner *sc.Scanner, raw string, out reflect.Valu
 	}
 
 	// the "hard" case -- bare tokens not including ',' (the argument
-	// separator), ';' (the slice separator), ':' (the map separator), or '}'
-	// (delimitted slice ender)
+	// separator), ';' (the slice separator), or '}' (delimitted slice
+	// ender)
 	startPos := scanner.Position.Offset
-	for hint := peekNoSpace(scanner); hint != ',' && hint != ';' && hint != ':' && hint != '}' && hint != sc.EOF; hint = peekNoSpace(scanner) {
+	for hint := scanner.Peek(); hint != ',' && hint != ';' && hint != '}' && hint != sc.EOF; hint = scanner.Peek() {
 		// skip this token
 		scanner.Scan()
 	}
@@ -388,15 +296,15 @@ func (a *Argument) parseSlice(scanner *sc.Scanner, raw string, out reflect.Value
 	elem := reflect.Indirect(reflect.New(out.Type().Elem()))
 
 	// preferred case
-	if peekNoSpace(scanner) == '{' {
+	if scanner.Peek() == '{' {
 		// NB(directxman12): supporting delimitted slices in bare slices
 		// would require an extra look-ahead here :-/
 
 		scanner.Scan() // skip '{'
-		for hint := peekNoSpace(scanner); hint != '}' && hint != sc.EOF; hint = peekNoSpace(scanner) {
-			a.ItemType.parse(scanner, raw, elem, true /* parsing a slice */)
+		for hint := scanner.Peek(); hint != '}' && hint != sc.EOF; hint = scanner.Peek() {
+			a.ItemType.parse(scanner, raw, elem, true)
 			resSlice = reflect.Append(resSlice, elem)
-			tok := peekNoSpace(scanner)
+			tok := scanner.Peek()
 			if tok == '}' {
 				break
 			}
@@ -412,10 +320,10 @@ func (a *Argument) parseSlice(scanner *sc.Scanner, raw string, out reflect.Value
 	}
 
 	// legacy case
-	for hint := peekNoSpace(scanner); hint != ',' && hint != '}' && hint != sc.EOF; hint = peekNoSpace(scanner) {
-		a.ItemType.parse(scanner, raw, elem, true /* parsing a slice */)
+	for hint := scanner.Peek(); hint != ',' && hint != '}' && hint != sc.EOF; hint = scanner.Peek() {
+		a.ItemType.parse(scanner, raw, elem, true)
 		resSlice = reflect.Append(resSlice, elem)
-		tok := peekNoSpace(scanner)
+		tok := scanner.Peek()
 		if tok == ',' || tok == '}' || tok == sc.EOF {
 			break
 		}
@@ -426,39 +334,6 @@ func (a *Argument) parseSlice(scanner *sc.Scanner, raw string, out reflect.Value
 		}
 	}
 	castAndSet(out, resSlice)
-}
-
-// parseMap parses a map of the form {string: val, string: val, string: val}
-func (a *Argument) parseMap(scanner *sc.Scanner, raw string, out reflect.Value) {
-	resMap := reflect.MakeMap(out.Type())
-	elem := reflect.Indirect(reflect.New(out.Type().Elem()))
-	key := reflect.Indirect(reflect.New(out.Type().Key()))
-
-	if !expect(scanner, '{', "open curly brace") {
-		return
-	}
-
-	for hint := peekNoSpace(scanner); hint != '}' && hint != sc.EOF; hint = peekNoSpace(scanner) {
-		a.parseString(scanner, raw, key)
-		if !expect(scanner, ':', "colon") {
-			return
-		}
-		a.ItemType.parse(scanner, raw, elem, false /* not in a slice */)
-		resMap.SetMapIndex(key, elem)
-
-		if peekNoSpace(scanner) == '}' {
-			break
-		}
-		if !expect(scanner, ',', "comma") {
-			return
-		}
-	}
-
-	if !expect(scanner, '}', "close curly brace") {
-		return
-	}
-
-	castAndSet(out, resMap)
 }
 
 // parse functions like Parse, except that it allows passing down whether or not we're
@@ -512,19 +387,10 @@ func (a *Argument) parse(scanner *sc.Scanner, raw string, out reflect.Value, inS
 	case AnyType:
 		guessedType := guessType(scanner, raw, !inSlice)
 		newOut := out
-
-		// we need to be able to construct the right element types, below
-		// in parse, so construct a concretely-typed value to use as "out"
-		switch guessedType.Type {
-		case SliceType:
+		if guessedType.Type == SliceType {
+			// we need to be able to construct the right element types, below
+			// in parse, so construct a concretely-typed value to use as "out"
 			newType, err := makeSliceType(*guessedType.ItemType)
-			if err != nil {
-				scanner.Error(scanner, err.Error())
-				return
-			}
-			newOut = reflect.Indirect(reflect.New(newType))
-		case MapType:
-			newType, err := makeMapType(*guessedType.ItemType)
 			if err != nil {
 				scanner.Error(scanner, err.Error())
 				return
@@ -532,7 +398,7 @@ func (a *Argument) parse(scanner *sc.Scanner, raw string, out reflect.Value, inS
 			newOut = reflect.Indirect(reflect.New(newType))
 		}
 		if !newOut.CanSet() {
-			panic("at the disco") // TODO(directxman12): this is left over from debugging -- it might need to be an error
+			panic("at the disco")
 		}
 		guessedType.Parse(scanner, raw, newOut)
 		castAndSet(out, newOut)
@@ -541,9 +407,6 @@ func (a *Argument) parse(scanner *sc.Scanner, raw string, out reflect.Value, inS
 		// - `{val, val, val}` (preferred)
 		// - `val;val;val` (legacy)
 		a.parseSlice(scanner, raw, out)
-	case MapType:
-		// maps are {string: val, string: val, string: val}
-		a.parseMap(scanner, raw, out)
 	}
 }
 
@@ -586,16 +449,6 @@ func ArgumentFromType(rawType reflect.Type) (Argument, error) {
 		arg.Type = BoolType
 	case reflect.Slice:
 		arg.Type = SliceType
-		itemType, err := ArgumentFromType(rawType.Elem())
-		if err != nil {
-			return Argument{}, fmt.Errorf("bad slice item type: %v", err)
-		}
-		arg.ItemType = &itemType
-	case reflect.Map:
-		arg.Type = MapType
-		if rawType.Key().Kind() != reflect.String {
-			return Argument{}, fmt.Errorf("bad map key type: map keys must be strings")
-		}
 		itemType, err := ArgumentFromType(rawType.Elem())
 		if err != nil {
 			return Argument{}, fmt.Errorf("bad slice item type: %v", err)
@@ -761,28 +614,16 @@ func (d *Definition) Parse(rawMarker string) (interface{}, error) {
 	}
 
 	var errs []error
-	scanner := parserScanner(fields, func(scanner *sc.Scanner, msg string) {
-		errs = append(errs, &ScannerError{Msg: msg, Pos: scanner.Position})
+	scanner := parserScanner(fields, func(_ *sc.Scanner, msg string) {
+		errs = append(errs, errors.New(msg))
 	})
 
 	// TODO(directxman12): strict parsing where we error out if certain fields aren't optional
 	seen := make(map[string]struct{}, len(d.Fields))
 	if d.AnonymousField() && scanner.Peek() != sc.EOF {
-		// might still be a struct that something fiddled with, so double check
-		structFieldName := d.FieldNames[""]
-		outTarget := out
-		if structFieldName != "" {
-			// it's a struct field mapped to an anonymous marker
-			outTarget = out.FieldByName(structFieldName)
-			if !outTarget.CanSet() {
-				scanner.Error(scanner, fmt.Sprintf("cannot set field %q (might not exist)", structFieldName))
-				return out.Interface(), loader.MaybeErrList(errs)
-			}
-		}
-
 		// no need for trying to parse field names if we're not a struct
 		field := d.Fields[""]
-		field.Parse(scanner, fields, outTarget)
+		field.Parse(scanner, fields, out)
 		seen[""] = struct{}{} // mark as seen for strict definitions
 	} else if !d.Empty() && scanner.Peek() != sc.EOF {
 		// if we expect *and* actually have arguments passed
@@ -865,19 +706,6 @@ func MakeDefinition(name string, target TargetType, output interface{}) (*Defini
 	return def, nil
 }
 
-// MakeAnyTypeDefinition constructs a definition for an output struct with a
-// field named `Value` of type `interface{}`. The argument to the marker will
-// be parsed as AnyType and assigned to the field named `Value`.
-func MakeAnyTypeDefinition(name string, target TargetType, output interface{}) (*Definition, error) {
-	defn, err := MakeDefinition(name, target, output)
-	if err != nil {
-		return nil, err
-	}
-	defn.FieldNames = map[string]string{"": "Value"}
-	defn.Fields = map[string]Argument{"": defn.Fields["value"]}
-	return defn, nil
-}
-
 // splitMarker takes a marker in the form of `+a:b:c=arg,d=arg` and splits it
 // into the name (`a:b`), the name if it's not a struct (`a:b:c`), and the parts
 // that are definitely fields (`arg,d=arg`).
@@ -896,13 +724,4 @@ func splitMarker(raw string) (name string, anonymousName string, restFields stri
 		name = strings.Join(nameParts[:len(nameParts)-1], ":")
 	}
 	return name, anonymousName, restFields
-}
-
-type ScannerError struct {
-	Msg string
-	Pos sc.Position
-}
-
-func (e *ScannerError) Error() string {
-	return fmt.Sprintf("%s (at %s)", e.Msg, e.Pos)
 }

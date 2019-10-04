@@ -62,14 +62,14 @@ func (g Generator) Generate(ctx *genall.GenerationContext) error {
 		parser.NeedPackage(root)
 	}
 
-	metav1Pkg := FindMetav1(ctx.Roots)
+	metav1Pkg := findMetav1(ctx.Roots)
 	if metav1Pkg == nil {
 		// no objects in the roots, since nothing imported metav1
 		return nil
 	}
 
 	// TODO: allow selecting a specific object
-	kubeKinds := FindKubeKinds(parser, metav1Pkg)
+	kubeKinds := findKubeKinds(parser, metav1Pkg)
 	if len(kubeKinds) == 0 {
 		// no objects in the roots
 		return nil
@@ -116,9 +116,9 @@ func toTrivialVersions(crd *apiext.CustomResourceDefinition) {
 	crd.Spec.AdditionalPrinterColumns = canonicalColumns
 }
 
-// FindMetav1 locates the actual package representing metav1 amongst
+// findMetav1 locates the actual package representing metav1 amongst
 // the imports of the roots.
-func FindMetav1(roots []*loader.Package) *loader.Package {
+func findMetav1(roots []*loader.Package) *loader.Package {
 	for _, root := range roots {
 		pkg := root.Imports()["k8s.io/apimachinery/pkg/apis/meta/v1"]
 		if pkg != nil {
@@ -128,10 +128,10 @@ func FindMetav1(roots []*loader.Package) *loader.Package {
 	return nil
 }
 
-// FindKubeKinds locates all types that contain TypeMeta and ObjectMeta
+// findKubeKinds locates all types that contain TypeMeta and ObjectMeta
 // (and thus may be a Kubernetes object), and returns the corresponding
 // group-kinds.
-func FindKubeKinds(parser *Parser, metav1Pkg *loader.Package) []schema.GroupKind {
+func findKubeKinds(parser *Parser, metav1Pkg *loader.Package) []schema.GroupKind {
 	// TODO(directxman12): technically, we should be finding metav1 per-package
 	var kubeKinds []schema.GroupKind
 	for typeIdent, info := range parser.Types {
