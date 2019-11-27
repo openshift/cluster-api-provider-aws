@@ -30,9 +30,7 @@ import (
 	machinecontroller "github.com/openshift/cluster-api/pkg/controller/machine"
 	mapierrors "github.com/openshift/cluster-api/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/equality"
 	apimachineryerrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	errorutil "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
@@ -110,136 +108,98 @@ func (a *Actuator) Create(context context.Context, cluster *clusterv1.Cluster, m
 	instance, err := a.CreateMachine(cluster, machine)
 	if err != nil {
 		glog.Errorf("%s: error creating machine: %v", machine.Name, err)
-		updateConditionError := a.updateMachineProviderConditions(machine, providerconfigv1.MachineCreation, MachineCreationFailed, err.Error())
+		updateConditionError := a.setMachineProviderConditions(machine, providerconfigv1.MachineCreation, MachineCreationFailed, err.Error())
 		if updateConditionError != nil {
 			glog.Errorf("%s: error updating machine conditions: %v", machine.Name, updateConditionError)
 		}
 		return err
 	}
-	updatedMachine, err := a.updateProviderID(machine, instance)
-	if err != nil {
+
+	if err := a.setProviderID(machine, instance); err != nil {
 		return fmt.Errorf("%s: failed to update machine object with providerID: %v", machine.Name, err)
 	}
-	machine = updatedMachine
-
-	updatedMachine, err = a.setMachineCloudProviderSpecifics(machine, instance)
-	if err != nil {
+	if err := a.setMachineCloudProviderSpecifics(machine, instance); err != nil {
 		return fmt.Errorf("%s: failed to set machine cloud provider specifics: %v", machine.Name, err)
 	}
 
-	return a.updateStatus(updatedMachine, instance)
+	return a.setStatus(machine, instance)
 }
 
-func (a *Actuator) setMachineCloudProviderSpecifics(machine *machinev1.Machine, instance *ec2.Instance) (*machinev1.Machine, error) {
+func (a *Actuator) setMachineCloudProviderSpecifics(machine *machinev1.Machine, instance *ec2.Instance) error {
 	if instance == nil {
-		return machine, nil
-	}
-	machineCopy := machine.DeepCopy()
-
-	if machineCopy.Labels == nil {
-		machineCopy.Labels = make(map[string]string)
+		return nil
 	}
 
-	if machineCopy.Annotations == nil {
-		machineCopy.Annotations = make(map[string]string)
+	if machine.Labels == nil {
+		machine.Labels = make(map[string]string)
+	}
+
+	if machine.Annotations == nil {
+		machine.Annotations = make(map[string]string)
 	}
 
 	// Reaching to machine provider config since the region is not directly
 	// providing by *ec2.Instance object
 	machineProviderConfig, err := providerConfigFromMachine(machine, a.codec)
 	if err != nil {
-		return nil, fmt.Errorf("error decoding MachineProviderConfig: %v", err)
+		return fmt.Errorf("error decoding MachineProviderConfig: %v", err)
 	}
 
-	machineCopy.Labels[machinecontroller.MachineRegionLabelName] = machineProviderConfig.Placement.Region
+	machine.Labels[machinecontroller.MachineRegionLabelName] = machineProviderConfig.Placement.Region
 
 	if instance.Placement != nil {
-		machineCopy.Labels[machinecontroller.MachineAZLabelName] = aws.StringValue(instance.Placement.AvailabilityZone)
+		machine.Labels[machinecontroller.MachineAZLabelName] = aws.StringValue(instance.Placement.AvailabilityZone)
 	}
 
 	if instance.InstanceType != nil {
-		machineCopy.Labels[machinecontroller.MachineInstanceTypeLabelName] = aws.StringValue(instance.InstanceType)
+		machine.Labels[machinecontroller.MachineInstanceTypeLabelName] = aws.StringValue(instance.InstanceType)
 	}
 
 	if instance.State != nil && instance.State.Name != nil {
-		machineCopy.Annotations[machinecontroller.MachineInstanceStateAnnotationName] = aws.StringValue(instance.State.Name)
+		machine.Annotations[machinecontroller.MachineInstanceStateAnnotationName] = aws.StringValue(instance.State.Name)
 	}
 
-	if err := a.client.Update(context.Background(), machineCopy); err != nil {
-		return nil, fmt.Errorf("%s: error updating machine spec: %v", machine.Name, err)
-	}
-
-	return machineCopy, nil
+	return nil
 }
 
 // updateProviderID adds providerID in the machine spec
-func (a *Actuator) updateProviderID(machine *machinev1.Machine, instance *ec2.Instance) (*machinev1.Machine, error) {
+func (a *Actuator) setProviderID(machine *machinev1.Machine, instance *ec2.Instance) error {
 	existingProviderID := machine.Spec.ProviderID
-	machineCopy := machine.DeepCopy()
-	if instance != nil {
-		availabilityZone := ""
-		if instance.Placement != nil {
-			availabilityZone = aws.StringValue(instance.Placement.AvailabilityZone)
-		}
-		providerID := fmt.Sprintf("aws:///%s/%s", availabilityZone, aws.StringValue(instance.InstanceId))
-
-		if existingProviderID != nil && *existingProviderID == providerID {
-			glog.Infof("%s: ProviderID already set in the machine Spec with value:%s", machine.Name, *existingProviderID)
-			return machine, nil
-		}
-		machineCopy.Spec.ProviderID = &providerID
-		if err := a.client.Update(context.Background(), machineCopy); err != nil {
-			return nil, fmt.Errorf("%s: error updating machine spec ProviderID: %v", machine.Name, err)
-		}
-		glog.Infof("%s: ProviderID updated at machine spec: %s", machine.Name, providerID)
-	} else {
-		machineCopy.Spec.ProviderID = nil
-		if err := a.client.Update(context.Background(), machineCopy); err != nil {
-			return nil, fmt.Errorf("%s: error updating ProviderID in machine spec: %v", machine.Name, err)
-		}
-		glog.Infof("%s: No instance found so clearing ProviderID field in the machine spec", machine.Name)
+	if instance == nil {
+		return nil
 	}
-	return machineCopy, nil
+	availabilityZone := ""
+	if instance.Placement != nil {
+		availabilityZone = aws.StringValue(instance.Placement.AvailabilityZone)
+	}
+	providerID := fmt.Sprintf("aws:///%s/%s", availabilityZone, aws.StringValue(instance.InstanceId))
+
+	if existingProviderID != nil && *existingProviderID == providerID {
+		glog.Infof("%s: ProviderID already set in the machine Spec with value:%s", machine.Name, *existingProviderID)
+		return nil
+	}
+	machine.Spec.ProviderID = &providerID
+	glog.Infof("%s: ProviderID set at machine spec: %s", machine.Name, providerID)
+	return nil
 }
 
-func (a *Actuator) updateMachineStatus(machine *machinev1.Machine, awsStatus *providerconfigv1.AWSMachineProviderStatus, networkAddresses []corev1.NodeAddress) error {
+func (a *Actuator) setMachineStatus(machine *machinev1.Machine, awsStatus *providerconfigv1.AWSMachineProviderStatus, networkAddresses []corev1.NodeAddress) error {
 	awsStatusRaw, err := a.codec.EncodeProviderStatus(awsStatus)
 	if err != nil {
 		glog.Errorf("%s: error encoding AWS provider status: %v", machine.Name, err)
 		return err
 	}
 
-	machineCopy := machine.DeepCopy()
-	machineCopy.Status.ProviderStatus = awsStatusRaw
+	machine.Status.ProviderStatus = awsStatusRaw
 	if networkAddresses != nil {
-		machineCopy.Status.Addresses = networkAddresses
-	}
-
-	oldAWSStatus := &providerconfigv1.AWSMachineProviderStatus{}
-	if err := a.codec.DecodeProviderStatus(machine.Status.ProviderStatus, oldAWSStatus); err != nil {
-		glog.Errorf("%s: error updating machine status: %v", machine.Name, err)
-		return err
-	}
-
-	// TODO(vikasc): Revisit to compare complete machine status objects
-	if !equality.Semantic.DeepEqual(awsStatus, oldAWSStatus) || !equality.Semantic.DeepEqual(machine.Status.Addresses, machineCopy.Status.Addresses) {
-		glog.Infof("%s: machine status has changed, updating", machine.Name)
-		time := metav1.Now()
-		machineCopy.Status.LastUpdated = &time
-
-		if err := a.client.Status().Update(context.Background(), machineCopy); err != nil {
-			glog.Errorf("%s: error updating machine status: %v", machine.Name, err)
-			return err
-		}
-	} else {
-		glog.Infof("%s: status unchanged", machine.Name)
+		machine.Status.Addresses = networkAddresses
 	}
 
 	return nil
 }
 
 // updateMachineProviderConditions updates conditions set within machine provider status.
-func (a *Actuator) updateMachineProviderConditions(machine *machinev1.Machine, conditionType providerconfigv1.AWSMachineProviderConditionType, reason string, msg string) error {
+func (a *Actuator) setMachineProviderConditions(machine *machinev1.Machine, conditionType providerconfigv1.AWSMachineProviderConditionType, reason string, msg string) error {
 
 	glog.Infof("%s: updating machine conditions", machine.Name)
 
@@ -251,7 +211,7 @@ func (a *Actuator) updateMachineProviderConditions(machine *machinev1.Machine, c
 
 	awsStatus.Conditions = setAWSMachineProviderCondition(awsStatus.Conditions, conditionType, corev1.ConditionTrue, reason, msg, updateConditionIfReasonOrMessageChange)
 
-	if err := a.updateMachineStatus(machine, awsStatus, nil); err != nil {
+	if err := a.setMachineStatus(machine, awsStatus, nil); err != nil {
 		return err
 	}
 
@@ -387,9 +347,7 @@ func (a *Actuator) DeleteMachine(cluster *clusterv1.Cluster, machine *machinev1.
 
 	if len(terminatingInstances) == 1 {
 		if terminatingInstances[0] != nil && terminatingInstances[0].CurrentState != nil && terminatingInstances[0].CurrentState.Name != nil {
-			machineCopy := machine.DeepCopy()
-			machineCopy.Annotations[machinecontroller.MachineInstanceStateAnnotationName] = aws.StringValue(terminatingInstances[0].CurrentState.Name)
-			a.client.Update(context.Background(), machineCopy)
+			machine.Annotations[machinecontroller.MachineInstanceStateAnnotationName] = aws.StringValue(terminatingInstances[0].CurrentState.Name)
 		}
 	}
 
@@ -441,7 +399,7 @@ func (a *Actuator) Update(context context.Context, cluster *clusterv1.Cluster, m
 		a.handleMachineError(machine, mapierrors.UpdateMachine("no instance found, reason unknown"), updateEventAction)
 
 		// Update status to clear out machine details.
-		if err := a.updateStatus(machine, nil); err != nil {
+		if err := a.setStatus(machine, nil); err != nil {
 			return err
 		}
 		// This is an unrecoverable error condition.  We should delay to
@@ -471,20 +429,16 @@ func (a *Actuator) Update(context context.Context, cluster *clusterv1.Cluster, m
 
 	a.eventRecorder.Eventf(machine, corev1.EventTypeNormal, "Updated", "Updated machine %v", machine.Name)
 
-	modMachine, err := a.setMachineCloudProviderSpecifics(machine, newestInstance)
-	if err != nil {
+	if err := a.setMachineCloudProviderSpecifics(machine, newestInstance); err != nil {
 		return fmt.Errorf("%s: failed to set machine cloud provider specifics: %v", machine.Name, err)
 	}
-	machine = modMachine
 
-	updatedMachine, err := a.updateProviderID(machine, newestInstance)
-	if err != nil {
+	if err := a.setProviderID(machine, newestInstance); err != nil {
 		return fmt.Errorf("%s: failed to update machine object with providerID: %v", machine.Name, err)
 	}
-	machine = updatedMachine
 
 	// We do not support making changes to pre-existing instances, just update status.
-	return a.updateStatus(machine, newestInstance)
+	return a.setStatus(machine, newestInstance)
 }
 
 // Exists determines if the given machine currently exists.
@@ -593,8 +547,7 @@ func (a *Actuator) updateLoadBalancers(client awsclient.Client, providerConfig *
 }
 
 // updateStatus calculates the new machine status, checks if anything has changed, and updates if so.
-func (a *Actuator) updateStatus(machine *machinev1.Machine, instance *ec2.Instance) error {
-
+func (a *Actuator) setStatus(machine *machinev1.Machine, instance *ec2.Instance) error {
 	glog.Infof("%s: Updating status", machine.Name)
 
 	// Starting with a fresh status as we assume full control of it here.
@@ -642,14 +595,7 @@ func (a *Actuator) updateStatus(machine *machinev1.Machine, instance *ec2.Instan
 	glog.Infof("%s: finished calculating AWS status", machine.Name)
 
 	awsStatus.Conditions = setAWSMachineProviderCondition(awsStatus.Conditions, providerconfigv1.MachineCreation, corev1.ConditionTrue, MachineCreationSucceeded, "machine successfully created", updateConditionIfReasonOrMessageChange)
-	// TODO(jchaloup): do we really need to update tis?
-	// origInstanceID := awsStatus.InstanceID
-	// if !StringPtrsEqual(origInstanceID, awsStatus.InstanceID) {
-	// 	mLog.Debug("AWS instance ID changed, clearing LastELBSync to trigger adding to ELBs")
-	// 	awsStatus.LastELBSync = nil
-	// }
-
-	if err := a.updateMachineStatus(machine, awsStatus, networkAddresses); err != nil {
+	if err := a.setMachineStatus(machine, awsStatus, networkAddresses); err != nil {
 		return err
 	}
 
