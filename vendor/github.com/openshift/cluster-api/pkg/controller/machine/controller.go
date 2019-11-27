@@ -86,6 +86,8 @@ const (
 
 	// Machine has a deletion timestamp
 	phaseDeleting = "Deleting"
+
+	requeueAfter = 30 * time.Second
 )
 
 var DefaultActuator Actuator
@@ -158,6 +160,7 @@ func (r *ReconcileMachine) Reconcile(request reconcile.Request) (reconcile.Resul
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
 	}
+	baseMachineToPatch := client.MergeFrom(m.DeepCopy())
 
 	// Implement controller logic here
 	name := m.Name
@@ -209,12 +212,13 @@ func (r *ReconcileMachine) Reconcile(request reconcile.Request) (reconcile.Resul
 			}
 
 			// Since adding the finalizer updates the object return to avoid later update issues
-			return reconcile.Result{}, nil
+			return reconcile.Result{Requeue: true}, nil
 		}
 	}
 
 	if !m.ObjectMeta.DeletionTimestamp.IsZero() {
-		if err := r.setPhase(m, phaseDeleting, ""); err != nil {
+		r.setPhase(m, phaseDeleting, "")
+		if err := r.patchMachine(ctx, baseMachineToPatch, m); err != nil {
 			return reconcile.Result{}, err
 		}
 
@@ -283,52 +287,75 @@ func (r *ReconcileMachine) Reconcile(request reconcile.Request) (reconcile.Resul
 	if instanceExists {
 		klog.Infof("Reconciling machine %q triggers idempotent update", name)
 		if err := r.actuator.Update(ctx, cluster, m); err != nil {
-			klog.Errorf(`Error updating machine "%s/%s": %v`, m.Namespace, name, err)
+			klog.Errorf("%v: error updating machine: %v", request.String(), err)
 			return delayIfRequeueAfterError(err)
 		}
 
 		if !machineIsProvisioned(m) {
-			klog.Errorf(`Instance for Machine "%s/%s exists but providerID or addresses has not been given to the machine yet"`, m.Namespace, name)
-			return reconcile.Result{}, err
+			klog.Infof("%v: exists but providerID or addresses has not been given to the machine yet, requeuing", request.String())
+			return reconcile.Result{RequeueAfter: requeueAfter}, nil
 		}
-		if machineHasNode(m) {
-			if err := r.setPhase(m, phaseRunning, ""); err != nil {
-				return reconcile.Result{}, err
-			}
-		} else {
-			if err := r.setPhase(m, phaseProvisioned, ""); err != nil {
-				return reconcile.Result{}, err
-			}
+
+		if !machineHasNode(m) {
+			// Requeue until we reach running phase
+			r.setPhase(m, phaseProvisioned, "")
+			klog.Infof("%v: has no node yet, requeuing", request.String())
+			err := r.patchMachine(ctx, baseMachineToPatch, m)
+			return reconcile.Result{RequeueAfter: requeueAfter}, err
 		}
-		return reconcile.Result{}, nil
+
+		r.setPhase(m, phaseRunning, "")
+		err := r.patchMachine(ctx, baseMachineToPatch, m)
+		return reconcile.Result{}, err
 	}
 
 	// Instance does not exist but the machine has been given a providerID/address.
 	// This can only be reached if an instance was deleted outside the machine API
 	if machineIsProvisioned(m) {
-		if err := r.setPhase(m, phaseFailed, "Can't find created instance."); err != nil {
-			return reconcile.Result{}, err
-		}
-		return reconcile.Result{}, nil
+		r.setPhase(m, phaseFailed, "Can't find created instance.")
+		err := r.patchMachine(ctx, baseMachineToPatch, m)
+		return reconcile.Result{}, err
 	}
 
 	// Machine resource created and instance does not exist yet.
-	if err := r.setPhase(m, phaseProvisioning, ""); err != nil {
+	r.setPhase(m, phaseProvisioning, "")
+	if err := r.patchMachine(ctx, baseMachineToPatch, m); err != nil {
 		return reconcile.Result{}, err
 	}
 	klog.Infof("Reconciling machine object %v triggers idempotent create.", m.ObjectMeta.Name)
 	if err := r.actuator.Create(ctx, cluster, m); err != nil {
 		klog.Warningf("Failed to create machine %q: %v", name, err)
 		if isInvalidMachineConfigurationError(err) {
-			if err := r.setPhase(m, phaseFailed, err.Error()); err != nil {
-				return reconcile.Result{}, err
-			}
-			return reconcile.Result{}, nil
+			r.setPhase(m, phaseFailed, err.Error())
+			err := r.patchMachine(ctx, baseMachineToPatch, m)
+			return reconcile.Result{}, err
+		}
+		if err := r.patchMachine(ctx, baseMachineToPatch, m); err != nil {
+			return reconcile.Result{}, err
 		}
 		return delayIfRequeueAfterError(err)
 	}
 
-	return reconcile.Result{}, nil
+	err = r.patchMachine(ctx, baseMachineToPatch, m)
+	return reconcile.Result{Requeue: true}, err
+}
+
+func (r *ReconcileMachine) patchMachine(ctx context.Context, baseMachineToPatch client.Patch, mutatedMachine *machinev1.Machine) error {
+	cloneMutatedStatus := mutatedMachine.Status.DeepCopy()
+
+	// Patch machine
+	if err := r.Client.Patch(context.Background(), mutatedMachine, baseMachineToPatch); err != nil {
+		klog.Errorf("Failed to update machine %q: %v", mutatedMachine.GetName(), err)
+		return err
+	}
+
+	//Patch status
+	mutatedMachine.Status = *cloneMutatedStatus
+	if err := r.Client.Status().Patch(context.Background(), mutatedMachine, baseMachineToPatch); err != nil {
+		klog.Errorf("Failed to update machine %q: %v", mutatedMachine.GetName(), err)
+		return err
+	}
+	return nil
 }
 
 func (r *ReconcileMachine) drainNode(machine *machinev1.Machine) error {
@@ -423,23 +450,19 @@ func isInvalidMachineConfigurationError(err error) bool {
 	return false
 }
 
-func (r *ReconcileMachine) setPhase(machine *machinev1.Machine, phase string, errorMessage string) error {
-	if stringPointerDeref(machine.Status.Phase) != phase {
-		klog.V(3).Infof("Machine %q going into phase %q", machine.GetName(), phase)
-		baseToPatch := client.MergeFrom(machine.DeepCopy())
-		machine.Status.Phase = &phase
-		machine.Status.ErrorMessage = nil
-		now := metav1.Now()
-		machine.Status.LastUpdated = &now
-		if phase == phaseFailed && errorMessage != "" {
-			machine.Status.ErrorMessage = &errorMessage
-		}
-		if err := r.Client.Status().Patch(context.Background(), machine, baseToPatch); err != nil {
-			klog.Errorf("Failed to update machine %q: %v", machine.GetName(), err)
-			return err
-		}
+func (r *ReconcileMachine) setPhase(machine *machinev1.Machine, phase string, errorMessage string) {
+	if stringPointerDeref(machine.Status.Phase) == phase {
+		return
 	}
-	return nil
+
+	klog.V(3).Infof("Machine %q going into phase %q", machine.GetName(), phase)
+	machine.Status.Phase = &phase
+	machine.Status.ErrorMessage = nil
+	now := metav1.Now()
+	machine.Status.LastUpdated = &now
+	if phase == phaseFailed && errorMessage != "" {
+		machine.Status.ErrorMessage = &errorMessage
+	}
 }
 
 func machineIsProvisioned(machine *machinev1.Machine) bool {
