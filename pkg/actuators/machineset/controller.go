@@ -23,7 +23,7 @@ const (
 	// This is needed by the autoscaler to foresee upcoming capacity when scaling from zero.
 	// https://github.com/openshift/enhancements/pull/186
 	cpuKey    = "machine.openshift.io/vCPU"
-	memoryKey = "machine.openshift.io/memoryMb"
+	memoryKey = "machine.openshift.io/memory"
 	gpuKey    = "machine.openshift.io/GPU"
 )
 
@@ -121,7 +121,8 @@ func reconcile(machineSet *machinev1.MachineSet) (ctrl.Result, error) {
 
 	// TODO: get annotations keys from machine API
 	machineSet.Annotations[cpuKey] = strconv.FormatInt(instanceType.VCPU, 10)
-	machineSet.Annotations[memoryKey] = strconv.FormatInt(instanceType.MemoryMb, 10)
+	// See https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#meaning-of-memory
+	machineSet.Annotations[memoryKey] = fmt.Sprintf("%dMi", instanceType.MemoryMb)
 	machineSet.Annotations[gpuKey] = strconv.FormatInt(instanceType.GPU, 10)
 
 	return ctrl.Result{}, nil

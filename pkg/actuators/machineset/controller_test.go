@@ -114,7 +114,7 @@ var _ = Describe("MachineSetReconciler", func() {
 			existingAnnotations: make(map[string]string),
 			expectedAnnotations: map[string]string{
 				cpuKey:    "8",
-				memoryKey: "16384",
+				memoryKey: "16384Mi",
 				gpuKey:    "0",
 			},
 			expectedEvents: []string{},
@@ -124,7 +124,7 @@ var _ = Describe("MachineSetReconciler", func() {
 			existingAnnotations: make(map[string]string),
 			expectedAnnotations: map[string]string{
 				cpuKey:    "64",
-				memoryKey: "786432",
+				memoryKey: "786432Mi",
 				gpuKey:    "16",
 			},
 			expectedEvents: []string{},
@@ -139,7 +139,7 @@ var _ = Describe("MachineSetReconciler", func() {
 				"existing": "annotation",
 				"annother": "existingAnnotation",
 				cpuKey:     "8",
-				memoryKey:  "16384",
+				memoryKey:  "16384Mi",
 				gpuKey:     "0",
 			},
 			expectedEvents: []string{},
@@ -209,7 +209,7 @@ func TestReconcile(t *testing.T) {
 			existingAnnotations: make(map[string]string),
 			expectedAnnotations: map[string]string{
 				cpuKey:    "8",
-				memoryKey: "16384",
+				memoryKey: "16384Mi",
 				gpuKey:    "0",
 			},
 			expectErr: false,
@@ -220,7 +220,7 @@ func TestReconcile(t *testing.T) {
 			existingAnnotations: make(map[string]string),
 			expectedAnnotations: map[string]string{
 				cpuKey:    "64",
-				memoryKey: "786432",
+				memoryKey: "786432Mi",
 				gpuKey:    "16",
 			},
 			expectErr: false,
@@ -236,7 +236,7 @@ func TestReconcile(t *testing.T) {
 				"existing": "annotation",
 				"annother": "existingAnnotation",
 				cpuKey:     "8",
-				memoryKey:  "16384",
+				memoryKey:  "16384Mi",
 				gpuKey:     "0",
 			},
 			expectErr: false,
