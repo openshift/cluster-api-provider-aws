@@ -186,7 +186,7 @@ github.com/onsi/gomega/matchers/support/goraph/edge
 github.com/onsi/gomega/matchers/support/goraph/node
 github.com/onsi/gomega/matchers/support/goraph/util
 github.com/onsi/gomega/types
-# github.com/openshift/machine-api-operator v0.2.1-0.20200402110321-4f3602b96da3 => github.com/joelspeed/machine-api-operator v0.2.1-0.20200417102748-367ae647375f
+# github.com/openshift/machine-api-operator v0.2.1-0.20200513150041-09efe6c914b4
 github.com/openshift/machine-api-operator/pkg/apis/machine
 github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1
 github.com/openshift/machine-api-operator/pkg/controller/machine
