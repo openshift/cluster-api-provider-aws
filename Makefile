@@ -80,11 +80,7 @@ push:
 	docker push "$(IMAGE):$(MUTABLE_TAG)"
 
 .PHONY: check
-check: fmt vet lint test check-pkg ## Check your code
-
-.PHONY: check-pkg
-check-pkg:
-	./hack/verify-actuator-pkg.sh
+check: fmt vet lint test ## Check your code
 
 .PHONY: unit
 unit: # Run unit test
