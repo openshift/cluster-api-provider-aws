@@ -83,9 +83,8 @@ func (r *Reconciler) create() error {
 	}
 
 	klog.Infof("Created Machine %v", r.machine.Name)
-	if err = r.setProviderID(instance); err != nil {
-		return fmt.Errorf("failed to update machine object with providerID: %w", err)
-	}
+
+	r.setProviderID(instance)
 
 	if err = r.setMachineCloudProviderSpecifics(instance); err != nil {
 		return fmt.Errorf("failed to set machine cloud provider specifics: %w", err)
@@ -192,9 +191,7 @@ func (r *Reconciler) update() error {
 		newestInstance = existingInstances[0]
 	}
 
-	if err = r.setProviderID(newestInstance); err != nil {
-		return fmt.Errorf("failed to update machine object with providerID: %w", err)
-	}
+	r.setProviderID(newestInstance)
 
 	if err = r.setMachineCloudProviderSpecifics(newestInstance); err != nil {
 		return fmt.Errorf("failed to set machine cloud provider specifics: %w", err)
@@ -292,10 +289,10 @@ func (r *Reconciler) updateLoadBalancers(instance *ec2.Instance) error {
 }
 
 // setProviderID adds providerID in the machine spec
-func (r *Reconciler) setProviderID(instance *ec2.Instance) error {
+func (r *Reconciler) setProviderID(instance *ec2.Instance) {
 	existingProviderID := r.machine.Spec.ProviderID
 	if instance == nil {
-		return nil
+		return
 	}
 	availabilityZone := ""
 	if instance.Placement != nil {
@@ -305,11 +302,11 @@ func (r *Reconciler) setProviderID(instance *ec2.Instance) error {
 
 	if existingProviderID != nil && *existingProviderID == providerID {
 		klog.Infof("%s: ProviderID already set in the machine Spec with value:%s", r.machine.Name, *existingProviderID)
-		return nil
+		return
 	}
 	r.machine.Spec.ProviderID = &providerID
 	klog.Infof("%s: ProviderID set at machine spec: %s", r.machine.Name, providerID)
-	return nil
+	return
 }
 
 func (r *Reconciler) setMachineCloudProviderSpecifics(instance *ec2.Instance) error {
