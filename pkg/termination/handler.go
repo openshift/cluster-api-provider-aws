@@ -70,9 +70,9 @@ func (h *handler) Run(stop <-chan struct{}) error {
 	errs := make(chan error, 1)
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
-	go func() {
-		errs <- h.run(ctx, wg)
-	}()
+	go func(errChan chan error) {
+		errChan <- h.run(ctx, wg)
+	}(errs)
 
 	select {
 	case <-stop:

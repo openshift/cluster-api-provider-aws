@@ -81,8 +81,8 @@ var _ = AfterSuite(func() {
 func StartTestHandler(th Handler) (chan struct{}, chan error) {
 	stop := make(chan struct{})
 	errs := make(chan error)
-	go func() {
-		errs <- th.Run(stop)
-	}()
+	go func(stopChan chan struct{}) {
+		errs <- th.Run(stopChan)
+	}(stop)
 	return stop, errs
 }
