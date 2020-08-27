@@ -41,7 +41,7 @@ import (
 var (
 	leaseDuration = 120 * time.Second
 	renewDealine  = 110 * time.Second
-	retryPeriod   = 20 * time.Second
+	retryPeriod   = 90 * time.Second
 )
 
 func main() {
