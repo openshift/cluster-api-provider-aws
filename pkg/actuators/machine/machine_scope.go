@@ -2,13 +2,13 @@ package machine
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/service/ec2"
 	machinev1 "github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1"
 	machineapierros "github.com/openshift/machine-api-operator/pkg/controller/machine"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/klog"
 	awsproviderv1 "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsprovider/v1beta1"
 	awsclient "sigs.k8s.io/cluster-api-provider-aws/pkg/client"
@@ -122,13 +122,15 @@ func (s *machineScope) getUserData() ([]byte, error) {
 		Name:      s.providerSpec.UserDataSecret.Name,
 	}
 
-	if err := s.client.Get(s.Context, objKey, userDataSecret); err != nil {
+	if err := s.client.Get(s.Context, objKey, userDataSecret); apierrors.IsNotFound(err) {
+		return nil, machineapierros.InvalidMachineConfiguration("userData secret is not found: %#v", objKey)
+	} else if err != nil {
 		return nil, err
 	}
 
 	userData, exists := userDataSecret.Data[userDataSecretKey]
 	if !exists {
-		return nil, fmt.Errorf("secret %s missing %s key", objKey, userDataSecretKey)
+		return nil, machineapierros.InvalidMachineConfiguration("secret %s missing %s key", objKey, userDataSecretKey)
 	}
 
 	return userData, nil
