@@ -145,29 +145,9 @@ func (c *awsClient) ELBv2RegisterTargets(input *elbv2.RegisterTargetsInput) (*el
 // secret if defined (i.e. in the root cluster),
 // otherwise the IAM profile of the master where the actuator will run. (target clusters)
 func NewClient(ctrlRuntimeClient client.Client, secretName, namespace, region string) (Client, error) {
-	awsConfig := &aws.Config{Region: aws.String(region)}
-
-	if secretName != "" {
-		var secret corev1.Secret
-		if err := ctrlRuntimeClient.Get(context.Background(), client.ObjectKey{Namespace: namespace, Name: secretName}, &secret); err != nil {
-			if apimachineryerrors.IsNotFound(err) {
-				return nil, machineapiapierrors.InvalidMachineConfiguration("aws credentials secret %s/%s: %v not found", namespace, secretName, err)
-			}
-			return nil, err
-		}
-		accessKeyID, ok := secret.Data[AwsCredsSecretIDKey]
-		if !ok {
-			return nil, machineapiapierrors.InvalidMachineConfiguration("AWS credentials secret %v did not contain key %v",
-				secretName, AwsCredsSecretIDKey)
-		}
-		secretAccessKey, ok := secret.Data[AwsCredsSecretAccessKey]
-		if !ok {
-			return nil, machineapiapierrors.InvalidMachineConfiguration("AWS credentials secret %v did not contain key %v",
-				secretName, AwsCredsSecretAccessKey)
-		}
-
-		awsConfig.Credentials = credentials.NewStaticCredentials(
-			string(accessKeyID), string(secretAccessKey), "")
+	awsConfig := &aws.Config{
+		Region:                        aws.String(region),
+		CredentialsChainVerboseErrors: aws.Bool(true),
 	}
 
 	// Resolve custom endpoints
@@ -175,10 +155,38 @@ func NewClient(ctrlRuntimeClient client.Client, secretName, namespace, region st
 		return nil, err
 	}
 
-	// Otherwise default to relying on the IAM role of the masters where the actuator is running:
+	// Attempt to create a session using the default credentials chain
+	// looking at environment variables and standard config file locations
 	s, err := session.NewSession(awsConfig)
 	if err != nil {
-		return nil, err
+		// Fall back to using the user id and secret key
+		if secretName != "" {
+			var secret corev1.Secret
+			if err := ctrlRuntimeClient.Get(context.Background(), client.ObjectKey{Namespace: namespace, Name: secretName}, &secret); err != nil {
+				if apimachineryerrors.IsNotFound(err) {
+					return nil, machineapiapierrors.InvalidMachineConfiguration("aws credentials secret %s/%s: %v not found", namespace, secretName, err)
+				}
+				return nil, err
+			}
+			accessKeyID, ok := secret.Data[AwsCredsSecretIDKey]
+			if !ok {
+				return nil, machineapiapierrors.InvalidMachineConfiguration("AWS credentials secret %v did not contain key %v",
+					secretName, AwsCredsSecretIDKey)
+			}
+			secretAccessKey, ok := secret.Data[AwsCredsSecretAccessKey]
+			if !ok {
+				return nil, machineapiapierrors.InvalidMachineConfiguration("AWS credentials secret %v did not contain key %v",
+					secretName, AwsCredsSecretAccessKey)
+			}
+
+			awsConfig.Credentials = credentials.NewStaticCredentials(
+				string(accessKeyID), string(secretAccessKey), "")
+		}
+
+		s, err = session.NewSession(awsConfig)
+		if err != nil {
+			return nil, err
+		}
 	}
 	s.Handlers.Build.PushBackNamed(addProviderVersionToUserAgent)
 
