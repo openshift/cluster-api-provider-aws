@@ -16,6 +16,7 @@ package machineset
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -208,9 +209,9 @@ func TestReconcile(t *testing.T) {
 			instanceType:        "a1.2xlarge",
 			existingAnnotations: make(map[string]string),
 			expectedAnnotations: map[string]string{
-				cpuKey:    "8",
-				memoryKey: "16384",
-				gpuKey:    "0",
+				cpuKey:    strconv.FormatInt(InstanceTypes["a1.2xlarge"].VCPU, 10),
+				memoryKey: strconv.FormatInt(InstanceTypes["a1.2xlarge"].MemoryMb, 10),
+				gpuKey:    strconv.FormatInt(InstanceTypes["a1.2xlarge"].GPU, 10),
 			},
 			expectErr: false,
 		},
@@ -219,9 +220,9 @@ func TestReconcile(t *testing.T) {
 			instanceType:        "p2.16xlarge",
 			existingAnnotations: make(map[string]string),
 			expectedAnnotations: map[string]string{
-				cpuKey:    "64",
-				memoryKey: "786432",
-				gpuKey:    "16",
+				cpuKey:    strconv.FormatInt(InstanceTypes["p2.16xlarge"].VCPU, 10),
+				memoryKey: strconv.FormatInt(InstanceTypes["p2.16xlarge"].MemoryMb, 10),
+				gpuKey:    strconv.FormatInt(InstanceTypes["p2.16xlarge"].GPU, 10),
 			},
 			expectErr: false,
 		},
@@ -235,9 +236,9 @@ func TestReconcile(t *testing.T) {
 			expectedAnnotations: map[string]string{
 				"existing": "annotation",
 				"annother": "existingAnnotation",
-				cpuKey:     "8",
-				memoryKey:  "16384",
-				gpuKey:     "0",
+				cpuKey:     strconv.FormatInt(InstanceTypes["a1.2xlarge"].VCPU, 10),
+				memoryKey:  strconv.FormatInt(InstanceTypes["a1.2xlarge"].MemoryMb, 10),
+				gpuKey:     strconv.FormatInt(InstanceTypes["a1.2xlarge"].GPU, 10),
 			},
 			expectErr: false,
 		},
