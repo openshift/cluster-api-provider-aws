@@ -20,6 +20,7 @@ import (
 	"context"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/klog/v2"
 	"sigs.k8s.io/cluster-api-provider-aws/pkg/version"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -173,6 +174,10 @@ func NewClient(ctrlRuntimeClient client.Client, secretName, namespace, region st
 	// Resolve custom endpoints
 	if err := resolveEndpoints(awsConfig, ctrlRuntimeClient, region); err != nil {
 		return nil, err
+	}
+
+	if klog.V(8).Enabled() {
+		awsConfig = awsConfig.WithLogLevel(aws.LogDebugWithHTTPBody)
 	}
 
 	// Otherwise default to relying on the IAM role of the masters where the actuator is running:
