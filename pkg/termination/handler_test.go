@@ -209,7 +209,7 @@ var _ = Describe("Handler Suite", func() {
 				})
 
 				It("should return an error", func() {
-					Eventually(errs).Should(Receive(MatchError("error polling termination endpoint: could not get URL \"abc#1://localhost\": Get abc#1://localhost: unsupported protocol scheme \"\"")))
+					Eventually(errs).Should(Receive(MatchError("error polling termination endpoint: could not get URL \"abc#1://localhost\": Get \"abc#1://localhost\": unsupported protocol scheme \"\"")))
 				})
 
 				It("should not delete the machine", func() {
