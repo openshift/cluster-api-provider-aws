@@ -93,7 +93,7 @@ func (r *Reconciler) create() error {
 
 	r.machineScope.setProviderStatus(instance, conditionSuccess())
 
-	return r.requeueIfInstancePending(instance)
+	return nil
 }
 
 // delete deletes machine
@@ -162,7 +162,7 @@ func (r *Reconciler) update() error {
 
 	existingLen := len(existingInstances)
 	if existingLen == 0 {
-		if r.machine.Spec.ProviderID != nil && *r.machine.Spec.ProviderID != "" && (r.machine.Status.LastUpdated == nil || r.machine.Status.LastUpdated.Add(requeueAfterSeconds*time.Second).After(time.Now())) {
+		if r.machine.Spec.ProviderID != nil && *r.machine.Spec.ProviderID != "" && len(r.machine.Status.Addresses) == 0 {
 			klog.Infof("%s: Possible eventual-consistency discrepancy; returning an error to requeue", r.machine.Name)
 			return &machinecontroller.RequeueAfterError{RequeueAfter: requeueAfterSeconds * time.Second}
 		}
@@ -238,7 +238,7 @@ func (r *Reconciler) exists() (bool, error) {
 	}
 
 	if len(existingInstances) == 0 {
-		if r.machine.Spec.ProviderID != nil && *r.machine.Spec.ProviderID != "" && (r.machine.Status.LastUpdated == nil || r.machine.Status.LastUpdated.Add(requeueAfterSeconds*time.Second).After(time.Now())) {
+		if r.machine.Spec.ProviderID != nil && *r.machine.Spec.ProviderID != "" && len(r.machine.Status.Addresses) == 0 {
 			klog.Infof("%s: Possible eventual-consistency discrepancy; returning an error to requeue", r.machine.Name)
 			return false, &machinecontroller.RequeueAfterError{RequeueAfter: requeueAfterSeconds * time.Second}
 		}
