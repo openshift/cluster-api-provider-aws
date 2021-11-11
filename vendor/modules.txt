@@ -206,7 +206,7 @@ github.com/onsi/gomega/matchers/support/goraph/edge
 github.com/onsi/gomega/matchers/support/goraph/node
 github.com/onsi/gomega/matchers/support/goraph/util
 github.com/onsi/gomega/types
-# github.com/openshift/api v0.0.0-20211028135425-c4970133b5ba
+# github.com/openshift/api v0.0.0-20211028135425-c4970133b5ba => github.com/JoelSpeed/api v0.0.0-20211118112045-93045434f671
 ## explicit
 github.com/openshift/api/config/v1
 github.com/openshift/api/machine/v1beta1
@@ -217,7 +217,7 @@ github.com/openshift/client-go/machine/clientset/versioned/typed/machine/v1beta1
 github.com/openshift/client-go/machine/informers/externalversions/internalinterfaces
 github.com/openshift/client-go/machine/informers/externalversions/machine/v1beta1
 github.com/openshift/client-go/machine/listers/machine/v1beta1
-# github.com/openshift/machine-api-operator v0.2.1-0.20211029132328-128c5c90918c
+# github.com/openshift/machine-api-operator v0.2.1-0.20211029132328-128c5c90918c => github.com/JoelSpeed/machine-api-operator v0.2.1-0.20211118112719-d1d8a920a98c
 ## explicit
 github.com/openshift/machine-api-operator/pkg/controller/machine
 github.com/openshift/machine-api-operator/pkg/metrics
@@ -819,3 +819,5 @@ sigs.k8s.io/structured-merge-diff/v4/typed
 sigs.k8s.io/structured-merge-diff/v4/value
 # sigs.k8s.io/yaml v1.2.0
 sigs.k8s.io/yaml
+# github.com/openshift/api => github.com/JoelSpeed/api v0.0.0-20211118112045-93045434f671
+# github.com/openshift/machine-api-operator => github.com/JoelSpeed/machine-api-operator v0.2.1-0.20211118112719-d1d8a920a98c

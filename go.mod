@@ -21,3 +21,7 @@ require (
 	sigs.k8s.io/controller-runtime v0.9.6
 	sigs.k8s.io/controller-tools v0.6.3-0.20210916130746-94401651a6c3
 )
+
+replace github.com/openshift/api => github.com/JoelSpeed/api v0.0.0-20211118112045-93045434f671
+
+replace github.com/openshift/machine-api-operator => github.com/JoelSpeed/machine-api-operator v0.2.1-0.20211118112719-d1d8a920a98c
