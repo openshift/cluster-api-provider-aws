@@ -45,6 +45,7 @@ type machineScope struct {
 	// machine resource
 	machine            *machinev1.Machine
 	machineToBePatched runtimeclient.Patch
+	originalStatus     machinev1.MachineStatus
 	providerSpec       *awsproviderv1.AWSMachineProviderConfig
 	providerStatus     *awsproviderv1.AWSMachineProviderStatus
 }
@@ -76,6 +77,7 @@ func newMachineScope(params machineScopeParams) (*machineScope, error) {
 		client:             params.client,
 		machine:            params.machine,
 		machineToBePatched: runtimeclient.MergeFrom(params.machine.DeepCopy()),
+		originalStatus:     params.machine.DeepCopy().Status,
 		providerSpec:       providerSpec,
 		providerStatus:     providerStatus,
 	}, nil
@@ -91,15 +93,25 @@ func (s *machineScope) patchMachine() error {
 	}
 	s.machine.Status.ProviderStatus = providerStatus
 
-	statusCopy := *s.machine.Status.DeepCopy()
-
-	// patch machine
-	if err := s.client.Patch(context.Background(), s.machine, s.machineToBePatched); err != nil {
-		klog.Errorf("Failed to patch machine %q: %v", s.machine.GetName(), err)
+	needsResourcePatch, err := s.needsResourcePatch()
+	if err != nil {
+		klog.Errorf("Failed to determine if machine patch required %q: %v", s.machine.GetName(), err)
 		return err
 	}
 
-	s.machine.Status = statusCopy
+	if needsResourcePatch {
+		// Copy the status so that it can be restored after the resource patch
+		statusCopy := *s.machine.Status.DeepCopy()
+
+		// patch machine
+		if err := s.client.Patch(context.Background(), s.machine, s.machineToBePatched); err != nil {
+			klog.Errorf("Failed to patch machine %q: %v", s.machine.GetName(), err)
+			return err
+		}
+
+		// The status was reset by the patch above, reset it before we patch the status
+		s.machine.Status = statusCopy
+	}
 
 	// patch status
 	if err := s.client.Status().Patch(context.Background(), s.machine, s.machineToBePatched); err != nil {
@@ -108,6 +120,19 @@ func (s *machineScope) patchMachine() error {
 	}
 
 	return nil
+}
+
+// needsResourcePatch is used to determine if the patch to the main resource would be a no-op
+func (s *machineScope) needsResourcePatch() (bool, error) {
+	machineCopy := s.machine.DeepCopy()
+	machineCopy.Status = s.originalStatus
+
+	data, err := s.machineToBePatched.Data(machineCopy)
+	if err != nil {
+		return false, fmt.Errorf("failed to calculate patch: %v", err)
+	}
+
+	return string(data) != "{}", nil
 }
 
 // getUserData fetches the user-data from the secret referenced in the Machine's
