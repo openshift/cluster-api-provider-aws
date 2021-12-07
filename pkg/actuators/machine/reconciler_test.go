@@ -525,10 +525,31 @@ func TestCreate(t *testing.T) {
 			if err.Error() != tc.expectedError.Error() {
 				t.Errorf("Expected: %v, got %v", tc.expectedError, err)
 			}
-		} else {
-			if err != nil {
-				t.Errorf("reconciler was not expected to return error: %v", err)
-			}
+			// Important to return here as the rest of this test assumes a successful create
+			return
+		}
+
+		// For the rest of this test, it is assumed the create action was successful
+		if err != nil {
+			t.Errorf("reconciler was not expected to return error: %v", err)
+		}
+
+		if len(machineScope.machine.Status.Addresses) != 0 {
+			// If addresses are set, the machine controller assumes the machine is provisioned.
+			// Don't set this on create so that we can ensure a successful Exists -> Update
+			// before the machine is considered provisioned.
+			t.Errorf("Expected addresses to be empty, got: %v", machineScope.machine.Status.Addresses)
+		}
+		if machineScope.machine.Spec.ProviderID != nil {
+			// If provider ID is set, the machine controller assumes the machine is provisioned.
+			// Don't set this on create so that we can ensure a successful Exists -> Update
+			// before the machine is considered provisioned.
+			t.Errorf("Expected ProviderID not to be set by create, got: %v", machineScope.machine.Spec.ProviderID)
+		}
+		if machineScope.providerStatus.InstanceID == nil {
+			t.Errorf("Expected InstanceID to be set, but got nil")
+		} else if *machineScope.providerStatus.InstanceID != instanceID {
+			t.Errorf("Expected InstanceID: %v, got: %v", instanceID, *machineScope.providerStatus.InstanceID)
 		}
 	}
 }
