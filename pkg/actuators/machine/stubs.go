@@ -24,10 +24,11 @@ const (
 	awsCredentialsSecretName = "aws-credentials-secret"
 	userDataSecretName       = "aws-actuator-user-data-secret"
 
-	keyName        = "aws-actuator-key-name"
-	stubClusterID  = "aws-actuator-cluster"
-	stubAMIID      = "ami-a9acbbd6"
-	stubInstanceID = "i-02fcb933c5da7085c"
+	keyName         = "aws-actuator-key-name"
+	stubClusterID   = "aws-actuator-cluster"
+	stubMachineName = "aws-actuator-testing-machine"
+	stubAMIID       = "ami-a9acbbd6"
+	stubInstanceID  = "i-02fcb933c5da7085c"
 )
 
 const userDataBlob = `#cloud-config
@@ -108,7 +109,7 @@ func stubMachine() (*machinev1.Machine, error) {
 
 	machine := &machinev1.Machine{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "aws-actuator-testing-machine",
+			Name:      stubMachineName,
 			Namespace: defaultNamespace,
 			Labels: map[string]string{
 				machinev1.MachineClusterIDLabel: stubClusterID,
@@ -297,7 +298,10 @@ func stubDescribeInstancesOutput(imageID, instanceID string, state string, priva
 							Code: aws.Int64(16),
 						},
 						LaunchTime:       aws.Time(time.Now()),
+						PublicIpAddress:  aws.String(privateIP),
 						PrivateIpAddress: aws.String(privateIP),
+						PrivateDnsName:   aws.String("privateDNS"),
+						PublicDnsName:    aws.String("publicDNS"),
 					},
 				},
 			},
@@ -308,6 +312,18 @@ func stubDescribeInstancesOutput(imageID, instanceID string, state string, priva
 func stubDescribeInstancesInput(instanceID string) *ec2.DescribeInstancesInput {
 	return &ec2.DescribeInstancesInput{
 		InstanceIds: aws.StringSlice([]string{instanceID}),
+	}
+}
+
+func stubDescribeInstancesInputFromName() *ec2.DescribeInstancesInput {
+	return &ec2.DescribeInstancesInput{
+		Filters: []*ec2.Filter{
+			{
+				Name:   awsTagFilter("Name"),
+				Values: aws.StringSlice([]string{stubMachineName}),
+			},
+			clusterFilter(stubClusterID),
+		},
 	}
 }
 
