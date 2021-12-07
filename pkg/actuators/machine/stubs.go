@@ -300,6 +300,12 @@ func stubDescribeInstancesOutput(imageID, instanceID string, state string, priva
 	}
 }
 
+func stubDescribeInstancesInput(instanceID string) *ec2.DescribeInstancesInput {
+	return &ec2.DescribeInstancesInput{
+		InstanceIds: aws.StringSlice([]string{instanceID}),
+	}
+}
+
 // StubDescribeDHCPOptions provides fake output
 func StubDescribeDHCPOptions() (*ec2.DescribeDhcpOptionsOutput, error) {
 	key := "key"
