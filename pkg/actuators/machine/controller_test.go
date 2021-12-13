@@ -39,14 +39,13 @@ func TestMachineControllerWithDelayedExistSuccess(t *testing.T) {
 		mockAWSClient.EXPECT().DescribeInstances(stubDescribeInstancesInputFromName()).Return(&ec2.DescribeInstancesOutput{}, nil).AnyTimes()
 
 		// Once the actuator has determined the Machine doesn't exist, it should eventually request to create the machine
-		mockAWSClient.EXPECT().RunInstances(gomock.Any()).Return(stubReservation("ami-a9acbbd6", stubInstanceID, "192.168.0.10"), nil).Times(1)
+		mockAWSClient.EXPECT().RunInstances(gomock.Any()).Return(stubReservation("ami-a9acbbd6", stubInstanceID), nil).Times(1)
 
 		// After the create, it will reconcile load balancer attachements, we don't care about these for this test
 		mockAWSClient.EXPECT().RegisterInstancesWithLoadBalancer(gomock.Any()).Return(nil, nil).AnyTimes()
 		mockAWSClient.EXPECT().ELBv2DescribeLoadBalancers(gomock.Any()).Return(stubDescribeLoadBalancersOutput(), nil).AnyTimes()
 		mockAWSClient.EXPECT().ELBv2DescribeTargetGroups(gomock.Any()).Return(stubDescribeTargetGroupsOutput(), nil).AnyTimes()
 		mockAWSClient.EXPECT().ELBv2RegisterTargets(gomock.Any()).Return(nil, nil).AnyTimes()
-		mockAWSClient.EXPECT().ELBv2DescribeTargetHealth(gomock.Any()).Return(stubDescribeTargetHealthOutput(), nil).AnyTimes()
 		mockAWSClient.EXPECT().DescribeVpcs(gomock.Any()).Return(StubDescribeVPCs()).AnyTimes()
 		mockAWSClient.EXPECT().DescribeDHCPOptions(gomock.Any()).Return(StubDescribeDHCPOptions()).AnyTimes()
 
