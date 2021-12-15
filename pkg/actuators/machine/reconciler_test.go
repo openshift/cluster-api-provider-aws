@@ -113,12 +113,13 @@ func TestAvailabilityZone(t *testing.T) {
 				placement = &ec2.Placement{AvailabilityZone: aws.String(tc.availabilityZone)}
 			}
 
+			instanceID := "i-02fcb933c5da7085c"
 			mockAWSClient.EXPECT().RunInstances(placementMatcher{placement}).Return(
 				&ec2.Reservation{
 					Instances: []*ec2.Instance{
 						{
 							ImageId:    aws.String("ami-a9acbbd6"),
-							InstanceId: aws.String("i-02fcb933c5da7085c"),
+							InstanceId: aws.String(instanceID),
 							State: &ec2.InstanceState{
 								Name: aws.String(ec2.InstanceStateNameRunning),
 							},
@@ -130,24 +131,8 @@ func TestAvailabilityZone(t *testing.T) {
 					},
 				}, nil)
 
-			mockAWSClient.EXPECT().DescribeInstances(gomock.Any()).Return(
-				&ec2.DescribeInstancesOutput{
-					Reservations: []*ec2.Reservation{
-						{
-							Instances: []*ec2.Instance{
-								{
-									ImageId:    aws.String("ami-a9acbbd6"),
-									InstanceId: aws.String("i-02fcb933c5da7085c"),
-									State: &ec2.InstanceState{
-										Name: aws.String(ec2.InstanceStateNameRunning),
-										Code: aws.Int64(16),
-									},
-									LaunchTime: aws.Time(time.Now()),
-								},
-							},
-						},
-					},
-				}, nil).AnyTimes()
+			mockAWSClient.EXPECT().DescribeInstances(stubDescribeInstancesInput(instanceID)).Return(stubDescribeInstancesOutput("ami-a9acbbd6", instanceID, ec2.InstanceStateNameRunning, "192.168.0.10"), nil).AnyTimes()
+			mockAWSClient.EXPECT().DescribeInstances(gomock.Any()).Return(&ec2.DescribeInstancesOutput{}, nil).AnyTimes()
 
 			mockAWSClient.EXPECT().TerminateInstances(gomock.Any()).Return(&ec2.TerminateInstancesOutput{}, nil)
 			mockAWSClient.EXPECT().RegisterInstancesWithLoadBalancer(gomock.Any()).AnyTimes()
@@ -194,12 +179,14 @@ func (m placementMatcher) String() string {
 
 func TestCreate(t *testing.T) {
 	// mock aws API calls
+	instanceID := "i-02fcb933c5da7085c"
 	mockCtrl := gomock.NewController(t)
 	mockAWSClient := mockaws.NewMockClient(mockCtrl)
 	mockAWSClient.EXPECT().DescribeSecurityGroups(gomock.Any()).Return(nil, fmt.Errorf("describeSecurityGroups error")).AnyTimes()
 	mockAWSClient.EXPECT().DescribeAvailabilityZones(gomock.Any()).Return(nil, fmt.Errorf("describeAvailabilityZones error")).AnyTimes()
 	mockAWSClient.EXPECT().DescribeImages(gomock.Any()).Return(nil, fmt.Errorf("describeImages error")).AnyTimes()
-	mockAWSClient.EXPECT().DescribeInstances(gomock.Any()).Return(stubDescribeInstancesOutput("ami-a9acbbd6", "i-02fcb933c5da7085c", ec2.InstanceStateNameRunning, "192.168.0.10"), nil).AnyTimes()
+	mockAWSClient.EXPECT().DescribeInstances(stubDescribeInstancesInput(instanceID)).Return(stubDescribeInstancesOutput("ami-a9acbbd6", instanceID, ec2.InstanceStateNameRunning, "192.168.0.10"), nil).AnyTimes()
+	mockAWSClient.EXPECT().DescribeInstances(gomock.Any()).Return(&ec2.DescribeInstancesOutput{}, nil).AnyTimes()
 	mockAWSClient.EXPECT().TerminateInstances(gomock.Any()).Return(&ec2.TerminateInstancesOutput{}, nil).AnyTimes()
 	mockAWSClient.EXPECT().RunInstances(gomock.Any()).Return(stubReservation("ami-a9acbbd6", "i-02fcb933c5da7085c"), nil).AnyTimes()
 	mockAWSClient.EXPECT().RegisterInstancesWithLoadBalancer(gomock.Any()).Return(nil, nil).AnyTimes()
@@ -525,10 +512,31 @@ func TestCreate(t *testing.T) {
 			if err.Error() != tc.expectedError.Error() {
 				t.Errorf("Expected: %v, got %v", tc.expectedError, err)
 			}
-		} else {
-			if err != nil {
-				t.Errorf("reconciler was not expected to return error: %v", err)
-			}
+			// Important to return here as the rest of this test assumes a successful create
+			return
+		}
+
+		// For the rest of this test, it is assumed the create action was successful
+		if err != nil {
+			t.Errorf("reconciler was not expected to return error: %v", err)
+		}
+
+		if len(machineScope.machine.Status.Addresses) != 0 {
+			// If addresses are set, the machine controller assumes the machine is provisioned.
+			// Don't set this on create so that we can ensure a successful Exists -> Update
+			// before the machine is considered provisioned.
+			t.Errorf("Expected addresses to be empty, got: %v", machineScope.machine.Status.Addresses)
+		}
+		if machineScope.machine.Spec.ProviderID != nil {
+			// If provider ID is set, the machine controller assumes the machine is provisioned.
+			// Don't set this on create so that we can ensure a successful Exists -> Update
+			// before the machine is considered provisioned.
+			t.Errorf("Expected ProviderID not to be set by create, got: %v", machineScope.machine.Spec.ProviderID)
+		}
+		if machineScope.providerStatus.InstanceID == nil {
+			t.Errorf("Expected InstanceID to be set, but got nil")
+		} else if *machineScope.providerStatus.InstanceID != instanceID {
+			t.Errorf("Expected InstanceID: %v, got: %v", instanceID, *machineScope.providerStatus.InstanceID)
 		}
 	}
 }

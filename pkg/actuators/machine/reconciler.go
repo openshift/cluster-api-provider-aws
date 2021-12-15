@@ -40,6 +40,20 @@ func newReconciler(scope *machineScope) *Reconciler {
 func (r *Reconciler) create() error {
 	klog.Infof("%s: creating machine", r.machine.Name)
 
+	if instances, err := r.getMachineInstances(); err == nil && len(instances) > 0 {
+		klog.Infof("%s: found existing instance %s for machine", r.machine.Name, aws.StringValue(instances[0].InstanceId))
+		// If we got here, then Exists failed to find the instance, and we were asked to create a new instance.
+		// The instance already exists, so requeue and start the reconcile again, Exists should pass now.
+		// Don't bother updating the status, Update will configure everything on the next reconcile.
+		return fmt.Errorf("%s: Possible eventual-consistency discrepancy; returning an error to requeue", r.machine.Name)
+	}
+	if r.providerStatus.InstanceID != nil && *r.providerStatus.InstanceID != "" {
+		// The instance was already created as we have an InstanceID within the status.
+		// We must not create a new instance, this is an eventual consistency issue
+		// on the AWS side.
+		return fmt.Errorf("%s: Machine was already created, InstanceID is set in providerStatus. Possible eventual-consistency discrepancy; returning an error to requeue", r.machine.Name)
+	}
+
 	if err := validateMachine(*r.machine); err != nil {
 		return fmt.Errorf("%v: failed validating machine provider spec: %w", r.machine.GetName(), err)
 	}
@@ -93,15 +107,13 @@ func (r *Reconciler) create() error {
 	}
 
 	klog.Infof("Created Machine %v", r.machine.Name)
-	if err = r.setProviderID(instance); err != nil {
-		return fmt.Errorf("failed to update machine object with providerID: %w", err)
-	}
-
-	if err = r.setMachineCloudProviderSpecifics(instance); err != nil {
-		return fmt.Errorf("failed to set machine cloud provider specifics: %w", err)
-	}
-
 	r.machineScope.setProviderStatus(instance, conditionSuccess())
+	// DO NOT set addresses on the first pass.
+	// If we set addresses, the machine controller implies that the machine is provisioned.
+	// We remove them here so that we get a chance to requeue when there is a delay in the
+	// instance appearing within the API.
+	// XRef: https://github.com/openshift/machine-api-operator/blob/ce3579a54b486a12b185301aae0307dfb5443e5e/pkg/controller/machine/controller.go#L680
+	r.machine.Status.Addresses = nil
 
 	return nil
 }

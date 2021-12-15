@@ -10,6 +10,7 @@ import (
 
 	configv1 "github.com/openshift/api/config/v1"
 	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
@@ -23,6 +24,7 @@ const (
 var (
 	k8sClient     client.Client
 	eventRecorder record.EventRecorder
+	cfg           *rest.Config
 )
 
 func TestMain(m *testing.M) {
@@ -35,7 +37,8 @@ func TestMain(m *testing.M) {
 
 	configv1.AddToScheme(scheme.Scheme)
 
-	cfg, err := testEnv.Start()
+	var err error
+	cfg, err = testEnv.Start()
 	if err != nil {
 		log.Fatal(err)
 	}
