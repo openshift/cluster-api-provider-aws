@@ -255,8 +255,16 @@ func getBlockDeviceMappings(machine runtimeclient.ObjectKey, blockDeviceMappingS
 			},
 		}
 
-		if *volumeType == ec2.VolumeTypeIo1 {
-			blockDeviceMapping.Ebs.Iops = blockDeviceMappingSpec.EBS.Iops
+		// IOPS settings are only valid on IO1, IO2 and GP3 block devices
+		// https://awscli.amazonaws.com/v2/documentation/api/latest/reference/ec2/create-volume.html
+		switch aws.StringValue(volumeType) {
+		case ec2.VolumeTypeIo1, ec2.VolumeTypeIo2, ec2.VolumeTypeGp3:
+			// The installer will explicitly set the Iops to 0 if the user doesn't specify the option.
+			// This means that any existing installation may break unless we ignore 0 values.
+			// 0 Iops is below the minimum so AWS will fail the instance create request if we send a 0 value.
+			if blockDeviceMappingSpec.EBS.Iops != nil && *blockDeviceMappingSpec.EBS.Iops > 0 {
+				blockDeviceMapping.Ebs.Iops = blockDeviceMappingSpec.EBS.Iops
+			}
 		}
 
 		if aws.StringValue(blockDeviceMappingSpec.EBS.KMSKey.ID) != "" {
