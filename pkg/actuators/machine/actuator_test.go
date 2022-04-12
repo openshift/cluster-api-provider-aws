@@ -169,11 +169,11 @@ func TestMachineEvents(t *testing.T) {
 
 			mockCtrl := gomock.NewController(t)
 			mockAWSClient := mockaws.NewMockClient(mockCtrl)
-			awsClientBuilder := func(client runtimeclient.Client, secretName, namespace, region string, configManagedClient runtimeclient.Client) (awsclient.Client, error) {
+			awsClientBuilder := func(client runtimeclient.Client, secretName, namespace, region string, configManagedClient runtimeclient.Client, regionCache awsclient.RegionCache) (awsclient.Client, error) {
 				return mockAWSClient, nil
 			}
 			if tc.invalidMachineScope {
-				awsClientBuilder = func(client runtimeclient.Client, secretName, namespace, region string, configManagedClient runtimeclient.Client) (awsclient.Client, error) {
+				awsClientBuilder = func(client runtimeclient.Client, secretName, namespace, region string, configManagedClient runtimeclient.Client, regionCache awsclient.RegionCache) (awsclient.Client, error) {
 					return nil, errors.New("AWS client error")
 				}
 			}

@@ -23,6 +23,8 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"sync"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
@@ -62,10 +64,12 @@ const (
 	kubeCloudConfigName = "kube-cloud-config"
 	// cloudCABundleKey is the key in the kube cloud config ConfigMap where the custom CA bundle is located
 	cloudCABundleKey = "ca-bundle.pem"
+	// awsRegionsCacheExpirationDuration is the duration for which the AWS regions cache is valid
+	awsRegionsCacheExpirationDuration = time.Minute * 30
 )
 
 // AwsClientBuilderFuncType is function type for building aws client
-type AwsClientBuilderFuncType func(client client.Client, secretName, namespace, region string, configManagedClient client.Client) (Client, error)
+type AwsClientBuilderFuncType func(client client.Client, secretName, namespace, region string, configManagedClient client.Client, regionCache RegionCache) (Client, error)
 
 // Client is a wrapper object for actual AWS SDK clients to allow for easier testing.
 type Client interface {
@@ -205,21 +209,120 @@ func NewClientFromKeys(accessKey, secretAccessKey, region string) (Client, error
 	}, nil
 }
 
+// DescribeRegionsData holds output of DescribeRegions API call and the time when it was last updated.
+type DescribeRegionsData struct {
+	err                   error
+	describeRegionsOutput *ec2.DescribeRegionsOutput
+	lastUpdated           time.Time
+}
+
+type regionCache struct {
+	data  map[string]DescribeRegionsData
+	mutex sync.RWMutex
+}
+
+// RegionCache caches successful DescribeRegions API calls.
+type RegionCache interface {
+	GetCachedDescribeRegions(awsSession *session.Session) (*ec2.DescribeRegionsOutput, error)
+}
+
+// NewRegionCache creates a new empty DescribeRegionsData cache with lock.
+func NewRegionCache() RegionCache {
+	return &regionCache{
+		data:  map[string]DescribeRegionsData{},
+		mutex: sync.RWMutex{},
+	}
+}
+
+// GetCachedDescribeRegions returns DescribeRegionsOutput from DescribeRegions AWS API call.
+// It is cached to avoid AWS API calls on each reconcile loop.
+func (c *regionCache) GetCachedDescribeRegions(awsSession *session.Session) (*ec2.DescribeRegionsOutput, error) {
+	creds, err := awsSession.Config.Credentials.Get()
+	if err != nil {
+		return nil, err
+	}
+
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	regionData := c.data[creds.AccessKeyID]
+	if regionData.describeRegionsOutput != nil && regionData.err == nil &&
+		time.Since(regionData.lastUpdated) < awsRegionsCacheExpirationDuration {
+		klog.Info("Using cached AWS region data")
+		return regionData.describeRegionsOutput, nil
+	}
+
+	currentRegion := awsSession.Config.Region
+	// Use default region to send our request
+	awsSession.Config.Region = aws.String("us-east-1")
+	describeRegionsOutput, err := ec2.New(awsSession).DescribeRegions(&ec2.DescribeRegionsInput{
+		AllRegions: aws.Bool(true),
+		DryRun:     aws.Bool(false),
+	})
+	// Restore the original region
+	awsSession.Config.Region = currentRegion
+	if err != nil {
+		regionData.err = err
+		return nil, err
+	}
+
+	regionData.describeRegionsOutput = describeRegionsOutput
+	regionData.lastUpdated = time.Now()
+	c.data[creds.AccessKeyID] = regionData
+	return describeRegionsOutput, nil
+}
+
+// Check that region is in the DescribeRegions list and is opted in.
+func validateRegion(describeRegionsOutput *ec2.DescribeRegionsOutput, region string) (*ec2.Region, error) {
+	var regionData *ec2.Region
+	for _, currentRegion := range describeRegionsOutput.Regions {
+		if currentRegion != nil && *currentRegion.RegionName == region {
+			regionData = currentRegion
+			break
+		}
+	}
+
+	if regionData == nil {
+		return nil, fmt.Errorf("region %s is not a valid region", region)
+	}
+	if *regionData.OptInStatus == "not-opted-in" {
+		return nil, fmt.Errorf("region %s is not opted in", region)
+	}
+	klog.Infof("AWS reports region %s is valid", region)
+	return regionData, nil
+}
+
 // NewValidatedClient creates our client wrapper object for the actual AWS clients we use.
 // This should behave the same as NewClient except it will validate the client configuration
 // (eg the region) before returning the client.
-func NewValidatedClient(ctrlRuntimeClient client.Client, secretName, namespace, region string, configManagedClient client.Client) (Client, error) {
+func NewValidatedClient(ctrlRuntimeClient client.Client, secretName, namespace, region string, configManagedClient client.Client, regionCache RegionCache) (Client, error) {
 	s, err := newAWSSession(ctrlRuntimeClient, secretName, namespace, region, configManagedClient)
 	if err != nil {
 		return nil, err
 	}
 
 	// Check that the endpoint can be resolved by the endpoint resolver.
+	// If the endpoint is not resolvable locally, we try to validate using the AWS API.
 	// If the endpoint is not known, it is not a standard or configured custom region.
-	// If this is the case, the client will likely not be able to connect
+	// In that case, the client will likely not be able to connect
 	_, err = s.Config.EndpointResolver.EndpointFor("ec2", region, func(opts *endpoints.Options) {
 		opts.StrictMatching = true
 	})
+	if err != nil {
+		switch err.(type) {
+		case endpoints.UnknownEndpointError:
+			klog.Infof("Region %s is not recognized by aws-sdk, trying to validate using API", region)
+			var describeRegionsOutput *ec2.DescribeRegionsOutput
+			describeRegionsOutput, err = regionCache.GetCachedDescribeRegions(s)
+			if err != nil {
+				return nil, fmt.Errorf("could not retrieve region data: %w", err)
+			}
+
+			_, err = validateRegion(describeRegionsOutput, region)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
 	if err != nil {
 		return nil, fmt.Errorf("region %q not resolved: %w", region, err)
 	}
