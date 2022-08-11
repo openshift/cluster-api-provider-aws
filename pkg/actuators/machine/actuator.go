@@ -43,6 +43,7 @@ type Actuator struct {
 	eventRecorder       record.EventRecorder
 	awsClientBuilder    awsclient.AwsClientBuilderFuncType
 	configManagedClient runtimeclient.Client
+	regionCache         awsclient.RegionCache
 }
 
 // ActuatorParams holds parameter information for Actuator.
@@ -60,6 +61,7 @@ func NewActuator(params ActuatorParams) *Actuator {
 		eventRecorder:       params.EventRecorder,
 		awsClientBuilder:    params.AwsClientBuilder,
 		configManagedClient: params.ConfigManagedClient,
+		regionCache:         awsclient.NewRegionCache(),
 	}
 }
 
@@ -82,6 +84,7 @@ func (a *Actuator) Create(ctx context.Context, machine *machinev1.Machine) error
 		machine:             machine,
 		awsClientBuilder:    a.awsClientBuilder,
 		configManagedClient: a.configManagedClient,
+		regionCache:         a.regionCache,
 	})
 	if err != nil {
 		fmtErr := fmt.Errorf(scopeFailFmt, machine.GetName(), err)
@@ -108,6 +111,7 @@ func (a *Actuator) Exists(ctx context.Context, machine *machinev1.Machine) (bool
 		machine:             machine,
 		awsClientBuilder:    a.awsClientBuilder,
 		configManagedClient: a.configManagedClient,
+		regionCache:         a.regionCache,
 	})
 	if err != nil {
 		return false, fmt.Errorf(scopeFailFmt, machine.GetName(), err)
@@ -124,6 +128,7 @@ func (a *Actuator) Update(ctx context.Context, machine *machinev1.Machine) error
 		machine:             machine,
 		awsClientBuilder:    a.awsClientBuilder,
 		configManagedClient: a.configManagedClient,
+		regionCache:         a.regionCache,
 	})
 	if err != nil {
 		fmtErr := fmt.Errorf(scopeFailFmt, machine.GetName(), err)
@@ -163,6 +168,7 @@ func (a *Actuator) Delete(ctx context.Context, machine *machinev1.Machine) error
 		machine:             machine,
 		awsClientBuilder:    a.awsClientBuilder,
 		configManagedClient: a.configManagedClient,
+		regionCache:         a.regionCache,
 	})
 	if err != nil {
 		fmtErr := fmt.Errorf(scopeFailFmt, machine.GetName(), err)

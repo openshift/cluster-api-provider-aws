@@ -7,6 +7,7 @@ package mock
 import (
 	reflect "reflect"
 
+	session "github.com/aws/aws-sdk-go/aws/session"
 	ec2 "github.com/aws/aws-sdk-go/service/ec2"
 	elb "github.com/aws/aws-sdk-go/service/elb"
 	elbv2 "github.com/aws/aws-sdk-go/service/elbv2"
@@ -289,4 +290,42 @@ func (m *MockClient) TerminateInstances(arg0 *ec2.TerminateInstancesInput) (*ec2
 func (mr *MockClientMockRecorder) TerminateInstances(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TerminateInstances", reflect.TypeOf((*MockClient)(nil).TerminateInstances), arg0)
+}
+
+// MockRegionCache is a mock of RegionCache interface.
+type MockRegionCache struct {
+	ctrl     *gomock.Controller
+	recorder *MockRegionCacheMockRecorder
+}
+
+// MockRegionCacheMockRecorder is the mock recorder for MockRegionCache.
+type MockRegionCacheMockRecorder struct {
+	mock *MockRegionCache
+}
+
+// NewMockRegionCache creates a new mock instance.
+func NewMockRegionCache(ctrl *gomock.Controller) *MockRegionCache {
+	mock := &MockRegionCache{ctrl: ctrl}
+	mock.recorder = &MockRegionCacheMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockRegionCache) EXPECT() *MockRegionCacheMockRecorder {
+	return m.recorder
+}
+
+// GetCachedDescribeRegions mocks base method.
+func (m *MockRegionCache) GetCachedDescribeRegions(awsSession *session.Session) (*ec2.DescribeRegionsOutput, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCachedDescribeRegions", awsSession)
+	ret0, _ := ret[0].(*ec2.DescribeRegionsOutput)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCachedDescribeRegions indicates an expected call of GetCachedDescribeRegions.
+func (mr *MockRegionCacheMockRecorder) GetCachedDescribeRegions(awsSession interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCachedDescribeRegions", reflect.TypeOf((*MockRegionCache)(nil).GetCachedDescribeRegions), awsSession)
 }
