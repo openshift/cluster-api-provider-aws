@@ -160,6 +160,10 @@ func (r *Reconciler) delete() error {
 		return fmt.Errorf("failed to updated update load balancers: %w", err)
 	}
 
+	if r.machine.Annotations == nil {
+		r.machine.Annotations = make(map[string]string)
+	}
+
 	if len(terminatingInstances) == 1 {
 		if terminatingInstances[0] != nil && terminatingInstances[0].CurrentState != nil && terminatingInstances[0].CurrentState.Name != nil {
 			r.machine.Annotations[machinecontroller.MachineInstanceStateAnnotationName] = aws.StringValue(terminatingInstances[0].CurrentState.Name)
