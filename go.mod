@@ -24,6 +24,6 @@ require (
 )
 
 replace (
-	sigs.k8s.io/cluster-api-provider-aws => github.com/openshift/cluster-api-provider-aws v0.2.1-0.20210622023641-c69a3acaee27
-	sigs.k8s.io/cluster-api-provider-azure => github.com/openshift/cluster-api-provider-azure v0.1.0-alpha.3.0.20210816141152-a7c40345b994
+	sigs.k8s.io/cluster-api-provider-aws v0.0.0-00010101000000-000000000000 => github.com/openshift/cluster-api-provider-aws v0.2.1-0.20210622023641-c69a3acaee27
+	sigs.k8s.io/cluster-api-provider-azure v0.0.0-00010101000000-000000000000 => github.com/openshift/cluster-api-provider-azure v0.1.0-alpha.3.0.20210816141152-a7c40345b994
 )
