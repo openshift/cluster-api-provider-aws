@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -77,7 +78,7 @@ func (r *AWSMachinePoolReconciler) getEC2Service(scope scope.EC2Scope) services.
 	return ec2.NewService(scope)
 }
 
-// +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=awsmachinepools,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=awsmachinepools,verbs=get;list;watch;update;patch;delete
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=awsmachinepools/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=cluster.x-k8s.io,resources=machinepools;machinepools/status,verbs=get;list;watch;patch
 // +kubebuilder:rbac:groups="",resources=events,verbs=get;list;watch;create;update;patch
@@ -202,11 +203,11 @@ func (r *AWSMachinePoolReconciler) reconcileNormal(ctx context.Context, machineP
 	}
 
 	// If the AWSMachinepool doesn't have our finalizer, add it
-	controllerutil.AddFinalizer(machinePoolScope.AWSMachinePool, expinfrav1.MachinePoolFinalizer)
-
-	// Register finalizer immediately to avoid orphaning AWS resources
-	if err := machinePoolScope.PatchObject(); err != nil {
-		return ctrl.Result{}, err
+	if controllerutil.AddFinalizer(machinePoolScope.AWSMachinePool, expinfrav1.MachinePoolFinalizer) {
+		// Register finalizer immediately to avoid orphaning AWS resources
+		if err := machinePoolScope.PatchObject(); err != nil {
+			return ctrl.Result{}, err
+		}
 	}
 
 	if !machinePoolScope.Cluster.Status.InfrastructureReady {
@@ -393,7 +394,18 @@ func (r *AWSMachinePoolReconciler) reconcileDelete(machinePoolScope *scope.Machi
 
 func (r *AWSMachinePoolReconciler) updatePool(machinePoolScope *scope.MachinePoolScope, clusterScope cloud.ClusterScoper, existingASG *expinfrav1.AutoScalingGroup) error {
 	asgSvc := r.getASGService(clusterScope)
-	if asgNeedsUpdates(machinePoolScope, existingASG) {
+
+	subnetIDs, err := asgSvc.SubnetIDs(machinePoolScope)
+	if err != nil {
+		return errors.Wrapf(err, "fail to get subnets for ASG")
+	}
+	machinePoolScope.Debug("determining if subnets change in machinePoolScope",
+		"subnets of machinePoolScope", subnetIDs,
+		"subnets of existing asg", existingASG.Subnets)
+	less := func(a, b string) bool { return a < b }
+	subnetChanges := cmp.Diff(subnetIDs, existingASG.Subnets, cmpopts.SortSlices(less)) != ""
+
+	if asgNeedsUpdates(machinePoolScope, existingASG) || subnetChanges {
 		machinePoolScope.Info("updating AutoScalingGroup")
 
 		if err := asgSvc.UpdateASG(machinePoolScope); err != nil {
@@ -509,8 +521,6 @@ func asgNeedsUpdates(machinePoolScope *scope.MachinePoolScope, existingASG *expi
 		return true
 	}
 
-	// todo subnet diff
-
 	return false
 }
 
@@ -545,7 +555,7 @@ func machinePoolToInfrastructureMapFunc(gvk schema.GroupVersionKind) handler.Map
 	return func(o client.Object) []reconcile.Request {
 		m, ok := o.(*expclusterv1.MachinePool)
 		if !ok {
-			panic(fmt.Sprintf("Expected a MachinePool but got a %T", o))
+			klog.Error("Expected a MachinePool but got a %T", o)
 		}
 
 		gk := gvk.GroupKind()

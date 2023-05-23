@@ -67,6 +67,7 @@ const (
 	PreCSIKubernetesVer                  = "PRE_1_23_KUBERNETES_VERSION"
 	PostCSIKubernetesVer                 = "POST_1_23_KUBERNETES_VERSION"
 	EFSSupport                           = "efs-support"
+	IntreeCloudProvider                  = "intree-cloud-provider"
 )
 
 var ResourceQuotaFilePath = "/tmp/capa-e2e-resource-usage.lock"
@@ -146,7 +147,7 @@ func getLimitedResources() map[string]*ServiceQuota {
 		ServiceCode:         "vpc",
 		QuotaName:           "VPCs per Region",
 		QuotaCode:           "L-F678F1CE",
-		DesiredMinimumValue: 20,
+		DesiredMinimumValue: 25,
 	}
 
 	serviceQuotas["ec2-normal"] = &ServiceQuota{
@@ -182,6 +183,13 @@ func getLimitedResources() map[string]*ServiceQuota {
 		QuotaName:           "Storage for General Purpose SSD (gp2) volumes, in TiB",
 		QuotaCode:           "L-D18FCD1D",
 		DesiredMinimumValue: 50,
+	}
+
+	serviceQuotas["eventBridge-rules"] = &ServiceQuota{
+		ServiceCode:         "events",
+		QuotaName:           "Maximum number of rules an account can have per event bus",
+		QuotaCode:           "L-244521F2",
+		DesiredMinimumValue: 500,
 	}
 
 	return serviceQuotas

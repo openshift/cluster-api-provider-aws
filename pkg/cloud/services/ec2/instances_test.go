@@ -141,7 +141,7 @@ func TestInstanceIfExists(t *testing.T) {
 					t.Fatalf("expected instance but got nothing")
 				}
 
-				if instance.ID != "id-1" {
+				if instance != nil && instance.ID != "id-1" {
 					t.Fatalf("expected id-1 but got: %v", instance.ID)
 				}
 			},
@@ -310,7 +310,7 @@ func TestCreateInstance(t *testing.T) {
 				},
 				Spec: clusterv1.MachineSpec{
 					Bootstrap: clusterv1.Bootstrap{
-						DataSecretName: pointer.StringPtr("bootstrap-data"),
+						DataSecretName: pointer.String("bootstrap-data"),
 					},
 				},
 			},
@@ -348,13 +348,30 @@ func TestCreateInstance(t *testing.T) {
 								ID: "3",
 							},
 						},
-						APIServerELB: infrav1.ClassicELB{
+						APIServerELB: infrav1.LoadBalancer{
 							DNSName: "test-apiserver.us-east-1.aws",
 						},
 					},
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
+				m.
+					DescribeInstanceTypes(gomock.Eq(&ec2.DescribeInstanceTypesInput{
+						InstanceTypes: []*string{
+							aws.String("m5.large"),
+						},
+					})).
+					Return(&ec2.DescribeInstanceTypesOutput{
+						InstanceTypes: []*ec2.InstanceTypeInfo{
+							{
+								ProcessorInfo: &ec2.ProcessorInfo{
+									SupportedArchitectures: []*string{
+										aws.String("x86_64"),
+									},
+								},
+							},
+						},
+					}, nil)
 				m. // TODO: Restore these parameters, but with the tags as well
 					RunInstances(gomock.Any()).
 					Return(&ec2.Reservation{
@@ -385,8 +402,12 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					}, nil)
-				m.WaitUntilInstanceRunningWithContext(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(nil)
+				m.
+					DescribeNetworkInterfaces(gomock.Any()).
+					Return(&ec2.DescribeNetworkInterfacesOutput{
+						NetworkInterfaces: []*ec2.NetworkInterface{},
+						NextToken:         nil,
+					}, nil)
 			},
 			check: func(instance *infrav1.Instance, err error) {
 				if err != nil {
@@ -402,7 +423,7 @@ func TestCreateInstance(t *testing.T) {
 				},
 				Spec: clusterv1.MachineSpec{
 					Bootstrap: clusterv1.Bootstrap{
-						DataSecretName: pointer.StringPtr("bootstrap-data"),
+						DataSecretName: pointer.String("bootstrap-data"),
 					},
 					FailureDomain: aws.String("us-east-1c"),
 				},
@@ -454,13 +475,30 @@ func TestCreateInstance(t *testing.T) {
 								ID: "3",
 							},
 						},
-						APIServerELB: infrav1.ClassicELB{
+						APIServerELB: infrav1.LoadBalancer{
 							DNSName: "test-apiserver.us-east-1.aws",
 						},
 					},
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
+				m.
+					DescribeInstanceTypes(gomock.Eq(&ec2.DescribeInstanceTypesInput{
+						InstanceTypes: []*string{
+							aws.String("m5.2xlarge"),
+						},
+					})).
+					Return(&ec2.DescribeInstanceTypesOutput{
+						InstanceTypes: []*ec2.InstanceTypeInfo{
+							{
+								ProcessorInfo: &ec2.ProcessorInfo{
+									SupportedArchitectures: []*string{
+										aws.String("x86_64"),
+									},
+								},
+							},
+						},
+					}, nil)
 				m.
 					RunInstances(gomock.Any()).
 					Return(&ec2.Reservation{
@@ -491,9 +529,12 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					}, nil)
-
-				m.WaitUntilInstanceRunningWithContext(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(nil)
+				m.
+					DescribeNetworkInterfaces(gomock.Any()).
+					Return(&ec2.DescribeNetworkInterfacesOutput{
+						NetworkInterfaces: []*ec2.NetworkInterface{},
+						NextToken:         nil,
+					}, nil)
 			},
 			check: func(instance *infrav1.Instance, err error) {
 				if err != nil {
@@ -513,14 +554,14 @@ func TestCreateInstance(t *testing.T) {
 				},
 				Spec: clusterv1.MachineSpec{
 					Bootstrap: clusterv1.Bootstrap{
-						DataSecretName: pointer.StringPtr("bootstrap-data"),
+						DataSecretName: pointer.String("bootstrap-data"),
 					},
-					Version: pointer.StringPtr("v1.16.1"),
+					Version: pointer.String("v1.16.1"),
 				},
 			},
 			machineConfig: &infrav1.AWSMachineSpec{
 				ImageLookupOrg: "test-org-123",
-				InstanceType:   "m5.large",
+				InstanceType:   "m6g.large",
 			},
 			awsCluster: &infrav1.AWSCluster{
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
@@ -550,7 +591,7 @@ func TestCreateInstance(t *testing.T) {
 								ID: "3",
 							},
 						},
-						APIServerELB: infrav1.ClassicELB{
+						APIServerELB: infrav1.LoadBalancer{
 							DNSName: "test-apiserver.us-east-1.aws",
 						},
 					},
@@ -561,6 +602,23 @@ func TestCreateInstance(t *testing.T) {
 				if err != nil {
 					t.Fatalf("Failed to process ami format: %v", err)
 				}
+				m.
+					DescribeInstanceTypes(gomock.Eq(&ec2.DescribeInstanceTypesInput{
+						InstanceTypes: []*string{
+							aws.String("m6g.large"),
+						},
+					})).
+					Return(&ec2.DescribeInstanceTypesOutput{
+						InstanceTypes: []*ec2.InstanceTypeInfo{
+							{
+								ProcessorInfo: &ec2.ProcessorInfo{
+									SupportedArchitectures: []*string{
+										aws.String("arm64"),
+									},
+								},
+							},
+						},
+					}, nil)
 				// verify that the ImageLookupOrg is used when finding AMIs
 				m.
 					DescribeImages(gomock.Eq(&ec2.DescribeImagesInput{
@@ -575,7 +633,7 @@ func TestCreateInstance(t *testing.T) {
 							},
 							{
 								Name:   aws.String("architecture"),
-								Values: []*string{aws.String("x86_64")},
+								Values: []*string{aws.String("arm64")},
 							},
 							{
 								Name:   aws.String("state"),
@@ -625,9 +683,12 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					}, nil)
-
-				m.WaitUntilInstanceRunningWithContext(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(nil)
+				m.
+					DescribeNetworkInterfaces(gomock.Any()).
+					Return(&ec2.DescribeNetworkInterfacesOutput{
+						NetworkInterfaces: []*ec2.NetworkInterface{},
+						NextToken:         nil,
+					}, nil)
 			},
 			check: func(instance *infrav1.Instance, err error) {
 				if err != nil {
@@ -643,9 +704,9 @@ func TestCreateInstance(t *testing.T) {
 				},
 				Spec: clusterv1.MachineSpec{
 					Bootstrap: clusterv1.Bootstrap{
-						DataSecretName: pointer.StringPtr("bootstrap-data"),
+						DataSecretName: pointer.String("bootstrap-data"),
 					},
-					Version: pointer.StringPtr("v1.16.1"),
+					Version: pointer.String("v1.16.1"),
 				},
 			},
 			machineConfig: &infrav1.AWSMachineSpec{
@@ -680,7 +741,7 @@ func TestCreateInstance(t *testing.T) {
 								ID: "3",
 							},
 						},
-						APIServerELB: infrav1.ClassicELB{
+						APIServerELB: infrav1.LoadBalancer{
 							DNSName: "test-apiserver.us-east-1.aws",
 						},
 					},
@@ -691,6 +752,23 @@ func TestCreateInstance(t *testing.T) {
 				if err != nil {
 					t.Fatalf("Failed to process ami format: %v", err)
 				}
+				m.
+					DescribeInstanceTypes(gomock.Eq(&ec2.DescribeInstanceTypesInput{
+						InstanceTypes: []*string{
+							aws.String("m5.large"),
+						},
+					})).
+					Return(&ec2.DescribeInstanceTypesOutput{
+						InstanceTypes: []*ec2.InstanceTypeInfo{
+							{
+								ProcessorInfo: &ec2.ProcessorInfo{
+									SupportedArchitectures: []*string{
+										aws.String("x86_64"),
+									},
+								},
+							},
+						},
+					}, nil)
 				// verify that the ImageLookupOrg is used when finding AMIs
 				m.
 					DescribeImages(gomock.Eq(&ec2.DescribeImagesInput{
@@ -755,9 +833,12 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					}, nil)
-
-				m.WaitUntilInstanceRunningWithContext(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(nil)
+				m.
+					DescribeNetworkInterfaces(gomock.Any()).
+					Return(&ec2.DescribeNetworkInterfacesOutput{
+						NetworkInterfaces: []*ec2.NetworkInterface{},
+						NextToken:         nil,
+					}, nil)
 			},
 			check: func(instance *infrav1.Instance, err error) {
 				if err != nil {
@@ -773,9 +854,9 @@ func TestCreateInstance(t *testing.T) {
 				},
 				Spec: clusterv1.MachineSpec{
 					Bootstrap: clusterv1.Bootstrap{
-						DataSecretName: pointer.StringPtr("bootstrap-data"),
+						DataSecretName: pointer.String("bootstrap-data"),
 					},
-					Version: pointer.StringPtr("v1.16.1"),
+					Version: pointer.String("v1.16.1"),
 				},
 			},
 			machineConfig: &infrav1.AWSMachineSpec{
@@ -811,7 +892,7 @@ func TestCreateInstance(t *testing.T) {
 								ID: "3",
 							},
 						},
-						APIServerELB: infrav1.ClassicELB{
+						APIServerELB: infrav1.LoadBalancer{
 							DNSName: "test-apiserver.us-east-1.aws",
 						},
 					},
@@ -822,6 +903,23 @@ func TestCreateInstance(t *testing.T) {
 				if err != nil {
 					t.Fatalf("Failed to process ami format: %v", err)
 				}
+				m.
+					DescribeInstanceTypes(gomock.Eq(&ec2.DescribeInstanceTypesInput{
+						InstanceTypes: []*string{
+							aws.String("m5.large"),
+						},
+					})).
+					Return(&ec2.DescribeInstanceTypesOutput{
+						InstanceTypes: []*ec2.InstanceTypeInfo{
+							{
+								ProcessorInfo: &ec2.ProcessorInfo{
+									SupportedArchitectures: []*string{
+										aws.String("x86_64"),
+									},
+								},
+							},
+						},
+					}, nil)
 				// verify that the ImageLookupOrg is used when finding AMIs
 				m.
 					DescribeImages(gomock.Eq(&ec2.DescribeImagesInput{
@@ -886,9 +984,12 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					}, nil)
-
-				m.WaitUntilInstanceRunningWithContext(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(nil)
+				m.
+					DescribeNetworkInterfaces(gomock.Any()).
+					Return(&ec2.DescribeNetworkInterfacesOutput{
+						NetworkInterfaces: []*ec2.NetworkInterface{},
+						NextToken:         nil,
+					}, nil)
 			},
 			check: func(instance *infrav1.Instance, err error) {
 				if err != nil {
@@ -904,7 +1005,7 @@ func TestCreateInstance(t *testing.T) {
 				},
 				Spec: clusterv1.MachineSpec{
 					Bootstrap: clusterv1.Bootstrap{
-						DataSecretName: pointer.StringPtr("bootstrap-data"),
+						DataSecretName: pointer.String("bootstrap-data"),
 					},
 					FailureDomain: aws.String("us-east-1b"),
 				},
@@ -943,13 +1044,30 @@ func TestCreateInstance(t *testing.T) {
 								ID: "3",
 							},
 						},
-						APIServerELB: infrav1.ClassicELB{
+						APIServerELB: infrav1.LoadBalancer{
 							DNSName: "test-apiserver.us-east-1.aws",
 						},
 					},
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
+				m.
+					DescribeInstanceTypes(gomock.Eq(&ec2.DescribeInstanceTypesInput{
+						InstanceTypes: []*string{
+							aws.String("m5.large"),
+						},
+					})).
+					Return(&ec2.DescribeInstanceTypesOutput{
+						InstanceTypes: []*ec2.InstanceTypeInfo{
+							{
+								ProcessorInfo: &ec2.ProcessorInfo{
+									SupportedArchitectures: []*string{
+										aws.String("x86_64"),
+									},
+								},
+							},
+						},
+					}, nil)
 				m.
 					DescribeSubnets(&ec2.DescribeSubnetsInput{
 						Filters: []*ec2.Filter{
@@ -994,8 +1112,12 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					}, nil)
-				m.WaitUntilInstanceRunningWithContext(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(nil)
+				m.
+					DescribeNetworkInterfaces(gomock.Any()).
+					Return(&ec2.DescribeNetworkInterfacesOutput{
+						NetworkInterfaces: []*ec2.NetworkInterface{},
+						NextToken:         nil,
+					}, nil)
 			},
 			check: func(instance *infrav1.Instance, err error) {
 				if err != nil {
@@ -1011,7 +1133,7 @@ func TestCreateInstance(t *testing.T) {
 				},
 				Spec: clusterv1.MachineSpec{
 					Bootstrap: clusterv1.Bootstrap{
-						DataSecretName: pointer.StringPtr("bootstrap-data"),
+						DataSecretName: pointer.String("bootstrap-data"),
 					},
 				},
 			},
@@ -1049,7 +1171,7 @@ func TestCreateInstance(t *testing.T) {
 								ID: "3",
 							},
 						},
-						APIServerELB: infrav1.ClassicELB{
+						APIServerELB: infrav1.LoadBalancer{
 							DNSName: "test-apiserver.us-east-1.aws",
 						},
 					},
@@ -1069,6 +1191,23 @@ func TestCreateInstance(t *testing.T) {
 							SubnetId:         aws.String("matching-subnet"),
 							AvailabilityZone: aws.String("us-east-1b"),
 						}},
+					}, nil)
+				m.
+					DescribeInstanceTypes(gomock.Eq(&ec2.DescribeInstanceTypesInput{
+						InstanceTypes: []*string{
+							aws.String("m5.large"),
+						},
+					})).
+					Return(&ec2.DescribeInstanceTypesOutput{
+						InstanceTypes: []*ec2.InstanceTypeInfo{
+							{
+								ProcessorInfo: &ec2.ProcessorInfo{
+									SupportedArchitectures: []*string{
+										aws.String("x86_64"),
+									},
+								},
+							},
+						},
 					}, nil)
 				m.
 					RunInstances(gomock.Any()).
@@ -1100,8 +1239,12 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					}, nil)
-				m.WaitUntilInstanceRunningWithContext(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(nil)
+				m.
+					DescribeNetworkInterfaces(gomock.Any()).
+					Return(&ec2.DescribeNetworkInterfacesOutput{
+						NetworkInterfaces: []*ec2.NetworkInterface{},
+						NextToken:         nil,
+					}, nil)
 			},
 			check: func(instance *infrav1.Instance, err error) {
 				if err != nil {
@@ -1117,7 +1260,7 @@ func TestCreateInstance(t *testing.T) {
 				},
 				Spec: clusterv1.MachineSpec{
 					Bootstrap: clusterv1.Bootstrap{
-						DataSecretName: pointer.StringPtr("bootstrap-data"),
+						DataSecretName: pointer.String("bootstrap-data"),
 					},
 				},
 			},
@@ -1155,13 +1298,30 @@ func TestCreateInstance(t *testing.T) {
 								ID: "3",
 							},
 						},
-						APIServerELB: infrav1.ClassicELB{
+						APIServerELB: infrav1.LoadBalancer{
 							DNSName: "test-apiserver.us-east-1.aws",
 						},
 					},
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
+				m.
+					DescribeInstanceTypes(gomock.Eq(&ec2.DescribeInstanceTypesInput{
+						InstanceTypes: []*string{
+							aws.String("m5.large"),
+						},
+					})).
+					Return(&ec2.DescribeInstanceTypesOutput{
+						InstanceTypes: []*ec2.InstanceTypeInfo{
+							{
+								ProcessorInfo: &ec2.ProcessorInfo{
+									SupportedArchitectures: []*string{
+										aws.String("x86_64"),
+									},
+								},
+							},
+						},
+					}, nil)
 				m.
 					DescribeSubnets(&ec2.DescribeSubnetsInput{
 						Filters: []*ec2.Filter{
@@ -1193,7 +1353,7 @@ func TestCreateInstance(t *testing.T) {
 				},
 				Spec: clusterv1.MachineSpec{
 					Bootstrap: clusterv1.Bootstrap{
-						DataSecretName: pointer.StringPtr("bootstrap-data"),
+						DataSecretName: pointer.String("bootstrap-data"),
 					},
 				},
 			},
@@ -1231,26 +1391,13 @@ func TestCreateInstance(t *testing.T) {
 								ID: "3",
 							},
 						},
-						APIServerELB: infrav1.ClassicELB{
+						APIServerELB: infrav1.LoadBalancer{
 							DNSName: "test-apiserver.us-east-1.aws",
 						},
 					},
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.
-					DescribeSubnets(&ec2.DescribeSubnetsInput{
-						Filters: []*ec2.Filter{
-							filter.EC2.SubnetStates(ec2.SubnetStatePending, ec2.SubnetStateAvailable),
-							filter.EC2.VPC("vpc-id"),
-							{Name: aws.String("subnet-id"), Values: aws.StringSlice([]string{"matching-subnet"})},
-						},
-					}).
-					Return(&ec2.DescribeSubnetsOutput{
-						Subnets: []*ec2.Subnet{{
-							SubnetId: aws.String("matching-subnet"),
-						}},
-					}, nil)
 				m.
 					RunInstances(gomock.Any()).
 					Return(&ec2.Reservation{
@@ -1281,8 +1428,42 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					}, nil)
-				m.WaitUntilInstanceRunningWithContext(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(nil)
+				m.
+					DescribeInstanceTypes(gomock.Eq(&ec2.DescribeInstanceTypesInput{
+						InstanceTypes: []*string{
+							aws.String("m5.large"),
+						},
+					})).
+					Return(&ec2.DescribeInstanceTypesOutput{
+						InstanceTypes: []*ec2.InstanceTypeInfo{
+							{
+								ProcessorInfo: &ec2.ProcessorInfo{
+									SupportedArchitectures: []*string{
+										aws.String("x86_64"),
+									},
+								},
+							},
+						},
+					}, nil)
+				m.
+					DescribeSubnets(&ec2.DescribeSubnetsInput{
+						Filters: []*ec2.Filter{
+							filter.EC2.SubnetStates(ec2.SubnetStatePending, ec2.SubnetStateAvailable),
+							filter.EC2.VPC("vpc-id"),
+							{Name: aws.String("subnet-id"), Values: aws.StringSlice([]string{"matching-subnet"})},
+						},
+					}).
+					Return(&ec2.DescribeSubnetsOutput{
+						Subnets: []*ec2.Subnet{{
+							SubnetId: aws.String("matching-subnet"),
+						}},
+					}, nil)
+				m.
+					DescribeNetworkInterfaces(gomock.Any()).
+					Return(&ec2.DescribeNetworkInterfacesOutput{
+						NetworkInterfaces: []*ec2.NetworkInterface{},
+						NextToken:         nil,
+					}, nil)
 			},
 			check: func(instance *infrav1.Instance, err error) {
 				if err != nil {
@@ -1298,7 +1479,7 @@ func TestCreateInstance(t *testing.T) {
 				},
 				Spec: clusterv1.MachineSpec{
 					Bootstrap: clusterv1.Bootstrap{
-						DataSecretName: pointer.StringPtr("bootstrap-data"),
+						DataSecretName: pointer.String("bootstrap-data"),
 					},
 					FailureDomain: aws.String("us-east-1b"),
 				},
@@ -1338,7 +1519,7 @@ func TestCreateInstance(t *testing.T) {
 								ID: "3",
 							},
 						},
-						APIServerELB: infrav1.ClassicELB{
+						APIServerELB: infrav1.LoadBalancer{
 							DNSName: "test-apiserver.us-east-1.aws",
 						},
 					},
@@ -1358,6 +1539,23 @@ func TestCreateInstance(t *testing.T) {
 							SubnetId:         aws.String("subnet-1"),
 							AvailabilityZone: aws.String("us-west-1b"),
 						}},
+					}, nil)
+				m.
+					DescribeInstanceTypes(gomock.Eq(&ec2.DescribeInstanceTypesInput{
+						InstanceTypes: []*string{
+							aws.String("m5.large"),
+						},
+					})).
+					Return(&ec2.DescribeInstanceTypesOutput{
+						InstanceTypes: []*ec2.InstanceTypeInfo{
+							{
+								ProcessorInfo: &ec2.ProcessorInfo{
+									SupportedArchitectures: []*string{
+										aws.String("x86_64"),
+									},
+								},
+							},
+						},
 					}, nil)
 			},
 			check: func(instance *infrav1.Instance, err error) {
@@ -1379,7 +1577,7 @@ func TestCreateInstance(t *testing.T) {
 				},
 				Spec: clusterv1.MachineSpec{
 					Bootstrap: clusterv1.Bootstrap{
-						DataSecretName: pointer.StringPtr("bootstrap-data"),
+						DataSecretName: pointer.String("bootstrap-data"),
 					},
 					FailureDomain: aws.String("us-east-1b"),
 				},
@@ -1418,13 +1616,30 @@ func TestCreateInstance(t *testing.T) {
 								ID: "3",
 							},
 						},
-						APIServerELB: infrav1.ClassicELB{
+						APIServerELB: infrav1.LoadBalancer{
 							DNSName: "test-apiserver.us-east-1.aws",
 						},
 					},
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
+				m.
+					DescribeInstanceTypes(gomock.Eq(&ec2.DescribeInstanceTypesInput{
+						InstanceTypes: []*string{
+							aws.String("m5.large"),
+						},
+					})).
+					Return(&ec2.DescribeInstanceTypesOutput{
+						InstanceTypes: []*ec2.InstanceTypeInfo{
+							{
+								ProcessorInfo: &ec2.ProcessorInfo{
+									SupportedArchitectures: []*string{
+										aws.String("x86_64"),
+									},
+								},
+							},
+						},
+					}, nil)
 			},
 			check: func(instance *infrav1.Instance, err error) {
 				expectedErrMsg := "failed to run machine \"aws-test1\" with public IP, no public subnets available in availability zone \"us-east-1b\""
@@ -1445,7 +1660,7 @@ func TestCreateInstance(t *testing.T) {
 				},
 				Spec: clusterv1.MachineSpec{
 					Bootstrap: clusterv1.Bootstrap{
-						DataSecretName: pointer.StringPtr("bootstrap-data"),
+						DataSecretName: pointer.String("bootstrap-data"),
 					},
 				},
 			},
@@ -1485,7 +1700,7 @@ func TestCreateInstance(t *testing.T) {
 								ID: "3",
 							},
 						},
-						APIServerELB: infrav1.ClassicELB{
+						APIServerELB: infrav1.LoadBalancer{
 							DNSName: "test-apiserver.us-east-1.aws",
 						},
 					},
@@ -1506,6 +1721,23 @@ func TestCreateInstance(t *testing.T) {
 							AvailabilityZone:    aws.String("us-east-1b"),
 							MapPublicIpOnLaunch: aws.Bool(true),
 						}},
+					}, nil)
+				m.
+					DescribeInstanceTypes(gomock.Eq(&ec2.DescribeInstanceTypesInput{
+						InstanceTypes: []*string{
+							aws.String("m5.large"),
+						},
+					})).
+					Return(&ec2.DescribeInstanceTypesOutput{
+						InstanceTypes: []*ec2.InstanceTypeInfo{
+							{
+								ProcessorInfo: &ec2.ProcessorInfo{
+									SupportedArchitectures: []*string{
+										aws.String("x86_64"),
+									},
+								},
+							},
+						},
 					}, nil)
 				m.
 					RunInstances(gomock.Any()).
@@ -1537,8 +1769,12 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					}, nil)
-				m.WaitUntilInstanceRunningWithContext(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(nil)
+				m.
+					DescribeNetworkInterfaces(gomock.Any()).
+					Return(&ec2.DescribeNetworkInterfacesOutput{
+						NetworkInterfaces: []*ec2.NetworkInterface{},
+						NextToken:         nil,
+					}, nil)
 			},
 			check: func(instance *infrav1.Instance, err error) {
 				if err != nil {
@@ -1554,7 +1790,7 @@ func TestCreateInstance(t *testing.T) {
 				},
 				Spec: clusterv1.MachineSpec{
 					Bootstrap: clusterv1.Bootstrap{
-						DataSecretName: pointer.StringPtr("bootstrap-data"),
+						DataSecretName: pointer.String("bootstrap-data"),
 					},
 				},
 			},
@@ -1594,7 +1830,7 @@ func TestCreateInstance(t *testing.T) {
 								ID: "3",
 							},
 						},
-						APIServerELB: infrav1.ClassicELB{
+						APIServerELB: infrav1.LoadBalancer{
 							DNSName: "test-apiserver.us-east-1.aws",
 						},
 					},
@@ -1616,6 +1852,23 @@ func TestCreateInstance(t *testing.T) {
 							MapPublicIpOnLaunch: aws.Bool(false),
 						}},
 					}, nil)
+				m.
+					DescribeInstanceTypes(gomock.Eq(&ec2.DescribeInstanceTypesInput{
+						InstanceTypes: []*string{
+							aws.String("m5.large"),
+						},
+					})).
+					Return(&ec2.DescribeInstanceTypesOutput{
+						InstanceTypes: []*ec2.InstanceTypeInfo{
+							{
+								ProcessorInfo: &ec2.ProcessorInfo{
+									SupportedArchitectures: []*string{
+										aws.String("x86_64"),
+									},
+								},
+							},
+						},
+					}, nil)
 			},
 			check: func(instance *infrav1.Instance, err error) {
 				expectedErrMsg := "failed to run machine \"aws-test1\", found 1 subnets matching criteria but post-filtering failed. subnet \"private-subnet-1\" is a private subnet."
@@ -1636,7 +1889,7 @@ func TestCreateInstance(t *testing.T) {
 				},
 				Spec: clusterv1.MachineSpec{
 					Bootstrap: clusterv1.Bootstrap{
-						DataSecretName: pointer.StringPtr("bootstrap-data"),
+						DataSecretName: pointer.String("bootstrap-data"),
 					},
 				},
 			},
@@ -1685,13 +1938,30 @@ func TestCreateInstance(t *testing.T) {
 								ID: "3",
 							},
 						},
-						APIServerELB: infrav1.ClassicELB{
+						APIServerELB: infrav1.LoadBalancer{
 							DNSName: "test-apiserver.us-east-1.aws",
 						},
 					},
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
+				m.
+					DescribeInstanceTypes(gomock.Eq(&ec2.DescribeInstanceTypesInput{
+						InstanceTypes: []*string{
+							aws.String("m5.large"),
+						},
+					})).
+					Return(&ec2.DescribeInstanceTypesOutput{
+						InstanceTypes: []*ec2.InstanceTypeInfo{
+							{
+								ProcessorInfo: &ec2.ProcessorInfo{
+									SupportedArchitectures: []*string{
+										aws.String("x86_64"),
+									},
+								},
+							},
+						},
+					}, nil)
 				m.
 					DescribeSubnets(&ec2.DescribeSubnetsInput{
 						Filters: []*ec2.Filter{
@@ -1736,8 +2006,12 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					}, nil)
-				m.WaitUntilInstanceRunningWithContext(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(nil)
+				m.
+					DescribeNetworkInterfaces(gomock.Any()).
+					Return(&ec2.DescribeNetworkInterfacesOutput{
+						NetworkInterfaces: []*ec2.NetworkInterface{},
+						NextToken:         nil,
+					}, nil)
 			},
 			check: func(instance *infrav1.Instance, err error) {
 				if err != nil {
@@ -1753,7 +2027,7 @@ func TestCreateInstance(t *testing.T) {
 				},
 				Spec: clusterv1.MachineSpec{
 					Bootstrap: clusterv1.Bootstrap{
-						DataSecretName: pointer.StringPtr("bootstrap-data"),
+						DataSecretName: pointer.String("bootstrap-data"),
 					},
 				},
 			},
@@ -1796,13 +2070,30 @@ func TestCreateInstance(t *testing.T) {
 								ID: "3",
 							},
 						},
-						APIServerELB: infrav1.ClassicELB{
+						APIServerELB: infrav1.LoadBalancer{
 							DNSName: "test-apiserver.us-east-1.aws",
 						},
 					},
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
+				m.
+					DescribeInstanceTypes(gomock.Eq(&ec2.DescribeInstanceTypesInput{
+						InstanceTypes: []*string{
+							aws.String("m5.large"),
+						},
+					})).
+					Return(&ec2.DescribeInstanceTypesOutput{
+						InstanceTypes: []*ec2.InstanceTypeInfo{
+							{
+								ProcessorInfo: &ec2.ProcessorInfo{
+									SupportedArchitectures: []*string{
+										aws.String("x86_64"),
+									},
+								},
+							},
+						},
+					}, nil)
 				m.
 					RunInstances(gomock.Any()).
 					Return(&ec2.Reservation{
@@ -1833,8 +2124,12 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					}, nil)
-				m.WaitUntilInstanceRunningWithContext(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(nil)
+				m.
+					DescribeNetworkInterfaces(gomock.Any()).
+					Return(&ec2.DescribeNetworkInterfacesOutput{
+						NetworkInterfaces: []*ec2.NetworkInterface{},
+						NextToken:         nil,
+					}, nil)
 			},
 			check: func(instance *infrav1.Instance, err error) {
 				if err != nil {
@@ -1850,7 +2145,7 @@ func TestCreateInstance(t *testing.T) {
 				},
 				Spec: clusterv1.MachineSpec{
 					Bootstrap: clusterv1.Bootstrap{
-						DataSecretName: pointer.StringPtr("bootstrap-data"),
+						DataSecretName: pointer.String("bootstrap-data"),
 					},
 				},
 			},
@@ -1889,13 +2184,30 @@ func TestCreateInstance(t *testing.T) {
 								ID: "3",
 							},
 						},
-						APIServerELB: infrav1.ClassicELB{
+						APIServerELB: infrav1.LoadBalancer{
 							DNSName: "test-apiserver.us-east-1.aws",
 						},
 					},
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
+				m.
+					DescribeInstanceTypes(gomock.Eq(&ec2.DescribeInstanceTypesInput{
+						InstanceTypes: []*string{
+							aws.String("m5.large"),
+						},
+					})).
+					Return(&ec2.DescribeInstanceTypesOutput{
+						InstanceTypes: []*ec2.InstanceTypeInfo{
+							{
+								ProcessorInfo: &ec2.ProcessorInfo{
+									SupportedArchitectures: []*string{
+										aws.String("x86_64"),
+									},
+								},
+							},
+						},
+					}, nil)
 			},
 			check: func(instance *infrav1.Instance, err error) {
 				expectedErrMsg := "failed to run machine \"aws-test1\" with public IP, no public subnets available"
@@ -1916,7 +2228,7 @@ func TestCreateInstance(t *testing.T) {
 				},
 				Spec: clusterv1.MachineSpec{
 					Bootstrap: clusterv1.Bootstrap{
-						DataSecretName: pointer.StringPtr("bootstrap-data"),
+						DataSecretName: pointer.String("bootstrap-data"),
 					},
 				},
 			},
@@ -1958,13 +2270,30 @@ func TestCreateInstance(t *testing.T) {
 								ID: "3",
 							},
 						},
-						APIServerELB: infrav1.ClassicELB{
+						APIServerELB: infrav1.LoadBalancer{
 							DNSName: "test-apiserver.us-east-1.aws",
 						},
 					},
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
+				m.
+					DescribeInstanceTypes(gomock.Eq(&ec2.DescribeInstanceTypesInput{
+						InstanceTypes: []*string{
+							aws.String("m5.large"),
+						},
+					})).
+					Return(&ec2.DescribeInstanceTypesOutput{
+						InstanceTypes: []*ec2.InstanceTypeInfo{
+							{
+								ProcessorInfo: &ec2.ProcessorInfo{
+									SupportedArchitectures: []*string{
+										aws.String("x86_64"),
+									},
+								},
+							},
+						},
+					}, nil)
 				m. // TODO: Restore these parameters, but with the tags as well
 					RunInstances(gomock.Any()).
 					Return(&ec2.Reservation{
@@ -2001,8 +2330,12 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					}, nil)
-				m.WaitUntilInstanceRunningWithContext(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(nil)
+				m.
+					DescribeNetworkInterfaces(gomock.Any()).
+					Return(&ec2.DescribeNetworkInterfacesOutput{
+						NetworkInterfaces: []*ec2.NetworkInterface{},
+						NextToken:         nil,
+					}, nil)
 			},
 			check: func(instance *infrav1.Instance, err error) {
 				if err != nil {
@@ -2020,7 +2353,7 @@ func TestCreateInstance(t *testing.T) {
 				},
 				Spec: clusterv1.MachineSpec{
 					Bootstrap: clusterv1.Bootstrap{
-						DataSecretName: pointer.StringPtr("bootstrap-data"),
+						DataSecretName: pointer.String("bootstrap-data"),
 					},
 				},
 			},
@@ -2059,7 +2392,7 @@ func TestCreateInstance(t *testing.T) {
 								ID: "3",
 							},
 						},
-						APIServerELB: infrav1.ClassicELB{
+						APIServerELB: infrav1.LoadBalancer{
 							DNSName: "test-apiserver.us-east-1.aws",
 						},
 					},
@@ -2136,8 +2469,29 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					}, nil)
-				m.WaitUntilInstanceRunningWithContext(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(nil)
+				m.
+					DescribeInstanceTypes(gomock.Eq(&ec2.DescribeInstanceTypesInput{
+						InstanceTypes: []*string{
+							aws.String("m5.large"),
+						},
+					})).
+					Return(&ec2.DescribeInstanceTypesOutput{
+						InstanceTypes: []*ec2.InstanceTypeInfo{
+							{
+								ProcessorInfo: &ec2.ProcessorInfo{
+									SupportedArchitectures: []*string{
+										aws.String("x86_64"),
+									},
+								},
+							},
+						},
+					}, nil)
+				m.
+					DescribeNetworkInterfaces(gomock.Any()).
+					Return(&ec2.DescribeNetworkInterfacesOutput{
+						NetworkInterfaces: []*ec2.NetworkInterface{},
+						NextToken:         nil,
+					}, nil)
 			},
 			check: func(instance *infrav1.Instance, err error) {
 				if err != nil {
@@ -2155,7 +2509,7 @@ func TestCreateInstance(t *testing.T) {
 				},
 				Spec: clusterv1.MachineSpec{
 					Bootstrap: clusterv1.Bootstrap{
-						DataSecretName: pointer.StringPtr("bootstrap-data"),
+						DataSecretName: pointer.String("bootstrap-data"),
 					},
 				},
 			},
@@ -2196,13 +2550,30 @@ func TestCreateInstance(t *testing.T) {
 								ID: "3",
 							},
 						},
-						APIServerELB: infrav1.ClassicELB{
+						APIServerELB: infrav1.LoadBalancer{
 							DNSName: "test-apiserver.us-east-1.aws",
 						},
 					},
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
+				m.
+					DescribeInstanceTypes(gomock.Eq(&ec2.DescribeInstanceTypesInput{
+						InstanceTypes: []*string{
+							aws.String("m5.large"),
+						},
+					})).
+					Return(&ec2.DescribeInstanceTypesOutput{
+						InstanceTypes: []*ec2.InstanceTypeInfo{
+							{
+								ProcessorInfo: &ec2.ProcessorInfo{
+									SupportedArchitectures: []*string{
+										aws.String("x86_64"),
+									},
+								},
+							},
+						},
+					}, nil)
 				m. // TODO: Restore these parameters, but with the tags as well
 					RunInstances(gomock.Eq(&ec2.RunInstancesInput{
 						ImageId:      aws.String("abc"),
@@ -2273,8 +2644,12 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					}, nil)
-				m.WaitUntilInstanceRunningWithContext(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(nil)
+				m.
+					DescribeNetworkInterfaces(gomock.Any()).
+					Return(&ec2.DescribeNetworkInterfacesOutput{
+						NetworkInterfaces: []*ec2.NetworkInterface{},
+						NextToken:         nil,
+					}, nil)
 			},
 			check: func(instance *infrav1.Instance, err error) {
 				if err != nil {
@@ -2290,9 +2665,9 @@ func TestCreateInstance(t *testing.T) {
 				},
 				Spec: clusterv1.MachineSpec{
 					Bootstrap: clusterv1.Bootstrap{
-						DataSecretName: pointer.StringPtr("bootstrap-data"),
+						DataSecretName: pointer.String("bootstrap-data"),
 					},
-					Version: pointer.StringPtr("v1.16.1"),
+					Version: pointer.String("v1.16.1"),
 				},
 			},
 			machineConfig: &infrav1.AWSMachineSpec{
@@ -2326,13 +2701,30 @@ func TestCreateInstance(t *testing.T) {
 								ID: "3",
 							},
 						},
-						APIServerELB: infrav1.ClassicELB{
+						APIServerELB: infrav1.LoadBalancer{
 							DNSName: "test-apiserver.us-east-1.aws",
 						},
 					},
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
+				m.
+					DescribeInstanceTypes(gomock.Eq(&ec2.DescribeInstanceTypesInput{
+						InstanceTypes: []*string{
+							aws.String("m5.large"),
+						},
+					})).
+					Return(&ec2.DescribeInstanceTypesOutput{
+						InstanceTypes: []*ec2.InstanceTypeInfo{
+							{
+								ProcessorInfo: &ec2.ProcessorInfo{
+									SupportedArchitectures: []*string{
+										aws.String("x86_64"),
+									},
+								},
+							},
+						},
+					}, nil)
 				m.
 					DescribeImages(gomock.Any()).
 					Return(&ec2.DescribeImagesOutput{
@@ -2381,8 +2773,12 @@ func TestCreateInstance(t *testing.T) {
 							},
 						}, nil
 					})
-				m.WaitUntilInstanceRunningWithContext(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(nil)
+				m.
+					DescribeNetworkInterfaces(gomock.Any()).
+					Return(&ec2.DescribeNetworkInterfacesOutput{
+						NetworkInterfaces: []*ec2.NetworkInterface{},
+						NextToken:         nil,
+					}, nil)
 			},
 			check: func(instance *infrav1.Instance, err error) {
 				if err != nil {
@@ -2398,9 +2794,9 @@ func TestCreateInstance(t *testing.T) {
 				},
 				Spec: clusterv1.MachineSpec{
 					Bootstrap: clusterv1.Bootstrap{
-						DataSecretName: pointer.StringPtr("bootstrap-data"),
+						DataSecretName: pointer.String("bootstrap-data"),
 					},
-					Version: pointer.StringPtr("v1.16.1"),
+					Version: pointer.String("v1.16.1"),
 				},
 			},
 			machineConfig: &infrav1.AWSMachineSpec{
@@ -2435,13 +2831,30 @@ func TestCreateInstance(t *testing.T) {
 								ID: "3",
 							},
 						},
-						APIServerELB: infrav1.ClassicELB{
+						APIServerELB: infrav1.LoadBalancer{
 							DNSName: "test-apiserver.us-east-1.aws",
 						},
 					},
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
+				m.
+					DescribeInstanceTypes(gomock.Eq(&ec2.DescribeInstanceTypesInput{
+						InstanceTypes: []*string{
+							aws.String("m5.large"),
+						},
+					})).
+					Return(&ec2.DescribeInstanceTypesOutput{
+						InstanceTypes: []*ec2.InstanceTypeInfo{
+							{
+								ProcessorInfo: &ec2.ProcessorInfo{
+									SupportedArchitectures: []*string{
+										aws.String("x86_64"),
+									},
+								},
+							},
+						},
+					}, nil)
 				m.
 					DescribeImages(gomock.Any()).
 					Return(&ec2.DescribeImagesOutput{
@@ -2490,8 +2903,12 @@ func TestCreateInstance(t *testing.T) {
 							},
 						}, nil
 					})
-				m.WaitUntilInstanceRunningWithContext(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(nil)
+				m.
+					DescribeNetworkInterfaces(gomock.Any()).
+					Return(&ec2.DescribeNetworkInterfacesOutput{
+						NetworkInterfaces: []*ec2.NetworkInterface{},
+						NextToken:         nil,
+					}, nil)
 			},
 			check: func(instance *infrav1.Instance, err error) {
 				if err != nil {
@@ -2507,9 +2924,9 @@ func TestCreateInstance(t *testing.T) {
 				},
 				Spec: clusterv1.MachineSpec{
 					Bootstrap: clusterv1.Bootstrap{
-						DataSecretName: pointer.StringPtr("bootstrap-data"),
+						DataSecretName: pointer.String("bootstrap-data"),
 					},
-					Version: pointer.StringPtr("v1.16.1"),
+					Version: pointer.String("v1.16.1"),
 				},
 			},
 			machineConfig: &infrav1.AWSMachineSpec{
@@ -2545,13 +2962,30 @@ func TestCreateInstance(t *testing.T) {
 								ID: "3",
 							},
 						},
-						APIServerELB: infrav1.ClassicELB{
+						APIServerELB: infrav1.LoadBalancer{
 							DNSName: "test-apiserver.us-east-1.aws",
 						},
 					},
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
+				m.
+					DescribeInstanceTypes(gomock.Eq(&ec2.DescribeInstanceTypesInput{
+						InstanceTypes: []*string{
+							aws.String("m5.large"),
+						},
+					})).
+					Return(&ec2.DescribeInstanceTypesOutput{
+						InstanceTypes: []*ec2.InstanceTypeInfo{
+							{
+								ProcessorInfo: &ec2.ProcessorInfo{
+									SupportedArchitectures: []*string{
+										aws.String("x86_64"),
+									},
+								},
+							},
+						},
+					}, nil)
 				m.
 					DescribeImages(gomock.Any()).
 					Return(&ec2.DescribeImagesOutput{
@@ -2600,8 +3034,12 @@ func TestCreateInstance(t *testing.T) {
 							},
 						}, nil
 					})
-				m.WaitUntilInstanceRunningWithContext(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(nil)
+				m.
+					DescribeNetworkInterfaces(gomock.Any()).
+					Return(&ec2.DescribeNetworkInterfacesOutput{
+						NetworkInterfaces: []*ec2.NetworkInterface{},
+						NextToken:         nil,
+					}, nil)
 			},
 			check: func(instance *infrav1.Instance, err error) {
 				if err != nil {
@@ -2617,9 +3055,9 @@ func TestCreateInstance(t *testing.T) {
 				},
 				Spec: clusterv1.MachineSpec{
 					Bootstrap: clusterv1.Bootstrap{
-						DataSecretName: pointer.StringPtr("bootstrap-data"),
+						DataSecretName: pointer.String("bootstrap-data"),
 					},
-					Version: pointer.StringPtr("v1.16.1"),
+					Version: pointer.String("v1.16.1"),
 				},
 			},
 			machineConfig: &infrav1.AWSMachineSpec{
@@ -2655,13 +3093,30 @@ func TestCreateInstance(t *testing.T) {
 								ID: "3",
 							},
 						},
-						APIServerELB: infrav1.ClassicELB{
+						APIServerELB: infrav1.LoadBalancer{
 							DNSName: "test-apiserver.us-east-1.aws",
 						},
 					},
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
+				m.
+					DescribeInstanceTypes(gomock.Eq(&ec2.DescribeInstanceTypesInput{
+						InstanceTypes: []*string{
+							aws.String("m5.large"),
+						},
+					})).
+					Return(&ec2.DescribeInstanceTypesOutput{
+						InstanceTypes: []*ec2.InstanceTypeInfo{
+							{
+								ProcessorInfo: &ec2.ProcessorInfo{
+									SupportedArchitectures: []*string{
+										aws.String("x86_64"),
+									},
+								},
+							},
+						},
+					}, nil)
 				m.
 					DescribeImages(gomock.Any()).
 					Return(&ec2.DescribeImagesOutput{
@@ -2707,8 +3162,12 @@ func TestCreateInstance(t *testing.T) {
 							},
 						}, nil
 					})
-				m.WaitUntilInstanceRunningWithContext(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(nil)
+				m.
+					DescribeNetworkInterfaces(gomock.Any()).
+					Return(&ec2.DescribeNetworkInterfacesOutput{
+						NetworkInterfaces: []*ec2.NetworkInterface{},
+						NextToken:         nil,
+					}, nil)
 			},
 			check: func(instance *infrav1.Instance, err error) {
 				if err != nil {
@@ -2724,9 +3183,9 @@ func TestCreateInstance(t *testing.T) {
 				},
 				Spec: clusterv1.MachineSpec{
 					Bootstrap: clusterv1.Bootstrap{
-						DataSecretName: pointer.StringPtr("bootstrap-data"),
+						DataSecretName: pointer.String("bootstrap-data"),
 					},
-					Version: pointer.StringPtr("v1.16.1"),
+					Version: pointer.String("v1.16.1"),
 				},
 			},
 			machineConfig: &infrav1.AWSMachineSpec{
@@ -2762,13 +3221,30 @@ func TestCreateInstance(t *testing.T) {
 								ID: "3",
 							},
 						},
-						APIServerELB: infrav1.ClassicELB{
+						APIServerELB: infrav1.LoadBalancer{
 							DNSName: "test-apiserver.us-east-1.aws",
 						},
 					},
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
+				m.
+					DescribeInstanceTypes(gomock.Eq(&ec2.DescribeInstanceTypesInput{
+						InstanceTypes: []*string{
+							aws.String("m5.large"),
+						},
+					})).
+					Return(&ec2.DescribeInstanceTypesOutput{
+						InstanceTypes: []*ec2.InstanceTypeInfo{
+							{
+								ProcessorInfo: &ec2.ProcessorInfo{
+									SupportedArchitectures: []*string{
+										aws.String("x86_64"),
+									},
+								},
+							},
+						},
+					}, nil)
 				m.
 					DescribeImages(gomock.Any()).
 					Return(&ec2.DescribeImagesOutput{
@@ -2814,8 +3290,12 @@ func TestCreateInstance(t *testing.T) {
 							},
 						}, nil
 					})
-				m.WaitUntilInstanceRunningWithContext(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(nil)
+				m.
+					DescribeNetworkInterfaces(gomock.Any()).
+					Return(&ec2.DescribeNetworkInterfacesOutput{
+						NetworkInterfaces: []*ec2.NetworkInterface{},
+						NextToken:         nil,
+					}, nil)
 			},
 			check: func(instance *infrav1.Instance, err error) {
 				if err != nil {
@@ -2831,9 +3311,9 @@ func TestCreateInstance(t *testing.T) {
 				},
 				Spec: clusterv1.MachineSpec{
 					Bootstrap: clusterv1.Bootstrap{
-						DataSecretName: pointer.StringPtr("bootstrap-data"),
+						DataSecretName: pointer.String("bootstrap-data"),
 					},
-					Version: pointer.StringPtr("v1.16.1"),
+					Version: pointer.String("v1.16.1"),
 				},
 			},
 			machineConfig: &infrav1.AWSMachineSpec{
@@ -2869,13 +3349,30 @@ func TestCreateInstance(t *testing.T) {
 								ID: "3",
 							},
 						},
-						APIServerELB: infrav1.ClassicELB{
+						APIServerELB: infrav1.LoadBalancer{
 							DNSName: "test-apiserver.us-east-1.aws",
 						},
 					},
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
+				m.
+					DescribeInstanceTypes(gomock.Eq(&ec2.DescribeInstanceTypesInput{
+						InstanceTypes: []*string{
+							aws.String("m5.large"),
+						},
+					})).
+					Return(&ec2.DescribeInstanceTypesOutput{
+						InstanceTypes: []*ec2.InstanceTypeInfo{
+							{
+								ProcessorInfo: &ec2.ProcessorInfo{
+									SupportedArchitectures: []*string{
+										aws.String("x86_64"),
+									},
+								},
+							},
+						},
+					}, nil)
 				m.
 					DescribeImages(gomock.Any()).
 					Return(&ec2.DescribeImagesOutput{
@@ -2921,8 +3418,12 @@ func TestCreateInstance(t *testing.T) {
 							},
 						}, nil
 					})
-				m.WaitUntilInstanceRunningWithContext(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(nil)
+				m.
+					DescribeNetworkInterfaces(gomock.Any()).
+					Return(&ec2.DescribeNetworkInterfacesOutput{
+						NetworkInterfaces: []*ec2.NetworkInterface{},
+						NextToken:         nil,
+					}, nil)
 			},
 			check: func(instance *infrav1.Instance, err error) {
 				if err != nil {

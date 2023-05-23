@@ -31,7 +31,7 @@ import (
 	iamv1 "sigs.k8s.io/cluster-api-provider-aws/v2/iam/api/v1beta1"
 )
 
-func Test_RenderCloudformation(t *testing.T) {
+func TestRenderCloudformation(t *testing.T) {
 	cases := []struct {
 		fixture  string
 		template func() Template
@@ -73,7 +73,7 @@ func Test_RenderCloudformation(t *testing.T) {
 			fixture: "customsuffix",
 			template: func() Template {
 				t := NewTemplate()
-				t.Spec.NameSuffix = pointer.StringPtr(".custom-suffix.com")
+				t.Spec.NameSuffix = pointer.String(".custom-suffix.com")
 				return t
 			},
 		},

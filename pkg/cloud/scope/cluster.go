@@ -29,6 +29,7 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/throttle"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/util/system"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util/conditions"
 	"sigs.k8s.io/cluster-api/util/patch"
@@ -179,11 +180,11 @@ func (s *ClusterScope) ControlPlaneLoadBalancer() *infrav1.AWSLoadBalancerSpec {
 }
 
 // ControlPlaneLoadBalancerScheme returns the Classic ELB scheme (public or internal facing).
-func (s *ClusterScope) ControlPlaneLoadBalancerScheme() infrav1.ClassicELBScheme {
+func (s *ClusterScope) ControlPlaneLoadBalancerScheme() infrav1.ELBScheme {
 	if s.ControlPlaneLoadBalancer() != nil && s.ControlPlaneLoadBalancer().Scheme != nil {
 		return *s.ControlPlaneLoadBalancer().Scheme
 	}
-	return infrav1.ClassicELBSchemeInternetFacing
+	return infrav1.ELBSchemeInternetFacing
 }
 
 func (s *ClusterScope) ControlPlaneLoadBalancerName() *string {
@@ -210,7 +211,7 @@ func (s *ClusterScope) ControlPlaneConfigMapName() string {
 // ListOptionsLabelSelector returns a ListOptions with a label selector for clusterName.
 func (s *ClusterScope) ListOptionsLabelSelector() client.ListOption {
 	return client.MatchingLabels(map[string]string{
-		clusterv1.ClusterLabelName: s.Cluster.Name,
+		clusterv1.ClusterNameLabel: s.Cluster.Name,
 	})
 }
 
@@ -260,6 +261,7 @@ func (s *ClusterScope) PatchObject() error {
 			infrav1.BastionHostReadyCondition,
 			infrav1.LoadBalancerReadyCondition,
 			infrav1.PrincipalUsageAllowedCondition,
+			infrav1.PrincipalCredentialRetrievedCondition,
 		}})
 }
 
@@ -282,7 +284,7 @@ func (s *ClusterScope) APIServerPort() int32 {
 	if s.Cluster.Spec.ClusterNetwork != nil && s.Cluster.Spec.ClusterNetwork.APIServerPort != nil {
 		return *s.Cluster.Spec.ClusterNetwork.APIServerPort
 	}
-	return 6443
+	return infrav1.DefaultAPIServerPort
 }
 
 // SetFailureDomain sets the infrastructure provider failure domain key to the spec given as input.
@@ -350,4 +352,12 @@ func (s *ClusterScope) ImageLookupOrg() string {
 // ImageLookupBaseOS returns the base operating system name to use when looking up AMIs.
 func (s *ClusterScope) ImageLookupBaseOS() string {
 	return s.AWSCluster.Spec.ImageLookupBaseOS
+}
+
+// Partition returns the cluster partition.
+func (s *ClusterScope) Partition() string {
+	if s.AWSCluster.Spec.Partition == "" {
+		s.AWSCluster.Spec.Partition = system.GetPartitionFromRegion(s.Region())
+	}
+	return s.AWSCluster.Spec.Partition
 }

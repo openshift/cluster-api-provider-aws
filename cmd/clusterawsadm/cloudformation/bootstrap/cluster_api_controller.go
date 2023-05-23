@@ -114,6 +114,7 @@ func (t Template) ControllersPolicy() *iamv1.PolicyDocument {
 				"ec2:DescribeAddresses",
 				"ec2:DescribeAvailabilityZones",
 				"ec2:DescribeInstances",
+				"ec2:DescribeInstanceTypes",
 				"ec2:DescribeInternetGateways",
 				"ec2:DescribeEgressOnlyInternetGateways",
 				"ec2:DescribeInstanceTypes",
@@ -146,6 +147,7 @@ func (t Template) ControllersPolicy() *iamv1.PolicyDocument {
 				"elasticloadbalancing:DeleteTargetGroup",
 				"elasticloadbalancing:DescribeLoadBalancers",
 				"elasticloadbalancing:DescribeLoadBalancerAttributes",
+				"elasticloadbalancing:DescribeTargetGroups",
 				"elasticloadbalancing:ApplySecurityGroupsToLoadBalancer",
 				"elasticloadbalancing:DescribeTags",
 				"elasticloadbalancing:ModifyLoadBalancerAttributes",
@@ -161,6 +163,7 @@ func (t Template) ControllersPolicy() *iamv1.PolicyDocument {
 				"ec2:DeleteLaunchTemplate",
 				"ec2:DeleteLaunchTemplateVersions",
 				"ec2:DescribeKeyPairs",
+				"ec2:ModifyInstanceMetadataOptions",
 			},
 		},
 		{
@@ -342,7 +345,7 @@ func (t Template) ControllersPolicyEKS() *iamv1.PolicyDocument {
 			"iam:CreateServiceLinkedRole",
 		},
 		Resource: iamv1.Resources{
-			"arn:aws:iam::*:role/aws-service-role/eks-fargate-pods.amazonaws.com/AWSServiceRoleForAmazonEKSForFargate",
+			"arn:" + t.Spec.Partition + ":iam::*:role/aws-service-role/eks-fargate-pods.amazonaws.com/AWSServiceRoleForAmazonEKSForFargate",
 		},
 		Condition: iamv1.Conditions{
 			iamv1.StringLike: map[string]string{"iam:AWSServiceName": "eks-fargate.amazonaws.com"},
@@ -366,6 +369,7 @@ func (t Template) ControllersPolicyEKS() *iamv1.PolicyDocument {
 				"iam:AddClientIDToOpenIDConnectProvider",
 				"iam:UpdateOpenIDConnectProviderThumbprint",
 				"iam:DeleteOpenIDConnectProvider",
+				"iam:TagOpenIDConnectProvider",
 			},
 			Resource: iamv1.Resources{
 				"*",

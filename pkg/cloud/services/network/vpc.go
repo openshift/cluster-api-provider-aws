@@ -52,7 +52,9 @@ func (s *Service) reconcileVPC() error {
 
 		s.scope.VPC().CidrBlock = vpc.CidrBlock
 		s.scope.VPC().Tags = vpc.Tags
-		s.scope.VPC().IPv6 = vpc.IPv6
+		if s.scope.VPC().IsIPv6Enabled() {
+			s.scope.VPC().IPv6 = vpc.IPv6
+		}
 
 		// If VPC is unmanaged, return early.
 		if vpc.IsUnmanaged(s.scope.Name()) {
@@ -62,6 +64,20 @@ func (s *Service) reconcileVPC() error {
 			}
 			record.Eventf(s.scope.InfraCluster(), "SuccessfulSetVPCAttributes", "Set managed VPC attributes for %q", vpc.ID)
 			return nil
+		}
+
+		// Make sure tags are up-to-date.
+		// **Only** do this for managed VPCs. Make sure this logic is below the above `vpc.IsUnmanaged` check.
+		if err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (bool, error) {
+			buildParams := s.getVPCTagParams(s.scope.VPC().ID)
+			tagsBuilder := tags.New(&buildParams, tags.WithEC2(s.EC2Client))
+			if err := tagsBuilder.Ensure(s.scope.VPC().Tags); err != nil {
+				return false, err
+			}
+			return true, nil
+		}, awserrors.VPCNotFound); err != nil {
+			record.Warnf(s.scope.InfraCluster(), "FailedTagVPC", "Failed ensure managed VPC %q: %v", s.scope.VPC().ID, err)
+			return errors.Wrapf(err, "failed to ensure tags on vpc %q", s.scope.VPC().ID)
 		}
 
 		// if the VPC is managed, make managed sure attributes are configured.
