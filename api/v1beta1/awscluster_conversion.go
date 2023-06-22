@@ -43,6 +43,9 @@ func (src *AWSCluster) ConvertTo(dstRaw conversion.Hub) error {
 	}
 
 	dst.Spec.S3Bucket = restored.Spec.S3Bucket
+	if restored.Status.Bastion != nil {
+		dst.Status.Bastion.PlacementGroupName = restored.Status.Bastion.PlacementGroupName
+	}
 
 	return nil
 }

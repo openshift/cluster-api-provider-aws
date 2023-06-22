@@ -32,3 +32,11 @@ func Convert_v1beta1_AWSResourceReference_To_v1beta2_AWSResourceReference(in *AW
 func Convert_v1beta1_AWSMachineSpec_To_v1beta2_AWSMachineSpec(in *AWSMachineSpec, out *v1beta2.AWSMachineSpec, s conversion.Scope) error {
 	return autoConvert_v1beta1_AWSMachineSpec_To_v1beta2_AWSMachineSpec(in, out, s)
 }
+
+func Convert_v1beta2_Instance_To_v1beta1_Instance(in *v1beta2.Instance, out *Instance, s conversion.Scope) error {
+	return autoConvert_v1beta2_Instance_To_v1beta1_Instance(in, out, s)
+}
+
+func Convert_v1beta2_AWSMachineSpec_To_v1beta1_AWSMachineSpec(in *v1beta2.AWSMachineSpec, out *AWSMachineSpec, s conversion.Scope) error {
+	return autoConvert_v1beta2_AWSMachineSpec_To_v1beta1_AWSMachineSpec(in, out, s)
+}

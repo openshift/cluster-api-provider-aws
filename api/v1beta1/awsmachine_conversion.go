@@ -36,6 +36,7 @@ func (src *AWSMachine) ConvertTo(dstRaw conversion.Hub) error {
 	}
 
 	dst.Spec.Ignition = restored.Spec.Ignition
+	dst.Spec.PlacementGroupName = restored.Spec.PlacementGroupName
 
 	return nil
 }
@@ -81,6 +82,7 @@ func (r *AWSMachineTemplate) ConvertTo(dstRaw conversion.Hub) error {
 
 	dst.Spec.Template.ObjectMeta = restored.Spec.Template.ObjectMeta
 	dst.Spec.Template.Spec.Ignition = restored.Spec.Template.Spec.Ignition
+	dst.Spec.Template.Spec.PlacementGroupName = restored.Spec.Template.Spec.PlacementGroupName
 
 	return nil
 }
