@@ -45,4 +45,7 @@ type SGScope interface {
 
 	// ControlPlaneLoadBalancer returns the load balancer settings that are requested.
 	ControlPlaneLoadBalancer() *infrav1.AWSLoadBalancerSpec
+
+	// AdditionalControlPlaneIngressRules returns the additional ingress rules for the control plane security group.
+	AdditionalControlPlaneIngressRules() []infrav1.IngressRule
 }
