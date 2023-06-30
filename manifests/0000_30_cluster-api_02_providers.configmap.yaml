@@ -1,0 +1,18 @@
+apiVersion: v1
+data:
+  providers-list.yaml: |+
+    - name: aws
+      type: InfrastructureProvider
+      branch: release-4.14
+      version: v2.0.2
+
+kind: ConfigMap
+metadata:
+  annotations:
+    exclude.release.openshift.io/internal-openshift-hosted: "true"
+    include.release.openshift.io/self-managed-high-availability: "true"
+    include.release.openshift.io/single-node-developer: "true"
+    release.openshift.io/feature-set: TechPreviewNoUpgrade
+  creationTimestamp: null
+  name: cluster-capi-operator-providers
+  namespace: openshift-cluster-api
