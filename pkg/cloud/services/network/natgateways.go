@@ -72,11 +72,11 @@ func (s *Service) reconcileNatGateways() error {
 	subnetIDs := []string{}
 
 	for _, sn := range s.scope.Subnets().FilterPublic() {
-		if sn.ID == "" {
+		if sn.GetResourceID() == "" {
 			continue
 		}
 
-		if ngw, ok := existing[sn.ID]; ok {
+		if ngw, ok := existing[sn.GetResourceID()]; ok {
 			// Make sure tags are up to date.
 			if err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (bool, error) {
 				buildParams := s.getNatGatewayTagParams(*ngw.NatGatewayId)
@@ -93,7 +93,7 @@ func (s *Service) reconcileNatGateways() error {
 			continue
 		}
 
-		subnetIDs = append(subnetIDs, sn.ID)
+		subnetIDs = append(subnetIDs, sn.GetResourceID())
 	}
 
 	// Batch the creation of NAT gateways
@@ -142,11 +142,11 @@ func (s *Service) deleteNatGateways() error {
 
 	var ngIDs []*ec2.NatGateway
 	for _, sn := range s.scope.Subnets().FilterPublic() {
-		if sn.ID == "" {
+		if sn.GetResourceID() == "" {
 			continue
 		}
 
-		if ngID, ok := existing[sn.ID]; ok {
+		if ngID, ok := existing[sn.GetResourceID()]; ok {
 			ngIDs = append(ngIDs, ngID)
 		}
 	}
@@ -312,7 +312,7 @@ func (s *Service) deleteNatGateway(id string) error {
 
 func (s *Service) getNatGatewayForSubnet(sn *infrav1.SubnetSpec) (string, error) {
 	if sn.IsPublic {
-		return "", errors.Errorf("cannot get NAT gateway for a public subnet, got id %q", sn.ID)
+		return "", errors.Errorf("cannot get NAT gateway for a public subnet, got id %q", sn.GetResourceID())
 	}
 
 	azGateways := make(map[string][]string)
@@ -328,5 +328,5 @@ func (s *Service) getNatGatewayForSubnet(sn *infrav1.SubnetSpec) (string, error)
 		return gws[0], nil
 	}
 
-	return "", errors.Errorf("no nat gateways available in %q for private subnet %q, current state: %+v", sn.AvailabilityZone, sn.ID, azGateways)
+	return "", errors.Errorf("no nat gateways available in %q for private subnet %q, current state: %+v", sn.AvailabilityZone, sn.GetResourceID(), azGateways)
 }

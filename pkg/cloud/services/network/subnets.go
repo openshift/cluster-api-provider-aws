@@ -51,6 +51,8 @@ func (s *Service) reconcileSubnets() error {
 	subnets := s.scope.Subnets()
 	defer func() {
 		s.scope.SetSubnets(subnets)
+		s.scope.Debug("Reconciled subnets", "subnets", subnets)
+		conditions.MarkTrue(s.scope.InfraCluster(), infrav1.SubnetsReadyCondition)
 	}()
 
 	var (
@@ -135,7 +137,7 @@ func (s *Service) reconcileSubnets() error {
 			subnetTags := sub.Tags
 			// Make sure tags are up-to-date.
 			if err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (bool, error) {
-				buildParams := s.getSubnetTagParams(unmanagedVPC, existingSubnet.ID, existingSubnet.IsPublic, existingSubnet.AvailabilityZone, subnetTags)
+				buildParams := s.getSubnetTagParams(unmanagedVPC, existingSubnet.GetResourceID(), existingSubnet.IsPublic, existingSubnet.AvailabilityZone, subnetTags)
 				tagsBuilder := tags.New(&buildParams, tags.WithEC2(s.EC2Client))
 				if err := tagsBuilder.Ensure(existingSubnet.Tags); err != nil {
 					return false, err
@@ -143,27 +145,38 @@ func (s *Service) reconcileSubnets() error {
 				return true, nil
 			}, awserrors.SubnetNotFound); err != nil {
 				if !unmanagedVPC {
-					record.Warnf(s.scope.InfraCluster(), "FailedTagSubnet", "Failed tagging managed Subnet %q: %v", existingSubnet.ID, err)
-					return errors.Wrapf(err, "failed to ensure tags on subnet %q", existingSubnet.ID)
+					record.Warnf(s.scope.InfraCluster(), "FailedTagSubnet", "Failed tagging managed Subnet %q: %v", existingSubnet.GetResourceID(), err)
+					return errors.Wrapf(err, "failed to ensure tags on subnet %q", existingSubnet.GetResourceID())
 				} else {
 					// We may not have a permission to tag unmanaged subnets.
 					// When tagging unmanaged subnet fails, record an event and proceed.
-					record.Warnf(s.scope.InfraCluster(), "FailedTagSubnet", "Failed tagging unmanaged Subnet %q: %v", existingSubnet.ID, err)
+					record.Warnf(s.scope.InfraCluster(), "FailedTagSubnet", "Failed tagging unmanaged Subnet %q: %v", existingSubnet.GetResourceID(), err)
 					break
 				}
 			}
 
-			// Update subnet spec with the existing subnet details
 			// TODO(vincepri): check if subnet needs to be updated.
+
+			// Update subnet spec with the existing subnet details
+			// NOTE: Describing existing subnets does not return the subnet ID,
+			// so we need to persist it from the spec.
+			existingSubnet.ID = sub.ID
 			existingSubnet.DeepCopyInto(sub)
 		} else if unmanagedVPC {
 			// If there is no existing subnet and we have an umanaged vpc report an error
-			record.Warnf(s.scope.InfraCluster(), "FailedMatchSubnet", "Using unmanaged VPC and failed to find existing subnet for specified subnet id %d, cidr %q", sub.ID, sub.CidrBlock)
-			return errors.New(fmt.Errorf("usign unmanaged vpc and subnet %s (cidr %s) specified but it doesn't exist in vpc %s", sub.ID, sub.CidrBlock, s.scope.VPC().ID).Error())
+			record.Warnf(s.scope.InfraCluster(), "FailedMatchSubnet", "Using unmanaged VPC and failed to find existing subnet for specified subnet id %d, cidr %q", sub.GetResourceID(), sub.CidrBlock)
+			return errors.New(fmt.Errorf("usign unmanaged vpc and subnet %s (cidr %s) specified but it doesn't exist in vpc %s", sub.GetResourceID(), sub.CidrBlock, s.scope.VPC().ID).Error())
 		}
 	}
 
-	if !unmanagedVPC {
+	switch {
+	case unmanagedVPC:
+		if len(subnets) < 1 {
+			record.Warnf(s.scope.InfraCluster(), "FailedNoSubnet", "Expected at least 1 subnet but got 0")
+			return errors.New("expected at least 1 subnet but got 0")
+		}
+	default:
+		// If we're here, the VPC is managed by us.
 		// Check that we need at least 1 private and 1 public subnet after we have updated the metadata
 		if len(subnets.FilterPrivate()) < 1 {
 			record.Warnf(s.scope.InfraCluster(), "FailedNoPrivateSubnet", "Expected at least 1 private subnet but got 0")
@@ -173,18 +186,14 @@ func (s *Service) reconcileSubnets() error {
 			record.Warnf(s.scope.InfraCluster(), "FailedNoPublicSubnet", "Expected at least 1 public subnet but got 0")
 			return errors.New("expected at least 1 public subnet but got 0")
 		}
-	} else if unmanagedVPC {
-		if len(subnets) < 1 {
-			record.Warnf(s.scope.InfraCluster(), "FailedNoSubnet", "Expected at least 1 subnet but got 0")
-			return errors.New("expected at least 1 subnet but got 0")
-		}
-	}
 
-	// Proceed to create the rest of the subnets that don't have an ID.
-	if !unmanagedVPC {
+		// Proceed to create the rest of the subnets that don't have an ID.
 		for i := range subnets {
 			subnet := &subnets[i]
-			if subnet.ID != "" {
+
+			// If we have a ResourceID (ARN), the resource was already created,
+			// otherwise check that the subnet has an ID and it is not a temporary one.
+			if subnet.ResourceID != "" || (subnet.ResourceID == "" && strings.HasPrefix(subnet.ID, "subnet-")) {
 				continue
 			}
 
@@ -196,8 +205,6 @@ func (s *Service) reconcileSubnets() error {
 		}
 	}
 
-	s.scope.Debug("reconciled subnets", "subnets", subnets)
-	conditions.MarkTrue(s.scope.InfraCluster(), infrav1.SubnetsReadyCondition)
 	return nil
 }
 
@@ -335,6 +342,7 @@ func (s *Service) describeVpcSubnets() (infrav1.Subnets, error) {
 	for _, ec2sn := range sns.Subnets {
 		spec := infrav1.SubnetSpec{
 			ID:               *ec2sn.SubnetId,
+			ResourceID:       *ec2sn.SubnetId,
 			AvailabilityZone: *ec2sn.AvailabilityZone,
 			Tags:             converters.TagsToMap(ec2sn.Tags),
 		}
@@ -398,6 +406,15 @@ func (s *Service) describeSubnets() (*ec2.DescribeSubnetsOutput, error) {
 }
 
 func (s *Service) createSubnet(sn *infrav1.SubnetSpec) (*infrav1.SubnetSpec, error) {
+	// When managing subnets, the ID specified in the spec is the name of the subnet.
+	if sn.Tags == nil {
+		sn.Tags = make(infrav1.Tags)
+	}
+	if len(sn.ID) > 0 {
+		sn.Tags["Name"] = sn.ID
+	}
+
+	// Build the subnet creation request.
 	input := &ec2.CreateSubnetInput{
 		VpcId:            aws.String(s.scope.VPC().ID),
 		CidrBlock:        aws.String(sn.CidrBlock),
@@ -468,10 +485,14 @@ func (s *Service) createSubnet(sn *infrav1.SubnetSpec) (*infrav1.SubnetSpec, err
 	}
 
 	subnet := &infrav1.SubnetSpec{
-		ID:               *out.Subnet.SubnetId,
+		// Preserve the original identifier, this won't be a valid subnet ID, which
+		// is stored in the ResourceID field.
+		ID:               sn.ID,
+		ResourceID:       *out.Subnet.SubnetId,
 		AvailabilityZone: *out.Subnet.AvailabilityZone,
 		CidrBlock:        *out.Subnet.CidrBlock, // TODO: this will panic in case of IPv6 only subnets...
 		IsPublic:         sn.IsPublic,
+		Tags:             sn.Tags,
 	}
 	for _, set := range out.Subnet.Ipv6CidrBlockAssociationSet {
 		if *set.Ipv6CidrBlockState.State == ec2.SubnetCidrBlockStateCodeAssociated {
