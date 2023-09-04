@@ -23,7 +23,9 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	ignTypes "github.com/flatcar/ignition/config/v2_3/types"
+	"github.com/blang/semver"
+	ignTypes "github.com/coreos/ignition/config/v2_3/types"
+	ignV3Types "github.com/coreos/ignition/v2/config/v3_4/types"
 	"github.com/go-logr/logr"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
@@ -752,23 +754,10 @@ func (r *AWSMachineReconciler) ignitionUserData(scope *scope.MachineScope, objec
 		return nil, errors.Wrap(err, "creating userdata object")
 	}
 
-	ignData := &ignTypes.Config{
-		Ignition: ignTypes.Ignition{
-			Version: "2.3.0",
-			Config: ignTypes.IgnitionConfig{
-				Append: []ignTypes.ConfigReference{
-					{
-						Source: objectURL,
-					},
-				},
-			},
-		},
-	}
-
-	ignitionUserData, err := json.Marshal(ignData)
+	ignitionUserData, err := getIgnitionData(scope, objectURL)
 	if err != nil {
 		r.Recorder.Eventf(scope.AWSMachine, corev1.EventTypeWarning, "FailedGenerateIgnition", err.Error())
-		return nil, errors.Wrap(err, "serializing generated data")
+		return nil, errors.Wrap(err, "generating ignition data")
 	}
 
 	return ignitionUserData, nil
@@ -1145,4 +1134,57 @@ func (r *AWSMachineReconciler) ensureInstanceMetadataOptions(ec2svc services.EC2
 	}
 
 	return ec2svc.ModifyInstanceMetadataOptions(instance.ID, machine.Spec.InstanceMetadataOptions)
+}
+
+func getIgnitionData(scope *scope.MachineScope, objectURL string) ([]byte, error) {
+	ignVersion := getIgnitionVersion(scope)
+	semver, err := semver.Parse(ignVersion)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to parse ignition version %q", ignVersion)
+	}
+
+	switch semver.Major {
+	case 2:
+		ignData := &ignTypes.Config{
+			Ignition: ignTypes.Ignition{
+				Version: ignVersion,
+				Config: ignTypes.IgnitionConfig{
+					Append: []ignTypes.ConfigReference{
+						{
+							Source: objectURL,
+						},
+					},
+				},
+			},
+		}
+
+		return json.Marshal(ignData)
+	case 3:
+		ignData := &ignV3Types.Config{
+			Ignition: ignV3Types.Ignition{
+				Version: ignVersion,
+				Config: ignV3Types.IgnitionConfig{
+					Merge: []ignV3Types.Resource{
+						{
+							Source: aws.String(objectURL),
+						},
+					},
+				},
+			},
+		}
+
+		return json.Marshal(ignData)
+	default:
+		return nil, errors.Errorf("unsupported ignition version %q", ignVersion)
+	}
+}
+
+func getIgnitionVersion(scope *scope.MachineScope) string {
+	version := scope.AWSMachine.Spec.Ignition.Version
+	if version == "" {
+		version = infrav1.DefaultIgnitionVersion
+	}
+
+	// The ignition version field is only the major and minor versions, not the patch version.
+	return fmt.Sprintf("%s.0", version)
 }
