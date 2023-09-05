@@ -341,7 +341,7 @@ func (s *Service) describeVpcSubnets() (infrav1.Subnets, error) {
 	// We also look for a tag indicating that a particular subnet should be public, to try and determine whether a managed VPC's subnet should have such a route, but does not.
 	for _, ec2sn := range sns.Subnets {
 		spec := infrav1.SubnetSpec{
-			ID:               *ec2sn.SubnetId,
+			ID:               *ec2sn.SubnetId, // Joel thinks this is bad
 			ResourceID:       *ec2sn.SubnetId,
 			AvailabilityZone: *ec2sn.AvailabilityZone,
 			Tags:             converters.TagsToMap(ec2sn.Tags),
