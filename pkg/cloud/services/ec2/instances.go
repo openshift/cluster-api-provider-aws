@@ -240,6 +240,10 @@ func (s *Service) CreateInstance(scope *scope.MachineScope, userData []byte, use
 		return nil, err
 	}
 
+	// Set the providerID and instanceID as soon as we create an instance so that we keep it in case of errors afterward
+	scope.SetProviderID(out.ID, out.AvailabilityZone)
+	scope.SetInstanceID(out.ID)
+
 	if len(input.NetworkInterfaces) > 0 {
 		for _, id := range input.NetworkInterfaces {
 			s.scope.Debug("Attaching security groups to provided network interface", "groups", input.SecurityGroupIDs, "interface", id)
