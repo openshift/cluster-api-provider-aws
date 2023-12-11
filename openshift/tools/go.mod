@@ -4,6 +4,8 @@ go 1.18
 
 require github.com/openshift/cluster-capi-operator/manifests-gen v0.0.0-20231129212918-dcb7a56ab14c
 
+replace github.com/openshift/cluster-capi-operator/manifests-gen => github.com/damdo/cluster-capi-operator/manifests-gen v0.0.0-20231211154622-a809de6e1cfb
+
 require (
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/adrg/xdg v0.4.0 // indirect
