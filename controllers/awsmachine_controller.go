@@ -705,7 +705,7 @@ func (r *AWSMachineReconciler) resolveUserData(machineScope *scope.MachineScope,
 	}
 
 	if machineScope.UseIgnition(userDataFormat) {
-		userData, err = r.ignitionUserData(machineScope, objectStoreSvc, userData)
+		// No further modifications are needed in this case.
 	}
 
 	return userData, userDataFormat, err
@@ -745,7 +745,7 @@ func (r *AWSMachineReconciler) cloudInitUserData(machineScope *scope.MachineScop
 	return encryptedCloudInit, nil
 }
 
-func (r *AWSMachineReconciler) ignitionUserData(scope *scope.MachineScope, objectStoreSvc services.ObjectStoreInterface, userData []byte) ([]byte, error) {
+func (r *AWSMachineReconciler) getIgnitionUserDataFromS3(scope *scope.MachineScope, objectStoreSvc services.ObjectStoreInterface, userData []byte) ([]byte, error) {
 	if objectStoreSvc == nil {
 		return nil, errors.New("object store service not available")
 	}
@@ -819,12 +819,12 @@ func (r *AWSMachineReconciler) deleteBootstrapData(machineScope *scope.MachineSc
 		}
 	}
 
-	if objectStoreScope != nil {
-		// Bootstrap data will be removed from S3 if it is already populated.
-		if err := r.deleteIgnitionBootstrapDataFromS3(machineScope, r.getObjectStoreService(objectStoreScope)); err != nil {
-			return err
-		}
-	}
+	// if objectStoreScope != nil {
+	// 	// Bootstrap data will be removed from S3 if it is already populated.
+	// 	if err := r.deleteIgnitionBootstrapDataFromS3(machineScope, r.getObjectStoreService(objectStoreScope)); err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	return nil
 }
