@@ -1,8 +1,8 @@
 module sigs.k8s.io/cluster-api-provider-aws/v2
 
-go 1.21
+go 1.22
 
-toolchain go1.21.5
+toolchain go1.22.1
 
 replace (
 	// TODO: remove when component-base updates its prometheus deps (https://github.com/prometheus/client_golang/releases/tag/v1.19.0)
