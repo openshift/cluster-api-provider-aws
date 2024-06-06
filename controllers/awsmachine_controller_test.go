@@ -113,6 +113,10 @@ func TestAWSMachineReconcilerIntegrationTests(t *testing.T) {
 		}}})
 		g.Expect(err).To(BeNil())
 		cs.Cluster = &clusterv1.Cluster{ObjectMeta: metav1.ObjectMeta{Name: "test-cluster"}}
+		cs.AWSCluster.Spec.NetworkSpec.VPC = infrav1.VPCSpec{
+			ID:        "vpc-exists",
+			CidrBlock: "10.0.0.0/16",
+		}
 		cs.AWSCluster.Status.Network.APIServerELB.DNSName = DNSName
 		cs.AWSCluster.Spec.ControlPlaneLoadBalancer = &infrav1.AWSLoadBalancerSpec{
 			LoadBalancerType: infrav1.LoadBalancerTypeClassic,
@@ -271,6 +275,10 @@ func TestAWSMachineReconcilerIntegrationTests(t *testing.T) {
 		g.Expect(err).To(BeNil())
 		cs.Cluster = &clusterv1.Cluster{ObjectMeta: metav1.ObjectMeta{Name: "test-cluster"}}
 		cs.AWSCluster.Status.Network.APIServerELB.DNSName = DNSName
+		cs.AWSCluster.Spec.NetworkSpec.VPC = infrav1.VPCSpec{
+			ID:        "vpc-exists",
+			CidrBlock: "10.0.0.0/16",
+		}
 		cs.AWSCluster.Spec.ControlPlaneLoadBalancer = &infrav1.AWSLoadBalancerSpec{
 			LoadBalancerType: infrav1.LoadBalancerTypeClassic,
 		}
@@ -509,7 +517,7 @@ func mockedCreateInstanceCalls(m *mocks.MockEC2APIMockRecorder) {
 		Filters: []*ec2.Filter{
 			{
 				Name:   aws.String("vpc-id"),
-				Values: aws.StringSlice([]string{""}),
+				Values: aws.StringSlice([]string{"vpc-exists"}),
 			},
 			{
 				Name:   aws.String("tag:sigs.k8s.io/cluster-api-provider-aws/cluster/test-cluster"),
@@ -621,7 +629,7 @@ func mockedCreateInstanceCalls(m *mocks.MockEC2APIMockRecorder) {
 		},
 		{
 			Name:   aws.String("vpc-id"),
-			Values: aws.StringSlice([]string{""}),
+			Values: aws.StringSlice([]string{"vpc-exists"}),
 		},
 		{
 			Name:   aws.String("subnet-id"),
