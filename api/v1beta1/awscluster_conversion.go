@@ -47,6 +47,7 @@ func (src *AWSCluster) ConvertTo(dstRaw conversion.Hub) error {
 	if restored.Status.Bastion != nil {
 		dst.Status.Bastion.InstanceMetadataOptions = restored.Status.Bastion.InstanceMetadataOptions
 		dst.Status.Bastion.PlacementGroupName = restored.Status.Bastion.PlacementGroupName
+		dst.Status.Bastion.PlacementGroupPartition = restored.Status.Bastion.PlacementGroupPartition
 	}
 	dst.Spec.Partition = restored.Spec.Partition
 

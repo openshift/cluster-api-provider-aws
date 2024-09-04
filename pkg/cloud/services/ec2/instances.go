@@ -45,7 +45,6 @@ func (s *Service) GetRunningInstanceByTags(scope *scope.MachineScope) (*infrav1.
 
 	input := &ec2.DescribeInstancesInput{
 		Filters: []*ec2.Filter{
-			filter.EC2.VPC(s.scope.VPC().ID),
 			filter.EC2.ClusterOwned(s.scope.Name()),
 			filter.EC2.Name(scope.Name()),
 			filter.EC2.InstanceStates(ec2.InstanceStateNamePending, ec2.InstanceStateNameRunning),
@@ -238,6 +237,8 @@ func (s *Service) CreateInstance(scope *scope.MachineScope, userData []byte, use
 
 	input.PlacementGroupName = scope.AWSMachine.Spec.PlacementGroupName
 
+	input.PlacementGroupPartition = scope.AWSMachine.Spec.PlacementGroupPartition
+
 	s.scope.Debug("Running instance", "machine-role", scope.Role())
 	s.scope.Debug("Running instance with instance metadata options", "metadata options", input.InstanceMetadataOptions)
 	out, err := s.runInstance(scope.Role(), input)
@@ -306,9 +307,6 @@ func (s *Service) findSubnet(scope *scope.MachineScope) (string, error) {
 		criteria := []*ec2.Filter{
 			filter.EC2.SubnetStates(ec2.SubnetStatePending, ec2.SubnetStateAvailable),
 		}
-		if !scope.IsExternallyManaged() {
-			criteria = append(criteria, filter.EC2.VPC(s.scope.VPC().ID))
-		}
 		if scope.AWSMachine.Spec.Subnet.ID != nil {
 			criteria = append(criteria, &ec2.Filter{Name: aws.String("subnet-id"), Values: aws.StringSlice([]string{*scope.AWSMachine.Spec.Subnet.ID})})
 		}
@@ -343,6 +341,11 @@ func (s *Service) findSubnet(scope *scope.MachineScope) (string, error) {
 			}
 			filtered = append(filtered, subnet)
 		}
+		// prefer a subnet in the cluster VPC if multiple match
+		clusterVPC := s.scope.VPC().ID
+		sort.SliceStable(filtered, func(i, j int) bool {
+			return strings.Compare(*filtered[i].VpcId, clusterVPC) > strings.Compare(*filtered[j].VpcId, clusterVPC)
+		})
 		if len(filtered) == 0 {
 			errMessage = fmt.Sprintf("failed to run machine %q, found %d subnets matching criteria but post-filtering failed.",
 				scope.Name(), len(subnets)) + errMessage
@@ -438,10 +441,15 @@ func (s *Service) GetCoreSecurityGroups(scope *scope.MachineScope) ([]string, er
 	}
 	ids := make([]string, 0, len(sgRoles))
 	for _, sg := range sgRoles {
-		if _, ok := s.scope.SecurityGroups()[sg]; !ok {
-			return nil, awserrors.NewFailedDependency(fmt.Sprintf("%s security group not available", sg))
+		if _, ok := scope.AWSMachine.Spec.SecurityGroupOverrides[sg]; ok {
+			ids = append(ids, scope.AWSMachine.Spec.SecurityGroupOverrides[sg])
+			continue
 		}
-		ids = append(ids, s.scope.SecurityGroups()[sg].ID)
+		if _, ok := s.scope.SecurityGroups()[sg]; ok {
+			ids = append(ids, s.scope.SecurityGroups()[sg].ID)
+			continue
+		}
+		return nil, awserrors.NewFailedDependency(fmt.Sprintf("%s security group not available", sg))
 	}
 	return ids, nil
 }
@@ -576,21 +584,25 @@ func (s *Service) runInstance(role string, i *infrav1.Instance) (*infrav1.Instan
 	}
 
 	if len(i.Tags) > 0 {
-		spec := &ec2.TagSpecification{ResourceType: aws.String(ec2.ResourceTypeInstance)}
-		// We need to sort keys for tests to work
-		keys := make([]string, 0, len(i.Tags))
-		for k := range i.Tags {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-		for _, key := range keys {
-			spec.Tags = append(spec.Tags, &ec2.Tag{
-				Key:   aws.String(key),
-				Value: aws.String(i.Tags[key]),
-			})
-		}
+		resources := []string{ec2.ResourceTypeInstance, ec2.ResourceTypeVolume, ec2.ResourceTypeNetworkInterface}
+		for _, r := range resources {
+			spec := &ec2.TagSpecification{ResourceType: aws.String(r)}
 
-		input.TagSpecifications = append(input.TagSpecifications, spec)
+			// We need to sort keys for tests to work
+			keys := make([]string, 0, len(i.Tags))
+			for k := range i.Tags {
+				keys = append(keys, k)
+			}
+			sort.Strings(keys)
+			for _, key := range keys {
+				spec.Tags = append(spec.Tags, &ec2.Tag{
+					Key:   aws.String(key),
+					Value: aws.String(i.Tags[key]),
+				})
+			}
+
+			input.TagSpecifications = append(input.TagSpecifications, spec)
+		}
 	}
 
 	input.InstanceMarketOptions = getInstanceMarketOptionsRequest(i.SpotMarketOptions)
@@ -602,11 +614,18 @@ func (s *Service) runInstance(role string, i *infrav1.Instance) (*infrav1.Instan
 		}
 	}
 
+	if i.PlacementGroupName == "" && i.PlacementGroupPartition != 0 {
+		return nil, errors.Errorf("placementGroupPartition is set but placementGroupName is empty")
+	}
+
 	if i.PlacementGroupName != "" {
 		if input.Placement == nil {
 			input.Placement = &ec2.Placement{}
 		}
 		input.Placement.GroupName = &i.PlacementGroupName
+		if i.PlacementGroupPartition != 0 {
+			input.Placement.PartitionNumber = &i.PlacementGroupPartition
+		}
 	}
 
 	out, err := s.EC2Client.RunInstances(input)
