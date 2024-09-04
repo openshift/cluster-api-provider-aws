@@ -252,6 +252,8 @@ func (s *Service) CreateInstance(scope *scope.MachineScope, userData []byte, use
 
 	input.PlacementGroupName = scope.AWSMachine.Spec.PlacementGroupName
 
+	input.PlacementGroupPartition = scope.AWSMachine.Spec.PlacementGroupPartition
+
 	input.PrivateDNSName = scope.AWSMachine.Spec.PrivateDNSName
 
 	s.scope.Debug("Running instance", "machine-role", scope.Role())
@@ -611,21 +613,25 @@ func (s *Service) runInstance(role string, i *infrav1.Instance) (*infrav1.Instan
 	}
 
 	if len(i.Tags) > 0 {
-		spec := &ec2.TagSpecification{ResourceType: aws.String(ec2.ResourceTypeInstance)}
-		// We need to sort keys for tests to work
-		keys := make([]string, 0, len(i.Tags))
-		for k := range i.Tags {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-		for _, key := range keys {
-			spec.Tags = append(spec.Tags, &ec2.Tag{
-				Key:   aws.String(key),
-				Value: aws.String(i.Tags[key]),
-			})
-		}
+		resources := []string{ec2.ResourceTypeInstance, ec2.ResourceTypeVolume, ec2.ResourceTypeNetworkInterface}
+		for _, r := range resources {
+			spec := &ec2.TagSpecification{ResourceType: aws.String(r)}
 
-		input.TagSpecifications = append(input.TagSpecifications, spec)
+			// We need to sort keys for tests to work
+			keys := make([]string, 0, len(i.Tags))
+			for k := range i.Tags {
+				keys = append(keys, k)
+			}
+			sort.Strings(keys)
+			for _, key := range keys {
+				spec.Tags = append(spec.Tags, &ec2.Tag{
+					Key:   aws.String(key),
+					Value: aws.String(i.Tags[key]),
+				})
+			}
+
+			input.TagSpecifications = append(input.TagSpecifications, spec)
+		}
 	}
 
 	input.InstanceMarketOptions = getInstanceMarketOptionsRequest(i.SpotMarketOptions)
@@ -638,11 +644,18 @@ func (s *Service) runInstance(role string, i *infrav1.Instance) (*infrav1.Instan
 		}
 	}
 
+	if i.PlacementGroupName == "" && i.PlacementGroupPartition != 0 {
+		return nil, errors.Errorf("placementGroupPartition is set but placementGroupName is empty")
+	}
+
 	if i.PlacementGroupName != "" {
 		if input.Placement == nil {
 			input.Placement = &ec2.Placement{}
 		}
 		input.Placement.GroupName = &i.PlacementGroupName
+		if i.PlacementGroupPartition != 0 {
+			input.Placement.PartitionNumber = &i.PlacementGroupPartition
+		}
 	}
 
 	out, err := s.EC2Client.RunInstancesWithContext(context.TODO(), input)
