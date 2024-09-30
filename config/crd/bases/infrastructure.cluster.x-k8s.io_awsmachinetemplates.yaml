@@ -729,6 +729,16 @@ spec:
                         description: PlacementGroupName specifies the name of the
                           placement group in which to launch the instance.
                         type: string
+                      placementGroupPartition:
+                        description: PlacementGroupPartition is the partition number
+                          within the placement group in which to launch the instance.
+                          This value is only valid if the placement group, referred
+                          in `PlacementGroupName`, was created with strategy set to
+                          partition.
+                        format: int64
+                        maximum: 7
+                        minimum: 1
+                        type: integer
                       providerID:
                         description: ProviderID is the unique identifier as specified
                           by the cloud provider.
@@ -780,6 +790,14 @@ spec:
                             type: string
                         required:
                         - size
+                        type: object
+                      securityGroupOverrides:
+                        additionalProperties:
+                          type: string
+                        description: SecurityGroupOverrides is an optional set of
+                          security groups to use for the node. This is optional -
+                          if not provided security groups from the cluster will be
+                          used.
                         type: object
                       spotMarketOptions:
                         description: SpotMarketOptions allows users to configure instances

@@ -114,6 +114,11 @@ type AWSMachineSpec struct {
 	// +optional
 	Subnet *AWSResourceReference `json:"subnet,omitempty"`
 
+	// SecurityGroupOverrides is an optional set of security groups to use for the node.
+	// This is optional - if not provided security groups from the cluster will be used.
+	// +optional
+	SecurityGroupOverrides map[SecurityGroupRole]string `json:"securityGroupOverrides,omitempty"`
+
 	// SSHKeyName is the name of the ssh key to attach to the instance. Valid values are empty string (do not use SSH keys), a valid SSH key name, or omitted (use the default SSH key name)
 	// +optional
 	SSHKeyName *string `json:"sshKeyName,omitempty"`
@@ -155,6 +160,14 @@ type AWSMachineSpec struct {
 	// PlacementGroupName specifies the name of the placement group in which to launch the instance.
 	// +optional
 	PlacementGroupName string `json:"placementGroupName,omitempty"`
+
+	// PlacementGroupPartition is the partition number within the placement group in which to launch the instance.
+	// This value is only valid if the placement group, referred in `PlacementGroupName`, was created with
+	// strategy set to partition.
+	// +kubebuilder:validation:Minimum:=1
+	// +kubebuilder:validation:Maximum:=7
+	// +optional
+	PlacementGroupPartition int64 `json:"placementGroupPartition,omitempty"`
 
 	// Tenancy indicates if instance should run on shared or single-tenant hardware.
 	// +optional

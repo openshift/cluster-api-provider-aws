@@ -1382,6 +1382,7 @@ func autoConvert_v1beta2_AWSMachineSpec_To_v1beta1_AWSMachineSpec(in *v1beta2.AW
 	} else {
 		out.Subnet = nil
 	}
+	// WARNING: in.SecurityGroupOverrides requires manual conversion: does not exist in peer-type
 	out.SSHKeyName = (*string)(unsafe.Pointer(in.SSHKeyName))
 	out.RootVolume = (*Volume)(unsafe.Pointer(in.RootVolume))
 	out.NonRootVolumes = *(*[]Volume)(unsafe.Pointer(&in.NonRootVolumes))
@@ -1393,6 +1394,7 @@ func autoConvert_v1beta2_AWSMachineSpec_To_v1beta1_AWSMachineSpec(in *v1beta2.AW
 	out.Ignition = (*Ignition)(unsafe.Pointer(in.Ignition))
 	out.SpotMarketOptions = (*SpotMarketOptions)(unsafe.Pointer(in.SpotMarketOptions))
 	// WARNING: in.PlacementGroupName requires manual conversion: does not exist in peer-type
+	// WARNING: in.PlacementGroupPartition requires manual conversion: does not exist in peer-type
 	out.Tenancy = in.Tenancy
 	return nil
 }
@@ -1994,6 +1996,7 @@ func autoConvert_v1beta2_Instance_To_v1beta1_Instance(in *v1beta2.Instance, out 
 	out.AvailabilityZone = in.AvailabilityZone
 	out.SpotMarketOptions = (*SpotMarketOptions)(unsafe.Pointer(in.SpotMarketOptions))
 	// WARNING: in.PlacementGroupName requires manual conversion: does not exist in peer-type
+	// WARNING: in.PlacementGroupPartition requires manual conversion: does not exist in peer-type
 	out.Tenancy = in.Tenancy
 	out.VolumeIDs = *(*[]string)(unsafe.Pointer(&in.VolumeIDs))
 	// WARNING: in.InstanceMetadataOptions requires manual conversion: does not exist in peer-type
