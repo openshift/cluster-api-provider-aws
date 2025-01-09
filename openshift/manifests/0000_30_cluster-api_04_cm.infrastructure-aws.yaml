@@ -1610,6 +1610,13 @@ data:
                       m4.xlarge'
                     minLength: 2
                     type: string
+                  networkInterfaceType:
+                    description: NetworkInterfaceType is the interface type of the primary
+                      network Interface.
+                    enum:
+                    - interface
+                    - efa
+                    type: string
                   networkInterfaces:
                     description: |-
                       NetworkInterfaces is a list of ENIs to associate with the instance.
@@ -4167,6 +4174,10 @@ data:
                       instanceState:
                         description: The current state of the instance.
                         type: string
+                      networkInterfaceType:
+                        description: NetworkInterfaceType is the interface type of the
+                          primary network Interface.
+                        type: string
                       networkInterfaces:
                         description: Specifies ENIs attached to instance
                         items:
@@ -6222,6 +6233,13 @@ data:
                             description: 'InstanceType is the type of instance to create.
                               Example: m4.xlarge'
                             minLength: 2
+                            type: string
+                          networkInterfaceType:
+                            description: NetworkInterfaceType is the interface type of
+                              the primary network Interface.
+                            enum:
+                            - interface
+                            - efa
                             type: string
                           networkInterfaces:
                             description: |-
@@ -12605,6 +12623,10 @@ data:
                       instanceState:
                         description: The current state of the instance.
                         type: string
+                      networkInterfaceType:
+                        description: NetworkInterfaceType is the interface type of the
+                          primary network Interface.
+                        type: string
                       networkInterfaces:
                         description: Specifies ENIs attached to instance
                         items:
@@ -14665,6 +14687,10 @@ data:
                         type: object
                       instanceState:
                         description: The current state of the instance.
+                        type: string
+                      networkInterfaceType:
+                        description: NetworkInterfaceType is the interface type of the
+                          primary network Interface.
                         type: string
                       networkInterfaces:
                         description: Specifies ENIs attached to instance
@@ -18662,6 +18688,6 @@ metadata:
   labels:
     provider.cluster.x-k8s.io/name: aws
     provider.cluster.x-k8s.io/type: infrastructure
-    provider.cluster.x-k8s.io/version: 2.7.1
+    provider.cluster.x-k8s.io/version: v2.7.1
   name: aws
   namespace: openshift-cluster-api

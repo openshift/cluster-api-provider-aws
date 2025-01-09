@@ -2649,6 +2649,9 @@ spec:
                   instanceState:
                     description: The current state of the instance.
                     type: string
+                  networkInterfaceType:
+                    description: NetworkInterfaceType is the interface type of the primary network Interface.
+                    type: string
                   networkInterfaces:
                     description: Specifies ENIs attached to instance
                     items:
@@ -7596,6 +7599,12 @@ spec:
                 description: 'InstanceType is the type of instance to create. Example: m4.xlarge'
                 minLength: 2
                 type: string
+              networkInterfaceType:
+                description: NetworkInterfaceType is the interface type of the primary network Interface.
+                enum:
+                - interface
+                - efa
+                type: string
               networkInterfaces:
                 description: |-
                   NetworkInterfaces is a list of ENIs to associate with the instance.
@@ -8694,6 +8703,12 @@ spec:
                       instanceType:
                         description: 'InstanceType is the type of instance to create. Example: m4.xlarge'
                         minLength: 2
+                        type: string
+                      networkInterfaceType:
+                        description: NetworkInterfaceType is the interface type of the primary network Interface.
+                        enum:
+                        - interface
+                        - efa
                         type: string
                       networkInterfaces:
                         description: |-
@@ -10186,6 +10201,9 @@ spec:
                     type: object
                   instanceState:
                     description: The current state of the instance.
+                    type: string
+                  networkInterfaceType:
+                    description: NetworkInterfaceType is the interface type of the primary network Interface.
                     type: string
                   networkInterfaces:
                     description: Specifies ENIs attached to instance
@@ -12081,6 +12099,9 @@ spec:
                     type: object
                   instanceState:
                     description: The current state of the instance.
+                    type: string
+                  networkInterfaceType:
+                    description: NetworkInterfaceType is the interface type of the primary network Interface.
                     type: string
                   networkInterfaces:
                     description: Specifies ENIs attached to instance
