@@ -15040,6 +15040,14 @@ spec:
                   rule: self == oldSelf
                 - message: billingAccount must be a valid AWS account ID
                   rule: self.matches('^[0-9]{12}$')
+              channelGroup:
+                default: stable
+                description: OpenShift version channel group, default is stable.
+                enum:
+                - stable
+                - candidate
+                - nightly
+                type: string
               clusterRegistryConfig:
                 description: ClusterRegistryConfig represents registry config used with the cluster.
                 properties:
@@ -15166,6 +15174,11 @@ spec:
                   instanceType:
                     description: The instance type to use, for example `r5.xlarge`. Instance type ref; https://aws.amazon.com/ec2/instance-types/
                     type: string
+                  volumeSize:
+                    description: VolumeSize set the disk volume size for the default workers machine pool in Gib. The default is 300 GiB.
+                    maximum: 16384
+                    minimum: 75
+                    type: integer
                 type: object
               domainPrefix:
                 description: |-
@@ -15656,6 +15669,7 @@ spec:
                 type: string
             required:
             - availabilityZones
+            - channelGroup
             - installerRoleARN
             - oidcID
             - region
@@ -15985,6 +15999,11 @@ spec:
                   Version specifies the OpenShift version of the nodes associated with this machinepool.
                   ROSAControlPlane version is used if not set.
                 type: string
+              volumeSize:
+                description: VolumeSize set the disk volume size for the machine pool, in Gib. The default is 300 GiB.
+                maximum: 16384
+                minimum: 75
+                type: integer
             required:
             - instanceType
             - nodePoolName
@@ -15992,6 +16011,11 @@ spec:
           status:
             description: RosaMachinePoolStatus defines the observed state of RosaMachinePool.
             properties:
+              availableUpgrades:
+                description: Available upgrades for the ROSA MachinePool.
+                items:
+                  type: string
+                type: array
               conditions:
                 description: Conditions defines current service state of the managed machine pool
                 items:
