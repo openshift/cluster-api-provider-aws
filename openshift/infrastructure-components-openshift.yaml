@@ -1097,6 +1097,8 @@ spec:
                     enum:
                     - AmazonLinux
                     - AmazonLinuxGPU
+                    - AmazonLinux2023
+                    - AmazonLinux2023GPU
                     type: string
                   id:
                     description: ID of resource
@@ -1586,13 +1588,6 @@ spec:
             required:
             - instanceType
             type: object
-            x-kubernetes-validations:
-            - message: capacityReservationId may not be set when marketType is Spot
-              rule: '!has(self.capacityReservationId) || !has(self.marketType) ||
-                self.marketType != ''Spot'''
-            - message: capacityReservationId cannot be set when spotMarketOptions
-                is specified
-              rule: '!has(self.capacityReservationId) || !has(self.spotMarketOptions)'
           status:
             description: AWSMachineStatus defines the observed state of AWSMachine.
             properties:
@@ -5700,6 +5695,8 @@ spec:
                             enum:
                             - AmazonLinux
                             - AmazonLinuxGPU
+                            - AmazonLinux2023
+                            - AmazonLinux2023GPU
                             type: string
                           id:
                             description: ID of resource
@@ -6196,14 +6193,6 @@ spec:
                     required:
                     - instanceType
                     type: object
-                    x-kubernetes-validations:
-                    - message: capacityReservationId may not be set when marketType
-                        is Spot
-                      rule: '!has(self.capacityReservationId) || !has(self.marketType)
-                        || self.marketType != ''Spot'''
-                    - message: capacityReservationId cannot be set when spotMarketOptions
-                        is specified
-                      rule: '!has(self.capacityReservationId) || !has(self.spotMarketOptions)'
                 required:
                 - spec
                 type: object
@@ -6379,6 +6368,8 @@ spec:
                         enum:
                         - AmazonLinux
                         - AmazonLinuxGPU
+                        - AmazonLinux2023
+                        - AmazonLinux2023GPU
                         type: string
                       id:
                         description: ID of resource
@@ -6872,6 +6863,8 @@ spec:
                         enum:
                         - AmazonLinux
                         - AmazonLinuxGPU
+                        - AmazonLinux2023
+                        - AmazonLinux2023GPU
                         type: string
                       id:
                         description: ID of resource
@@ -7608,6 +7601,8 @@ spec:
                         enum:
                         - AmazonLinux
                         - AmazonLinuxGPU
+                        - AmazonLinux2023
+                        - AmazonLinux2023GPU
                         type: string
                       id:
                         description: ID of resource
@@ -8088,6 +8083,8 @@ spec:
                         enum:
                         - AmazonLinux
                         - AmazonLinuxGPU
+                        - AmazonLinux2023
+                        - AmazonLinux2023GPU
                         type: string
                       id:
                         description: ID of resource

@@ -1099,6 +1099,8 @@ data:
                         enum:
                         - AmazonLinux
                         - AmazonLinuxGPU
+                        - AmazonLinux2023
+                        - AmazonLinux2023GPU
                         type: string
                       id:
                         description: ID of resource
@@ -1588,13 +1590,6 @@ data:
                 required:
                 - instanceType
                 type: object
-                x-kubernetes-validations:
-                - message: capacityReservationId may not be set when marketType is Spot
-                  rule: '!has(self.capacityReservationId) || !has(self.marketType) ||
-                    self.marketType != ''Spot'''
-                - message: capacityReservationId cannot be set when spotMarketOptions
-                    is specified
-                  rule: '!has(self.capacityReservationId) || !has(self.spotMarketOptions)'
               status:
                 description: AWSMachineStatus defines the observed state of AWSMachine.
                 properties:
@@ -5702,6 +5697,8 @@ data:
                                 enum:
                                 - AmazonLinux
                                 - AmazonLinuxGPU
+                                - AmazonLinux2023
+                                - AmazonLinux2023GPU
                                 type: string
                               id:
                                 description: ID of resource
@@ -6198,14 +6195,6 @@ data:
                         required:
                         - instanceType
                         type: object
-                        x-kubernetes-validations:
-                        - message: capacityReservationId may not be set when marketType
-                            is Spot
-                          rule: '!has(self.capacityReservationId) || !has(self.marketType)
-                            || self.marketType != ''Spot'''
-                        - message: capacityReservationId cannot be set when spotMarketOptions
-                            is specified
-                          rule: '!has(self.capacityReservationId) || !has(self.spotMarketOptions)'
                     required:
                     - spec
                     type: object
@@ -6381,6 +6370,8 @@ data:
                             enum:
                             - AmazonLinux
                             - AmazonLinuxGPU
+                            - AmazonLinux2023
+                            - AmazonLinux2023GPU
                             type: string
                           id:
                             description: ID of resource
@@ -6874,6 +6865,8 @@ data:
                             enum:
                             - AmazonLinux
                             - AmazonLinuxGPU
+                            - AmazonLinux2023
+                            - AmazonLinux2023GPU
                             type: string
                           id:
                             description: ID of resource
@@ -7610,6 +7603,8 @@ data:
                             enum:
                             - AmazonLinux
                             - AmazonLinuxGPU
+                            - AmazonLinux2023
+                            - AmazonLinux2023GPU
                             type: string
                           id:
                             description: ID of resource
@@ -8090,6 +8085,8 @@ data:
                             enum:
                             - AmazonLinux
                             - AmazonLinuxGPU
+                            - AmazonLinux2023
+                            - AmazonLinux2023GPU
                             type: string
                           id:
                             description: ID of resource
@@ -18523,6 +18520,6 @@ metadata:
   labels:
     provider.cluster.x-k8s.io/name: aws
     provider.cluster.x-k8s.io/type: infrastructure
-    provider.cluster.x-k8s.io/version: v2.8.2
+    provider.cluster.x-k8s.io/version: v2.8.4
   name: aws
   namespace: openshift-cluster-api
