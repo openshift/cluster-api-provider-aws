@@ -1099,6 +1099,8 @@ data:
                         enum:
                         - AmazonLinux
                         - AmazonLinuxGPU
+                        - AmazonLinux2023
+                        - AmazonLinux2023GPU
                         type: string
                       id:
                         description: ID of resource
@@ -5702,6 +5704,8 @@ data:
                                 enum:
                                 - AmazonLinux
                                 - AmazonLinuxGPU
+                                - AmazonLinux2023
+                                - AmazonLinux2023GPU
                                 type: string
                               id:
                                 description: ID of resource
@@ -6381,6 +6385,8 @@ data:
                             enum:
                             - AmazonLinux
                             - AmazonLinuxGPU
+                            - AmazonLinux2023
+                            - AmazonLinux2023GPU
                             type: string
                           id:
                             description: ID of resource
@@ -6874,6 +6880,8 @@ data:
                             enum:
                             - AmazonLinux
                             - AmazonLinuxGPU
+                            - AmazonLinux2023
+                            - AmazonLinux2023GPU
                             type: string
                           id:
                             description: ID of resource
@@ -7610,6 +7618,8 @@ data:
                             enum:
                             - AmazonLinux
                             - AmazonLinuxGPU
+                            - AmazonLinux2023
+                            - AmazonLinux2023GPU
                             type: string
                           id:
                             description: ID of resource
@@ -8090,6 +8100,8 @@ data:
                             enum:
                             - AmazonLinux
                             - AmazonLinuxGPU
+                            - AmazonLinux2023
+                            - AmazonLinux2023GPU
                             type: string
                           id:
                             description: ID of resource
@@ -18523,6 +18535,6 @@ metadata:
   labels:
     provider.cluster.x-k8s.io/name: aws
     provider.cluster.x-k8s.io/type: infrastructure
-    provider.cluster.x-k8s.io/version: v2.8.2
+    provider.cluster.x-k8s.io/version: v2.8.4
   name: aws
   namespace: openshift-cluster-api
