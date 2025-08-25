@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,6 @@ limitations under the License.
 package eks
 
 import (
-	"context"
 	"crypto/sha1"
 	"crypto/tls"
 	"crypto/x509"
@@ -27,10 +26,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	ekstypes "github.com/aws/aws-sdk-go-v2/service/eks/types"
-	"github.com/aws/aws-sdk-go-v2/service/iam"
-	iamtypes "github.com/aws/aws-sdk-go-v2/service/iam/types"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/eks"
+	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -52,72 +50,72 @@ func TestOIDCReconcile(t *testing.T) {
 	tests := []struct {
 		name    string
 		expect  func(m *mock_iamauth.MockIAMAPIMockRecorder, url string)
-		cluster func(url string) ekstypes.Cluster
+		cluster func(url string) eks.Cluster
 	}{
 		{
 			name: "cluster create with no OIDC provider present yet should create one",
-			cluster: func(url string) ekstypes.Cluster {
-				return ekstypes.Cluster{
+			cluster: func(url string) eks.Cluster {
+				return eks.Cluster{
 					Name:    aws.String("cluster-test"),
 					Arn:     aws.String("arn:arn"),
 					RoleArn: aws.String("arn:role"),
-					Identity: &ekstypes.Identity{
-						Oidc: &ekstypes.OIDC{
+					Identity: &eks.Identity{
+						Oidc: &eks.OIDC{
 							Issuer: aws.String(url),
 						},
 					},
 				}
 			},
 			expect: func(m *mock_iamauth.MockIAMAPIMockRecorder, url string) {
-				m.ListOpenIDConnectProviders(gomock.Any(), &iam.ListOpenIDConnectProvidersInput{}).Return(&iam.ListOpenIDConnectProvidersOutput{
-					OpenIDConnectProviderList: []iamtypes.OpenIDConnectProviderListEntry{},
+				m.ListOpenIDConnectProviders(&iam.ListOpenIDConnectProvidersInput{}).Return(&iam.ListOpenIDConnectProvidersOutput{
+					OpenIDConnectProviderList: []*iam.OpenIDConnectProviderListEntry{},
 				}, nil)
-				m.CreateOpenIDConnectProvider(gomock.Any(), &iam.CreateOpenIDConnectProviderInput{
-					ClientIDList:   []string{"sts.amazonaws.com"},
-					ThumbprintList: []string{testCertThumbprint},
-					Url:            aws.String(url),
+				m.CreateOpenIDConnectProvider(&iam.CreateOpenIDConnectProviderInput{
+					ClientIDList:   aws.StringSlice([]string{"sts.amazonaws.com"}),
+					ThumbprintList: aws.StringSlice([]string{testCertThumbprint}),
+					Url:            &url,
 				}).Return(&iam.CreateOpenIDConnectProviderOutput{
 					OpenIDConnectProviderArn: aws.String("arn::oidc"),
 				}, nil)
-				m.TagOpenIDConnectProvider(gomock.Any(), &iam.TagOpenIDConnectProviderInput{
+				m.TagOpenIDConnectProvider(&iam.TagOpenIDConnectProviderInput{
 					OpenIDConnectProviderArn: aws.String("arn::oidc"),
-					Tags:                     []iamtypes.Tag{},
+					Tags:                     []*iam.Tag{},
 				}).Return(&iam.TagOpenIDConnectProviderOutput{}, nil)
 			},
 		},
 		{
 			name: "cluster create with existing OIDC provider which is retrieved",
-			cluster: func(url string) ekstypes.Cluster {
-				return ekstypes.Cluster{
+			cluster: func(url string) eks.Cluster {
+				return eks.Cluster{
 					Name:    aws.String("cluster-test"),
 					Arn:     aws.String("arn:arn"),
 					RoleArn: aws.String("arn:role"),
-					Identity: &ekstypes.Identity{
-						Oidc: &ekstypes.OIDC{
+					Identity: &eks.Identity{
+						Oidc: &eks.OIDC{
 							Issuer: aws.String(url),
 						},
 					},
 				}
 			},
 			expect: func(m *mock_iamauth.MockIAMAPIMockRecorder, url string) {
-				m.ListOpenIDConnectProviders(gomock.Any(), &iam.ListOpenIDConnectProvidersInput{}).Return(&iam.ListOpenIDConnectProvidersOutput{
-					OpenIDConnectProviderList: []iamtypes.OpenIDConnectProviderListEntry{
+				m.ListOpenIDConnectProviders(&iam.ListOpenIDConnectProvidersInput{}).Return(&iam.ListOpenIDConnectProvidersOutput{
+					OpenIDConnectProviderList: []*iam.OpenIDConnectProviderListEntry{
 						{
 							Arn: aws.String("arn::oidc"),
 						},
 					},
 				}, nil)
 				// This should equal with what we provide.
-				m.GetOpenIDConnectProvider(gomock.Any(), &iam.GetOpenIDConnectProviderInput{
+				m.GetOpenIDConnectProvider(&iam.GetOpenIDConnectProviderInput{
 					OpenIDConnectProviderArn: aws.String("arn::oidc"),
 				}).Return(&iam.GetOpenIDConnectProviderOutput{
-					ClientIDList:   []string{"sts.amazonaws.com"},
-					ThumbprintList: []string{testCertThumbprint},
-					Url:            aws.String(url),
+					ClientIDList:   aws.StringSlice([]string{"sts.amazonaws.com"}),
+					ThumbprintList: aws.StringSlice([]string{testCertThumbprint}),
+					Url:            &url,
 				}, nil)
-				m.TagOpenIDConnectProvider(gomock.Any(), &iam.TagOpenIDConnectProviderInput{
+				m.TagOpenIDConnectProvider(&iam.TagOpenIDConnectProviderInput{
 					OpenIDConnectProviderArn: aws.String("arn::oidc"),
-					Tags:                     []iamtypes.Tag{},
+					Tags:                     []*iam.Tag{},
 				}).Return(&iam.TagOpenIDConnectProviderOutput{}, nil)
 			},
 		},
@@ -176,7 +174,7 @@ func TestOIDCReconcile(t *testing.T) {
 			s.IAMClient = iamMock
 
 			cluster := tc.cluster(ts.URL)
-			err := s.reconcileOIDCProvider(context.TODO(), &cluster)
+			err := s.reconcileOIDCProvider(&cluster)
 			// We reached the trusted policy reconcile which will fail because it tries to connect to the server.
 			// But at this point, we already know that the critical area has been covered.
 			g.Expect(err).To(MatchError(ContainSubstring("dial tcp: lookup test-cluster-api.nodomain.example.com")))

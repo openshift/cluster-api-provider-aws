@@ -18,23 +18,23 @@ package v1beta1
 
 import (
 	apiconversion "k8s.io/apimachinery/pkg/conversion"
+	utilconversion "sigs.k8s.io/cluster-api/util/conversion"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	infrav1beta1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta1"
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
-	expinfrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta2"
-	utilconversion "sigs.k8s.io/cluster-api/util/conversion"
+	infrav1exp "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta2"
 )
 
 // ConvertTo converts the v1beta1 AWSMachinePool receiver to a v1beta2 AWSMachinePool.
 func (src *AWSMachinePool) ConvertTo(dstRaw conversion.Hub) error {
-	dst := dstRaw.(*expinfrav1.AWSMachinePool)
+	dst := dstRaw.(*infrav1exp.AWSMachinePool)
 	if err := Convert_v1beta1_AWSMachinePool_To_v1beta2_AWSMachinePool(src, dst, nil); err != nil {
 		return err
 	}
 
 	// Manually restore data.
-	restored := &expinfrav1.AWSMachinePool{}
+	restored := &infrav1exp.AWSMachinePool{}
 	if ok, err := utilconversion.UnmarshalData(src, restored); err != nil || !ok {
 		return err
 	}
@@ -52,13 +52,7 @@ func (src *AWSMachinePool) ConvertTo(dstRaw conversion.Hub) error {
 	if restored.Spec.AvailabilityZoneSubnetType != nil {
 		dst.Spec.AvailabilityZoneSubnetType = restored.Spec.AvailabilityZoneSubnetType
 	}
-	if restored.Spec.Ignition != nil {
-		dst.Spec.Ignition = restored.Spec.Ignition
-	}
 	dst.Status.InfrastructureMachineKind = restored.Status.InfrastructureMachineKind
-	if restored.Spec.AWSLifecycleHooks != nil {
-		dst.Spec.AWSLifecycleHooks = restored.Spec.AWSLifecycleHooks
-	}
 
 	if restored.Spec.AWSLaunchTemplate.PrivateDNSName != nil {
 		dst.Spec.AWSLaunchTemplate.PrivateDNSName = restored.Spec.AWSLaunchTemplate.PrivateDNSName
@@ -72,10 +66,6 @@ func (src *AWSMachinePool) ConvertTo(dstRaw conversion.Hub) error {
 		dst.Spec.AWSLaunchTemplate.MarketType = restored.Spec.AWSLaunchTemplate.MarketType
 	}
 
-	if preference := restored.Spec.AWSLaunchTemplate.CapacityReservationPreference; preference != "" {
-		dst.Spec.AWSLaunchTemplate.CapacityReservationPreference = preference
-	}
-
 	dst.Spec.DefaultInstanceWarmup = restored.Spec.DefaultInstanceWarmup
 	dst.Spec.AWSLaunchTemplate.NonRootVolumes = restored.Spec.AWSLaunchTemplate.NonRootVolumes
 	return nil
@@ -83,7 +73,7 @@ func (src *AWSMachinePool) ConvertTo(dstRaw conversion.Hub) error {
 
 // ConvertFrom converts the v1beta2 AWSMachinePool receiver to v1beta1 AWSMachinePool.
 func (dst *AWSMachinePool) ConvertFrom(srcRaw conversion.Hub) error {
-	src := srcRaw.(*expinfrav1.AWSMachinePool)
+	src := srcRaw.(*infrav1exp.AWSMachinePool)
 
 	if err := Convert_v1beta2_AWSMachinePool_To_v1beta1_AWSMachinePool(src, dst, nil); err != nil {
 		return err
@@ -94,24 +84,24 @@ func (dst *AWSMachinePool) ConvertFrom(srcRaw conversion.Hub) error {
 
 // ConvertTo converts the v1beta1 AWSMachinePoolList receiver to a v1beta2 AWSMachinePoolList.
 func (src *AWSMachinePoolList) ConvertTo(dstRaw conversion.Hub) error {
-	dst := dstRaw.(*expinfrav1.AWSMachinePoolList)
+	dst := dstRaw.(*infrav1exp.AWSMachinePoolList)
 	return Convert_v1beta1_AWSMachinePoolList_To_v1beta2_AWSMachinePoolList(src, dst, nil)
 }
 
 // ConvertFrom converts the v1beta2 AWSMachinePoolList receiver to v1beta1 AWSMachinePoolList.
 func (r *AWSMachinePoolList) ConvertFrom(srcRaw conversion.Hub) error {
-	src := srcRaw.(*expinfrav1.AWSMachinePoolList)
+	src := srcRaw.(*infrav1exp.AWSMachinePoolList)
 	return Convert_v1beta2_AWSMachinePoolList_To_v1beta1_AWSMachinePoolList(src, r, nil)
 }
 
 // ConvertTo converts the v1beta1 AWSManagedMachinePool receiver to a v1beta2 AWSManagedMachinePool.
 func (src *AWSManagedMachinePool) ConvertTo(dstRaw conversion.Hub) error {
-	dst := dstRaw.(*expinfrav1.AWSManagedMachinePool)
+	dst := dstRaw.(*infrav1exp.AWSManagedMachinePool)
 	if err := Convert_v1beta1_AWSManagedMachinePool_To_v1beta2_AWSManagedMachinePool(src, dst, nil); err != nil {
 		return err
 	}
 	// Manually restore data.
-	restored := &expinfrav1.AWSManagedMachinePool{}
+	restored := &infrav1exp.AWSManagedMachinePool{}
 	if ok, err := utilconversion.UnmarshalData(src, restored); err != nil || !ok {
 		return err
 	}
@@ -135,26 +125,17 @@ func (src *AWSManagedMachinePool) ConvertTo(dstRaw conversion.Hub) error {
 			dst.Spec.AWSLaunchTemplate.MarketType = restored.Spec.AWSLaunchTemplate.MarketType
 		}
 
-		if preference := restored.Spec.AWSLaunchTemplate.CapacityReservationPreference; preference != "" {
-			dst.Spec.AWSLaunchTemplate.CapacityReservationPreference = preference
-		}
 	}
 	if restored.Spec.AvailabilityZoneSubnetType != nil {
 		dst.Spec.AvailabilityZoneSubnetType = restored.Spec.AvailabilityZoneSubnetType
 	}
-	if restored.Spec.AWSLifecycleHooks != nil {
-		dst.Spec.AWSLifecycleHooks = restored.Spec.AWSLifecycleHooks
-	}
-
-	dst.Spec.RolePath = restored.Spec.RolePath
-	dst.Spec.RolePermissionsBoundary = restored.Spec.RolePermissionsBoundary
 
 	return nil
 }
 
 // ConvertFrom converts the v1beta2 AWSManagedMachinePool receiver to v1beta1 AWSManagedMachinePool.
 func (r *AWSManagedMachinePool) ConvertFrom(srcRaw conversion.Hub) error {
-	src := srcRaw.(*expinfrav1.AWSManagedMachinePool)
+	src := srcRaw.(*infrav1exp.AWSManagedMachinePool)
 
 	if err := Convert_v1beta2_AWSManagedMachinePool_To_v1beta1_AWSManagedMachinePool(src, r, nil); err != nil {
 		return err
@@ -164,68 +145,49 @@ func (r *AWSManagedMachinePool) ConvertFrom(srcRaw conversion.Hub) error {
 }
 
 // Convert_v1beta2_AWSManagedMachinePoolSpec_To_v1beta1_AWSManagedMachinePoolSpec is a conversion function.
-func Convert_v1beta2_AWSManagedMachinePoolSpec_To_v1beta1_AWSManagedMachinePoolSpec(in *expinfrav1.AWSManagedMachinePoolSpec, out *AWSManagedMachinePoolSpec, s apiconversion.Scope) error {
+func Convert_v1beta2_AWSManagedMachinePoolSpec_To_v1beta1_AWSManagedMachinePoolSpec(in *infrav1exp.AWSManagedMachinePoolSpec, out *AWSManagedMachinePoolSpec, s apiconversion.Scope) error {
 	return autoConvert_v1beta2_AWSManagedMachinePoolSpec_To_v1beta1_AWSManagedMachinePoolSpec(in, out, s)
 }
 
-func Convert_v1beta2_AWSMachinePoolStatus_To_v1beta1_AWSMachinePoolStatus(in *expinfrav1.AWSMachinePoolStatus, out *AWSMachinePoolStatus, s apiconversion.Scope) error {
+func Convert_v1beta2_AWSMachinePoolStatus_To_v1beta1_AWSMachinePoolStatus(in *infrav1exp.AWSMachinePoolStatus, out *AWSMachinePoolStatus, s apiconversion.Scope) error {
 	return autoConvert_v1beta2_AWSMachinePoolStatus_To_v1beta1_AWSMachinePoolStatus(in, out, s)
 }
 
 // ConvertTo converts the v1beta1 AWSManagedMachinePoolList receiver to a v1beta2 AWSManagedMachinePoolList.
 func (src *AWSManagedMachinePoolList) ConvertTo(dstRaw conversion.Hub) error {
-	dst := dstRaw.(*expinfrav1.AWSManagedMachinePoolList)
+	dst := dstRaw.(*infrav1exp.AWSManagedMachinePoolList)
 	return Convert_v1beta1_AWSManagedMachinePoolList_To_v1beta2_AWSManagedMachinePoolList(src, dst, nil)
 }
 
 // ConvertFrom converts the v1beta2 AWSManagedMachinePoolList receiver to v1beta1 AWSManagedMachinePoolList.
 func (r *AWSManagedMachinePoolList) ConvertFrom(srcRaw conversion.Hub) error {
-	src := srcRaw.(*expinfrav1.AWSManagedMachinePoolList)
+	src := srcRaw.(*infrav1exp.AWSManagedMachinePoolList)
 
 	return Convert_v1beta2_AWSManagedMachinePoolList_To_v1beta1_AWSManagedMachinePoolList(src, r, nil)
 }
 
 // ConvertTo converts the v1beta1 AWSFargateProfile receiver to a v1beta2 AWSFargateProfile.
 func (src *AWSFargateProfile) ConvertTo(dstRaw conversion.Hub) error {
-	dst := dstRaw.(*expinfrav1.AWSFargateProfile)
-
-	if err := Convert_v1beta1_AWSFargateProfile_To_v1beta2_AWSFargateProfile(src, dst, nil); err != nil {
-		return err
-	}
-
-	// Manually restore data.
-	restored := &expinfrav1.AWSFargateProfile{}
-	if ok, err := utilconversion.UnmarshalData(src, restored); err != nil || !ok {
-		return err
-	}
-
-	dst.Spec.RolePath = restored.Spec.RolePath
-	dst.Spec.RolePermissionsBoundary = restored.Spec.RolePermissionsBoundary
-
-	return nil
+	dst := dstRaw.(*infrav1exp.AWSFargateProfile)
+	return Convert_v1beta1_AWSFargateProfile_To_v1beta2_AWSFargateProfile(src, dst, nil)
 }
 
 // ConvertFrom converts the v1beta2 AWSFargateProfile receiver to v1beta1 AWSFargateProfile.
 func (r *AWSFargateProfile) ConvertFrom(srcRaw conversion.Hub) error {
-	src := srcRaw.(*expinfrav1.AWSFargateProfile)
+	src := srcRaw.(*infrav1exp.AWSFargateProfile)
 
-	if err := Convert_v1beta2_AWSFargateProfile_To_v1beta1_AWSFargateProfile(src, r, nil); err != nil {
-		return err
-	}
-
-	// Preserve Hub data on down-conversion.
-	return utilconversion.MarshalData(src, r)
+	return Convert_v1beta2_AWSFargateProfile_To_v1beta1_AWSFargateProfile(src, r, nil)
 }
 
 // ConvertTo converts the v1beta1 AWSFargateProfileList receiver to a v1beta2 AWSFargateProfileList.
 func (src *AWSFargateProfileList) ConvertTo(dstRaw conversion.Hub) error {
-	dst := dstRaw.(*expinfrav1.AWSFargateProfileList)
+	dst := dstRaw.(*infrav1exp.AWSFargateProfileList)
 	return Convert_v1beta1_AWSFargateProfileList_To_v1beta2_AWSFargateProfileList(src, dst, nil)
 }
 
 // ConvertFrom converts the v1beta2 AWSFargateProfileList receiver to v1beta1 AWSFargateProfileList.
 func (r *AWSFargateProfileList) ConvertFrom(srcRaw conversion.Hub) error {
-	src := srcRaw.(*expinfrav1.AWSFargateProfileList)
+	src := srcRaw.(*infrav1exp.AWSFargateProfileList)
 
 	return Convert_v1beta2_AWSFargateProfileList_To_v1beta1_AWSFargateProfileList(src, r, nil)
 }
@@ -251,25 +213,29 @@ func Convert_v1beta1_Instance_To_v1beta2_Instance(in *infrav1beta1.Instance, out
 }
 
 // Convert_v1beta2_AWSLaunchTemplate_To_v1beta1_AWSLaunchTemplate converts the v1beta2 AWSLaunchTemplate receiver to a v1beta1 AWSLaunchTemplate.
-func Convert_v1beta2_AWSLaunchTemplate_To_v1beta1_AWSLaunchTemplate(in *expinfrav1.AWSLaunchTemplate, out *AWSLaunchTemplate, s apiconversion.Scope) error {
+func Convert_v1beta2_AWSLaunchTemplate_To_v1beta1_AWSLaunchTemplate(in *infrav1exp.AWSLaunchTemplate, out *AWSLaunchTemplate, s apiconversion.Scope) error {
 	return autoConvert_v1beta2_AWSLaunchTemplate_To_v1beta1_AWSLaunchTemplate(in, out, s)
 }
 
-func Convert_v1beta2_AWSMachinePoolSpec_To_v1beta1_AWSMachinePoolSpec(in *expinfrav1.AWSMachinePoolSpec, out *AWSMachinePoolSpec, s apiconversion.Scope) error {
+func Convert_v1beta1_AWSMachinePoolSpec_To_v1beta2_AWSMachinePoolSpec(in *AWSMachinePoolSpec, out *infrav1exp.AWSMachinePoolSpec, s apiconversion.Scope) error {
+	return autoConvert_v1beta1_AWSMachinePoolSpec_To_v1beta2_AWSMachinePoolSpec(in, out, s)
+}
+
+func Convert_v1beta2_AWSMachinePoolSpec_To_v1beta1_AWSMachinePoolSpec(in *infrav1exp.AWSMachinePoolSpec, out *AWSMachinePoolSpec, s apiconversion.Scope) error {
 	return autoConvert_v1beta2_AWSMachinePoolSpec_To_v1beta1_AWSMachinePoolSpec(in, out, s)
 }
 
-func Convert_v1beta2_AutoScalingGroup_To_v1beta1_AutoScalingGroup(in *expinfrav1.AutoScalingGroup, out *AutoScalingGroup, s apiconversion.Scope) error {
+func Convert_v1beta1_AutoScalingGroup_To_v1beta2_AutoScalingGroup(in *AutoScalingGroup, out *infrav1exp.AutoScalingGroup, s apiconversion.Scope) error {
+	return autoConvert_v1beta1_AutoScalingGroup_To_v1beta2_AutoScalingGroup(in, out, s)
+}
+
+func Convert_v1beta2_AutoScalingGroup_To_v1beta1_AutoScalingGroup(in *infrav1exp.AutoScalingGroup, out *AutoScalingGroup, s apiconversion.Scope) error {
 	// explicitly ignore CurrentlySuspended.
 	return autoConvert_v1beta2_AutoScalingGroup_To_v1beta1_AutoScalingGroup(in, out, s)
 }
 
 // Convert_v1beta2_RefreshPreferences_To_v1beta1_RefreshPreferences converts the v1beta2 RefreshPreferences receiver to a v1beta1 RefreshPreferences.
-func Convert_v1beta2_RefreshPreferences_To_v1beta1_RefreshPreferences(in *expinfrav1.RefreshPreferences, out *RefreshPreferences, s apiconversion.Scope) error {
+func Convert_v1beta2_RefreshPreferences_To_v1beta1_RefreshPreferences(in *infrav1exp.RefreshPreferences, out *RefreshPreferences, s apiconversion.Scope) error {
 	// spec.refreshPreferences.disable has been added to v1beta2.
 	return autoConvert_v1beta2_RefreshPreferences_To_v1beta1_RefreshPreferences(in, out, s)
-}
-
-func Convert_v1beta2_FargateProfileSpec_To_v1beta1_FargateProfileSpec(in *expinfrav1.FargateProfileSpec, out *FargateProfileSpec, s apiconversion.Scope) error {
-	return autoConvert_v1beta2_FargateProfileSpec_To_v1beta1_FargateProfileSpec(in, out, s)
 }

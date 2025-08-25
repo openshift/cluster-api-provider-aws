@@ -17,9 +17,8 @@ limitations under the License.
 package v1beta1
 
 import (
-	"sigs.k8s.io/controller-runtime/pkg/conversion"
-
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
 // ConvertTo converts the v1beta1 AWSClusterControllerIdentity receiver to a v1beta2 AWSClusterControllerIdentity.

@@ -17,20 +17,18 @@ limitations under the License.
 package ami
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"strconv"
 	"strings"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/ec2"
-	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/blang/semver"
 	"github.com/pkg/errors"
 
-	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/common"
 	ec2service "sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/ec2"
 )
 
@@ -182,33 +180,33 @@ func latestStableRelease() (string, error) {
 	return latestVersion, nil
 }
 
-func getAllImages(ec2Client common.EC2API, ownerID string) (map[string][]types.Image, error) {
+func getAllImages(ec2Client ec2iface.EC2API, ownerID string) (map[string][]*ec2.Image, error) {
 	if ownerID == "" {
 		ownerID = ec2service.DefaultMachineAMIOwnerID
 	}
 
 	describeImageInput := &ec2.DescribeImagesInput{
-		Filters: []types.Filter{
+		Filters: []*ec2.Filter{
 			{
 				Name:   aws.String("owner-id"),
-				Values: []string{ownerID},
+				Values: []*string{aws.String(ownerID)},
 			},
 			{
 				Name:   aws.String("architecture"),
-				Values: []string{"x86_64"},
+				Values: []*string{aws.String("x86_64")},
 			},
 			{
 				Name:   aws.String("state"),
-				Values: []string{"available"},
+				Values: []*string{aws.String("available")},
 			},
 			{
 				Name:   aws.String("virtualization-type"),
-				Values: []string{"hvm"},
+				Values: []*string{aws.String("hvm")},
 			},
 		},
 	}
 
-	out, err := ec2Client.DescribeImages(context.TODO(), describeImageInput)
+	out, err := ec2Client.DescribeImages(describeImageInput)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch AMIs")
 	}
@@ -216,9 +214,9 @@ func getAllImages(ec2Client common.EC2API, ownerID string) (map[string][]types.I
 		return nil, nil
 	}
 
-	imagesMap := make(map[string][]types.Image)
+	imagesMap := make(map[string][]*ec2.Image)
 	for _, image := range out.Images {
-		arr := strings.Split(aws.ToString(image.Name), "-")
+		arr := strings.Split(aws.StringValue(image.Name), "-")
 		if arr[len(arr)-2] == "00" {
 			arr = arr[:len(arr)-2]
 		} else {
@@ -227,7 +225,7 @@ func getAllImages(ec2Client common.EC2API, ownerID string) (map[string][]types.I
 		name := strings.Join(arr, "-")
 		images, ok := imagesMap[name]
 		if !ok {
-			images = make([]types.Image, 0)
+			images = make([]*ec2.Image, 0)
 		}
 		imagesMap[name] = append(images, image)
 	}
@@ -235,7 +233,7 @@ func getAllImages(ec2Client common.EC2API, ownerID string) (map[string][]types.I
 	return imagesMap, nil
 }
 
-func findAMI(imagesMap map[string][]types.Image, baseOS, kubernetesVersion string) (*types.Image, error) {
+func findAMI(imagesMap map[string][]*ec2.Image, baseOS, kubernetesVersion string) (*ec2.Image, error) {
 	amiNameFormat := "capa-ami-{{.BaseOS}}-{{.K8sVersion}}"
 	// Support new AMI format capa-ami-<os-version>-?<k8s-version>-*
 	amiName, err := ec2service.GenerateAmiName(amiNameFormat, baseOS, kubernetesVersion)
@@ -255,7 +253,7 @@ func findAMI(imagesMap map[string][]types.Image, baseOS, kubernetesVersion strin
 	return nil, nil
 }
 
-func latestAMI(val []types.Image) (*types.Image, error) {
+func latestAMI(val []*ec2.Image) (*ec2.Image, error) {
 	latestImage, err := ec2service.GetLatestImage(val)
 	if err != nil {
 		return nil, err

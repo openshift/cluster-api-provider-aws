@@ -21,7 +21,6 @@ limitations under the License.
 package mock_services
 
 import (
-	context "context"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -53,17 +52,17 @@ func (m *MockMachinePoolReconcileInterface) EXPECT() *MockMachinePoolReconcileIn
 }
 
 // ReconcileLaunchTemplate mocks base method.
-func (m *MockMachinePoolReconcileInterface) ReconcileLaunchTemplate(arg0 context.Context, arg1 scope.IgnitionScope, arg2 scope.LaunchTemplateScope, arg3 scope.S3Scope, arg4 services.EC2Interface, arg5 services.ObjectStoreInterface, arg6 func() (bool, error), arg7 func() error) error {
+func (m *MockMachinePoolReconcileInterface) ReconcileLaunchTemplate(arg0 scope.LaunchTemplateScope, arg1 services.EC2Interface, arg2 func() (bool, error), arg3 func() error) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReconcileLaunchTemplate", arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7)
+	ret := m.ctrl.Call(m, "ReconcileLaunchTemplate", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ReconcileLaunchTemplate indicates an expected call of ReconcileLaunchTemplate.
-func (mr *MockMachinePoolReconcileInterfaceMockRecorder) ReconcileLaunchTemplate(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7 interface{}) *gomock.Call {
+func (mr *MockMachinePoolReconcileInterfaceMockRecorder) ReconcileLaunchTemplate(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReconcileLaunchTemplate", reflect.TypeOf((*MockMachinePoolReconcileInterface)(nil).ReconcileLaunchTemplate), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReconcileLaunchTemplate", reflect.TypeOf((*MockMachinePoolReconcileInterface)(nil).ReconcileLaunchTemplate), arg0, arg1, arg2, arg3)
 }
 
 // ReconcileTags mocks base method.

@@ -21,12 +21,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/ec2"
-	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/ec2"
 
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/converters"
-	filter "sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/filter"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/filter"
 )
 
 func (s *Service) deleteSecurityGroups(ctx context.Context, resources []*AWSResource) error {
@@ -47,7 +46,7 @@ func (s *Service) deleteSecurityGroups(ctx context.Context, resources []*AWSReso
 }
 
 func (s *Service) isSecurityGroupToDelete(resource *AWSResource) bool {
-	if !s.isMatchingResource(resource, strings.ToLower(ec2.ServiceID), "security-group") {
+	if !s.isMatchingResource(resource, ec2.ServiceName, "security-group") {
 		return false
 	}
 	if eksClusterName := resource.Tags[eksClusterNameTag]; eksClusterName != "" {
@@ -65,7 +64,7 @@ func (s *Service) deleteSecurityGroup(ctx context.Context, securityGroupID strin
 	}
 
 	s.scope.Debug("Deleting security group", "group_id", securityGroupID)
-	if _, err := s.ec2Client.DeleteSecurityGroup(ctx, &input); err != nil {
+	if _, err := s.ec2Client.DeleteSecurityGroupWithContext(ctx, &input); err != nil {
 		return fmt.Errorf("deleting security group: %w", err)
 	}
 
@@ -73,22 +72,16 @@ func (s *Service) deleteSecurityGroup(ctx context.Context, securityGroupID strin
 }
 
 // getProviderOwnedSecurityGroups gets cloud provider created security groups of ELBs for this cluster, filtering by tag: kubernetes.io/cluster/<cluster-name>:owned and VPC Id.
-func (s *Service) getProviderOwnedSecurityGroups(ctx context.Context) ([]*AWSResource, error) {
+func (s *Service) getProviderOwnedSecurityGroups(_ context.Context) ([]*AWSResource, error) {
 	input := &ec2.DescribeSecurityGroupsInput{
-		Filters: []types.Filter{
+		Filters: []*ec2.Filter{
 			filter.EC2.ProviderOwned(s.scope.KubernetesClusterName()),
 		},
 	}
 
 	var resources []*AWSResource
-	paginator := ec2.NewDescribeSecurityGroupsPaginator(s.ec2Client, input)
-
-	for paginator.HasMorePages() {
-		page, err := paginator.NextPage(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get next page of security groups: %w", err)
-		}
-		for _, group := range page.SecurityGroups {
+	err := s.ec2Client.DescribeSecurityGroupsPagesWithContext(context.TODO(), input, func(out *ec2.DescribeSecurityGroupsOutput, last bool) bool {
+		for _, group := range out.SecurityGroups {
 			arn := composeFakeArn(sgService, sgResourcePrefix+*group.GroupId)
 			resource, err := composeAWSResource(arn, converters.TagsToMap(group.Tags))
 			if err != nil {
@@ -97,6 +90,10 @@ func (s *Service) getProviderOwnedSecurityGroups(ctx context.Context) ([]*AWSRes
 			}
 			resources = append(resources, resource)
 		}
+		return true
+	})
+	if err != nil {
+		return nil, fmt.Errorf("describe security groups error: %w", err)
 	}
 
 	return resources, nil

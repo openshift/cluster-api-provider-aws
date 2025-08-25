@@ -17,47 +17,46 @@ limitations under the License.
 package instancestate
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/sqs"
-	sqstypes "github.com/aws/aws-sdk-go-v2/service/sqs/types"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/pkg/errors"
 
 	iamv1 "sigs.k8s.io/cluster-api-provider-aws/v2/iam/api/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/awserrors"
 )
 
-func (s *Service) reconcileSQSQueue(ctx context.Context) error {
+func (s *Service) reconcileSQSQueue() error {
 	attrs := make(map[string]string)
-	attrs[string(sqstypes.QueueAttributeNameReceiveMessageWaitTimeSeconds)] = "20"
+	attrs[sqs.QueueAttributeNameReceiveMessageWaitTimeSeconds] = "20"
 
-	_, err := s.SQSClient.CreateQueue(ctx, &sqs.CreateQueueInput{
+	_, err := s.SQSClient.CreateQueue(&sqs.CreateQueueInput{
 		QueueName:  aws.String(GenerateQueueName(s.scope.Name())),
-		Attributes: attrs,
+		Attributes: aws.StringMap(attrs),
 	})
 
-	smithyErr := awserrors.ParseSmithyError(err)
-	if smithyErr != nil {
-		if smithyErr.ErrorCode() == (&sqstypes.QueueNameExists{}).ErrorCode() {
-			return nil
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			if aerr.Code() == sqs.ErrCodeQueueNameExists {
+				return nil
+			}
 		}
 	}
 	return errors.Wrap(err, "unable to create new queue")
 }
 
-func (s *Service) deleteSQSQueue(ctx context.Context) error {
-	resp, err := s.SQSClient.GetQueueUrl(ctx, &sqs.GetQueueUrlInput{QueueName: aws.String(GenerateQueueName(s.scope.Name()))})
+func (s *Service) deleteSQSQueue() error {
+	resp, err := s.SQSClient.GetQueueUrl(&sqs.GetQueueUrlInput{QueueName: aws.String(GenerateQueueName(s.scope.Name()))})
 	if err != nil {
 		if queueNotFoundError(err) {
 			return nil
 		}
 		return errors.Wrap(err, "unable to get queue URL")
 	}
-	_, err = s.SQSClient.DeleteQueue(ctx, &sqs.DeleteQueueInput{QueueUrl: resp.QueueUrl})
+	_, err = s.SQSClient.DeleteQueue(&sqs.DeleteQueueInput{QueueUrl: resp.QueueUrl})
 	if err != nil && queueNotFoundError(err) {
 		return nil
 	}
@@ -65,7 +64,7 @@ func (s *Service) deleteSQSQueue(ctx context.Context) error {
 	return errors.Wrap(err, "unable to delete queue")
 }
 
-func (s *Service) createPolicyForRule(ctx context.Context, input *createPolicyForRuleInput) error {
+func (s *Service) createPolicyForRule(input *createPolicyForRuleInput) error {
 	attrs := make(map[string]string)
 	policy := iamv1.PolicyDocument{
 		Version: iamv1.CurrentVersion,
@@ -87,11 +86,11 @@ func (s *Service) createPolicyForRule(ctx context.Context, input *createPolicyFo
 	if err != nil {
 		return errors.Wrap(err, "unable to JSON marshal policy")
 	}
-	attrs[string(sqstypes.QueueAttributeNamePolicy)] = string(policyData)
+	attrs[sqs.QueueAttributeNamePolicy] = string(policyData)
 
-	_, err = s.SQSClient.SetQueueAttributes(ctx, &sqs.SetQueueAttributesInput{
+	_, err = s.SQSClient.SetQueueAttributes(&sqs.SetQueueAttributesInput{
 		QueueUrl:   aws.String(input.QueueURL),
-		Attributes: attrs,
+		Attributes: aws.StringMap(attrs),
 	})
 
 	return errors.Wrap(err, "unable to update queue attributes")
@@ -104,11 +103,12 @@ func GenerateQueueName(clusterName string) string {
 }
 
 func queueNotFoundError(err error) bool {
-	smithyErr := awserrors.ParseSmithyError(err)
-	if smithyErr == nil {
-		return false
+	if aerr, ok := err.(awserr.Error); ok {
+		if aerr.Code() == sqs.ErrCodeQueueDoesNotExist {
+			return true
+		}
 	}
-	return smithyErr.ErrorCode() == (&sqstypes.QueueDoesNotExist{}).ErrorCode()
+	return false
 }
 
 type createPolicyForRuleInput struct {

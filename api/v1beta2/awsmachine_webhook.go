@@ -17,7 +17,6 @@ limitations under the License.
 package v1beta2
 
 import (
-	"context"
 	"encoding/base64"
 	"fmt"
 	"net"
@@ -42,31 +41,21 @@ import (
 var log = ctrl.Log.WithName("awsmachine-resource")
 
 func (r *AWSMachine) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	w := new(awsMachineWebhook)
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
-		WithValidator(w).
-		WithDefaulter(w).
 		Complete()
 }
 
 // +kubebuilder:webhook:verbs=create;update,path=/validate-infrastructure-cluster-x-k8s-io-v1beta2-awsmachine,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=awsmachines,versions=v1beta2,name=validation.awsmachine.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 // +kubebuilder:webhook:verbs=create;update,path=/mutate-infrastructure-cluster-x-k8s-io-v1beta2-awsmachine,mutating=true,failurePolicy=fail,groups=infrastructure.cluster.x-k8s.io,resources=awsmachines,versions=v1beta2,name=mawsmachine.kb.io,name=mutation.awsmachine.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 
-type awsMachineWebhook struct{}
-
 var (
-	_ webhook.CustomValidator = &awsMachineWebhook{}
-	_ webhook.CustomDefaulter = &awsMachineWebhook{}
+	_ webhook.Validator = &AWSMachine{}
+	_ webhook.Defaulter = &AWSMachine{}
 )
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (*awsMachineWebhook) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
-	r, ok := obj.(*AWSMachine)
-	if !ok {
-		return nil, fmt.Errorf("expected an AWSMachine object but got %T", r)
-	}
-
+func (r *AWSMachine) ValidateCreate() (admission.Warnings, error) {
 	var allErrs field.ErrorList
 
 	allErrs = append(allErrs, r.validateCloudInitSecret()...)
@@ -75,29 +64,22 @@ func (*awsMachineWebhook) ValidateCreate(_ context.Context, obj runtime.Object) 
 	allErrs = append(allErrs, r.validateNonRootVolumes()...)
 	allErrs = append(allErrs, r.validateSSHKeyName()...)
 	allErrs = append(allErrs, r.validateAdditionalSecurityGroups()...)
-	allErrs = append(allErrs, r.validateHostAffinity()...)
 	allErrs = append(allErrs, r.Spec.AdditionalTags.Validate()...)
 	allErrs = append(allErrs, r.validateNetworkElasticIPPool()...)
 	allErrs = append(allErrs, r.validateInstanceMarketType()...)
-	allErrs = append(allErrs, r.validateCapacityReservation()...)
 
 	return nil, aggregateObjErrors(r.GroupVersionKind().GroupKind(), r.Name, allErrs)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (*awsMachineWebhook) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
-	r, ok := newObj.(*AWSMachine)
-	if !ok {
-		return nil, fmt.Errorf("expected an AWSMachine object but got %T", r)
-	}
-
+func (r *AWSMachine) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	newAWSMachine, err := runtime.DefaultUnstructuredConverter.ToUnstructured(r)
 	if err != nil {
 		return nil, apierrors.NewInvalid(GroupVersion.WithKind("AWSMachine").GroupKind(), r.Name, field.ErrorList{
 			field.InternalError(nil, errors.Wrap(err, "failed to convert new AWSMachine to unstructured object")),
 		})
 	}
-	oldAWSMachine, err := runtime.DefaultUnstructuredConverter.ToUnstructured(oldObj)
+	oldAWSMachine, err := runtime.DefaultUnstructuredConverter.ToUnstructured(old)
 	if err != nil {
 		return nil, apierrors.NewInvalid(GroupVersion.WithKind("AWSMachine").GroupKind(), r.Name, field.ErrorList{
 			field.InternalError(nil, errors.Wrap(err, "failed to convert old AWSMachine to unstructured object")),
@@ -109,7 +91,6 @@ func (*awsMachineWebhook) ValidateUpdate(ctx context.Context, oldObj, newObj run
 	allErrs = append(allErrs, r.validateCloudInitSecret()...)
 	allErrs = append(allErrs, r.validateAdditionalSecurityGroups()...)
 	allErrs = append(allErrs, r.Spec.AdditionalTags.Validate()...)
-	allErrs = append(allErrs, r.validateHostAffinity()...)
 
 	newAWSMachineSpec := newAWSMachine["spec"].(map[string]interface{})
 	oldAWSMachineSpec := oldAWSMachine["spec"].(map[string]interface{})
@@ -381,14 +362,6 @@ func (r *AWSMachine) validateNetworkElasticIPPool() field.ErrorList {
 	return allErrs
 }
 
-func (r *AWSMachine) validateCapacityReservation() field.ErrorList {
-	var allErrs field.ErrorList
-	if r.Spec.CapacityReservationID != nil && r.Spec.CapacityReservationPreference != CapacityReservationPreferenceOnly && r.Spec.CapacityReservationPreference != "" {
-		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec", "capacityReservationPreference"), "when a reservation ID is specified, capacityReservationPreference may only be `capacity-reservations-only` or empty"))
-	}
-	return allErrs
-}
-
 func (r *AWSMachine) validateInstanceMarketType() field.ErrorList {
 	var allErrs field.ErrorList
 	if r.Spec.MarketType == MarketTypeCapacityBlock && r.Spec.SpotMarketOptions != nil {
@@ -429,30 +402,24 @@ func (r *AWSMachine) validateNonRootVolumes() field.ErrorList {
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (*awsMachineWebhook) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
+func (r *AWSMachine) ValidateDelete() (admission.Warnings, error) {
 	return nil, nil
 }
 
 // Default implements webhook.Defaulter such that an empty CloudInit will be defined with a default
 // SecureSecretsBackend as SecretBackendSecretsManager iff InsecureSkipSecretsManager is unset.
-func (*awsMachineWebhook) Default(_ context.Context, obj runtime.Object) error {
-	r, ok := obj.(*AWSMachine)
-	if !ok {
-		return fmt.Errorf("expected an AWSMachine object but got %T", r)
-	}
-
+func (r *AWSMachine) Default() {
 	if !r.Spec.CloudInit.InsecureSkipSecretsManager && r.Spec.CloudInit.SecureSecretsBackend == "" && !r.ignitionEnabled() {
 		r.Spec.CloudInit.SecureSecretsBackend = SecretBackendSecretsManager
 	}
 
 	if r.ignitionEnabled() && r.Spec.Ignition.Version == "" {
+		if r.Spec.Ignition == nil {
+			r.Spec.Ignition = &Ignition{}
+		}
+
 		r.Spec.Ignition.Version = DefaultIgnitionVersion
 	}
-	if r.ignitionEnabled() && r.Spec.Ignition.StorageType == "" {
-		r.Spec.Ignition.StorageType = DefaultIgnitionStorageType
-	}
-
-	return nil
 }
 
 func (r *AWSMachine) validateAdditionalSecurityGroups() field.ErrorList {
@@ -461,17 +428,6 @@ func (r *AWSMachine) validateAdditionalSecurityGroups() field.ErrorList {
 	for _, additionalSecurityGroup := range r.Spec.AdditionalSecurityGroups {
 		if len(additionalSecurityGroup.Filters) > 0 && additionalSecurityGroup.ID != nil {
 			allErrs = append(allErrs, field.Forbidden(field.NewPath("spec.additionalSecurityGroups"), "only one of ID or Filters may be specified, specifying both is forbidden"))
-		}
-	}
-	return allErrs
-}
-
-func (r *AWSMachine) validateHostAffinity() field.ErrorList {
-	var allErrs field.ErrorList
-
-	if r.Spec.HostAffinity != nil {
-		if r.Spec.HostID == nil || len(*r.Spec.HostID) == 0 {
-			allErrs = append(allErrs, field.Required(field.NewPath("spec.hostID"), "hostID must be set when hostAffinity is configured"))
 		}
 	}
 	return allErrs

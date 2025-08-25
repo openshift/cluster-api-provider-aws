@@ -22,11 +22,10 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/ec2"
-	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/pkg/errors"
 	"k8s.io/utils/ptr"
 
@@ -35,10 +34,8 @@ import (
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/converters"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/filter"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/scope"
-	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/common"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/userdata"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/record"
-	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/utils"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
@@ -47,14 +44,14 @@ func (s *Service) GetRunningInstanceByTags(scope *scope.MachineScope) (*infrav1.
 	s.scope.Debug("Looking for existing machine instance by tags")
 
 	input := &ec2.DescribeInstancesInput{
-		Filters: []types.Filter{
+		Filters: []*ec2.Filter{
 			filter.EC2.ClusterOwned(s.scope.Name()),
 			filter.EC2.Name(scope.Name()),
-			filter.EC2.InstanceStates(types.InstanceStateNamePending, types.InstanceStateNameRunning),
+			filter.EC2.InstanceStates(ec2.InstanceStateNamePending, ec2.InstanceStateNameRunning),
 		},
 	}
 
-	out, err := s.EC2Client.DescribeInstances(context.TODO(), input)
+	out, err := s.EC2Client.DescribeInstancesWithContext(context.TODO(), input)
 	switch {
 	case awserrors.IsNotFound(err):
 		return nil, nil
@@ -86,10 +83,10 @@ func (s *Service) InstanceIfExists(id *string) (*infrav1.Instance, error) {
 	s.scope.Debug("Looking for instance by id", "instance-id", *id)
 
 	input := &ec2.DescribeInstancesInput{
-		InstanceIds: []string{aws.ToString(id)},
+		InstanceIds: []*string{id},
 	}
 
-	out, err := s.EC2Client.DescribeInstances(context.TODO(), input)
+	out, err := s.EC2Client.DescribeInstancesWithContext(context.TODO(), input)
 	switch {
 	case awserrors.IsNotFound(err):
 		record.Eventf(s.scope.InfraCluster(), "FailedFindInstances", "failed to find instance by providerId %q: %v", *id, err)
@@ -111,7 +108,7 @@ func (s *Service) InstanceIfExists(id *string) (*infrav1.Instance, error) {
 // CreateInstance runs an ec2 instance.
 //
 //nolint:gocyclo // this function has multiple processes to perform
-func (s *Service) CreateInstance(ctx context.Context, scope *scope.MachineScope, userData []byte, userDataFormat string) (*infrav1.Instance, error) {
+func (s *Service) CreateInstance(scope *scope.MachineScope, userData []byte, userDataFormat string) (*infrav1.Instance, error) {
 	s.scope.Debug("Creating an instance for a machine")
 
 	input := &infrav1.Instance{
@@ -135,7 +132,7 @@ func (s *Service) CreateInstance(ctx context.Context, scope *scope.MachineScope,
 
 	var err error
 
-	imageArchitecture, err := s.pickArchitectureForInstanceType(types.InstanceType(input.Type))
+	imageArchitecture, err := s.pickArchitectureForInstanceType(input.Type)
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +164,7 @@ func (s *Service) CreateInstance(ctx context.Context, scope *scope.MachineScope,
 		}
 
 		if scope.IsEKSManaged() && imageLookupFormat == "" && imageLookupOrg == "" && imageLookupBaseOS == "" {
-			input.ImageID, err = s.eksAMILookup(ctx, *scope.Machine.Spec.Version, imageArchitecture, scope.AWSMachine.Spec.AMI.EKSOptimizedLookupType)
+			input.ImageID, err = s.eksAMILookup(*scope.Machine.Spec.Version, imageArchitecture, scope.AWSMachine.Spec.AMI.EKSOptimizedLookupType)
 			if err != nil {
 				return nil, err
 			}
@@ -258,12 +255,6 @@ func (s *Service) CreateInstance(ctx context.Context, scope *scope.MachineScope,
 
 	input.MarketType = scope.AWSMachine.Spec.MarketType
 
-	input.HostID = scope.AWSMachine.Spec.HostID
-
-	input.HostAffinity = scope.AWSMachine.Spec.HostAffinity
-
-	input.CapacityReservationPreference = scope.AWSMachine.Spec.CapacityReservationPreference
-
 	s.scope.Debug("Running instance", "machine-role", scope.Role())
 	s.scope.Debug("Running instance with instance metadata options", "metadata options", input.InstanceMetadataOptions)
 	out, err := s.runInstance(scope.Role(), input)
@@ -329,28 +320,28 @@ func (s *Service) findSubnet(scope *scope.MachineScope) (string, error) {
 
 	switch {
 	case scope.AWSMachine.Spec.Subnet != nil && (scope.AWSMachine.Spec.Subnet.ID != nil || scope.AWSMachine.Spec.Subnet.Filters != nil):
-		criteria := []types.Filter{
-			filter.EC2.SubnetStates(types.SubnetStatePending, types.SubnetStateAvailable),
+		criteria := []*ec2.Filter{
+			filter.EC2.SubnetStates(ec2.SubnetStatePending, ec2.SubnetStateAvailable),
 		}
 		if scope.AWSMachine.Spec.Subnet.ID != nil {
-			criteria = append(criteria, types.Filter{Name: aws.String("subnet-id"), Values: []string{*scope.AWSMachine.Spec.Subnet.ID}})
+			criteria = append(criteria, &ec2.Filter{Name: aws.String("subnet-id"), Values: aws.StringSlice([]string{*scope.AWSMachine.Spec.Subnet.ID})})
 		}
 		for _, f := range scope.AWSMachine.Spec.Subnet.Filters {
-			criteria = append(criteria, types.Filter{Name: aws.String(f.Name), Values: f.Values})
+			criteria = append(criteria, &ec2.Filter{Name: aws.String(f.Name), Values: aws.StringSlice(f.Values)})
 		}
 
 		subnets, err := s.getFilteredSubnets(criteria...)
 		if err != nil {
-			return "", errors.Wrapf(err, "failed to filter subnets for criteria %v", criteria)
+			return "", errors.Wrapf(err, "failed to filter subnets for criteria %q", criteria)
 		}
 		if len(subnets) == 0 {
-			errMessage := fmt.Sprintf("failed to run machine %q, no subnets available matching criteria %v",
+			errMessage := fmt.Sprintf("failed to run machine %q, no subnets available matching criteria %q",
 				scope.Name(), criteria)
 			record.Warnf(scope.AWSMachine, "FailedCreate", errMessage)
 			return "", awserrors.NewFailedDependency(errMessage)
 		}
 
-		var filtered []types.Subnet
+		var filtered []*ec2.Subnet
 		var errMessage string
 		for _, subnet := range subnets {
 			if failureDomain != nil && *subnet.AvailabilityZone != *failureDomain {
@@ -437,8 +428,8 @@ func (s *Service) findSubnet(scope *scope.MachineScope) (string, error) {
 }
 
 // getFilteredSubnets fetches subnets filtered based on the criteria passed.
-func (s *Service) getFilteredSubnets(criteria ...types.Filter) ([]types.Subnet, error) {
-	out, err := s.EC2Client.DescribeSubnets(context.TODO(), &ec2.DescribeSubnetsInput{Filters: criteria})
+func (s *Service) getFilteredSubnets(criteria ...*ec2.Filter) ([]*ec2.Subnet, error) {
+	out, err := s.EC2Client.DescribeSubnetsWithContext(context.TODO(), &ec2.DescribeSubnetsInput{Filters: criteria})
 	if err != nil {
 		return nil, err
 	}
@@ -526,10 +517,10 @@ func (s *Service) TerminateInstance(instanceID string) error {
 	s.scope.Debug("Attempting to terminate instance", "instance-id", instanceID)
 
 	input := &ec2.TerminateInstancesInput{
-		InstanceIds: []string{instanceID},
+		InstanceIds: aws.StringSlice([]string{instanceID}),
 	}
 
-	if _, err := s.EC2Client.TerminateInstances(context.TODO(), input); err != nil {
+	if _, err := s.EC2Client.TerminateInstancesWithContext(context.TODO(), input); err != nil {
 		return errors.Wrapf(err, "failed to terminate instance with id %q", instanceID)
 	}
 
@@ -547,10 +538,10 @@ func (s *Service) TerminateInstanceAndWait(instanceID string) error {
 	s.scope.Debug("Waiting for EC2 instance to terminate", "instance-id", instanceID)
 
 	input := &ec2.DescribeInstancesInput{
-		InstanceIds: []string{instanceID},
+		InstanceIds: aws.StringSlice([]string{instanceID}),
 	}
 
-	if err := ec2.NewInstanceTerminatedWaiter(s.EC2Client).Wait(context.TODO(), input, time.Minute*2); err != nil {
+	if err := s.EC2Client.WaitUntilInstanceTerminatedWithContext(context.TODO(), input); err != nil {
 		return errors.Wrapf(err, "failed to wait for instance %q termination", instanceID)
 	}
 
@@ -559,35 +550,35 @@ func (s *Service) TerminateInstanceAndWait(instanceID string) error {
 
 func (s *Service) runInstance(role string, i *infrav1.Instance) (*infrav1.Instance, error) {
 	input := &ec2.RunInstancesInput{
-		InstanceType: types.InstanceType(i.Type),
+		InstanceType: aws.String(i.Type),
 		ImageId:      aws.String(i.ImageID),
 		KeyName:      i.SSHKeyName,
 		EbsOptimized: i.EBSOptimized,
-		MaxCount:     aws.Int32(1),
-		MinCount:     aws.Int32(1),
+		MaxCount:     aws.Int64(1),
+		MinCount:     aws.Int64(1),
 		UserData:     i.UserData,
 	}
 
 	s.scope.Debug("userData size", "bytes", len(*i.UserData), "role", role)
 
 	if len(i.NetworkInterfaces) > 0 {
-		netInterfaces := make([]types.InstanceNetworkInterfaceSpecification, 0, len(i.NetworkInterfaces))
+		netInterfaces := make([]*ec2.InstanceNetworkInterfaceSpecification, 0, len(i.NetworkInterfaces))
 
 		for index, id := range i.NetworkInterfaces {
-			netInterfaces = append(netInterfaces, types.InstanceNetworkInterfaceSpecification{
+			netInterfaces = append(netInterfaces, &ec2.InstanceNetworkInterfaceSpecification{
 				NetworkInterfaceId: aws.String(id),
-				DeviceIndex:        aws.Int32(int32(index)), //nolint:gosec // disable G115
+				DeviceIndex:        aws.Int64(int64(index)),
 			})
 		}
 		netInterfaces[0].AssociatePublicIpAddress = i.PublicIPOnLaunch
 
 		input.NetworkInterfaces = netInterfaces
 	} else {
-		input.NetworkInterfaces = []types.InstanceNetworkInterfaceSpecification{
+		input.NetworkInterfaces = []*ec2.InstanceNetworkInterfaceSpecification{
 			{
-				DeviceIndex:              aws.Int32(0),
+				DeviceIndex:              aws.Int64(0),
 				SubnetId:                 aws.String(i.SubnetID),
-				Groups:                   i.SecurityGroupIDs,
+				Groups:                   aws.StringSlice(i.SecurityGroupIDs),
 				AssociatePublicIpAddress: i.PublicIPOnLaunch,
 			},
 		}
@@ -598,12 +589,12 @@ func (s *Service) runInstance(role string, i *infrav1.Instance) (*infrav1.Instan
 	}
 
 	if i.IAMProfile != "" {
-		input.IamInstanceProfile = &types.IamInstanceProfileSpecification{
+		input.IamInstanceProfile = &ec2.IamInstanceProfileSpecification{
 			Name: aws.String(i.IAMProfile),
 		}
 	}
 
-	blockdeviceMappings := []types.BlockDeviceMapping{}
+	blockdeviceMappings := []*ec2.BlockDeviceMapping{}
 
 	if i.RootVolume != nil {
 		rootDeviceName, err := s.checkRootVolume(i.RootVolume, i.ImageID)
@@ -611,7 +602,7 @@ func (s *Service) runInstance(role string, i *infrav1.Instance) (*infrav1.Instan
 			return nil, err
 		}
 
-		i.RootVolume.DeviceName = aws.ToString(rootDeviceName)
+		i.RootVolume.DeviceName = aws.StringValue(rootDeviceName)
 		blockDeviceMapping := volumeToBlockDeviceMapping(i.RootVolume)
 		blockdeviceMappings = append(blockdeviceMappings, blockDeviceMapping)
 	}
@@ -632,14 +623,9 @@ func (s *Service) runInstance(role string, i *infrav1.Instance) (*infrav1.Instan
 	}
 
 	if len(i.Tags) > 0 {
-		resources := []types.ResourceType{types.ResourceTypeInstance, types.ResourceTypeVolume}
-
-		if len(i.NetworkInterfaces) == 0 {
-			resources = append(resources, types.ResourceTypeNetworkInterface)
-		}
-
+		resources := []string{ec2.ResourceTypeInstance, ec2.ResourceTypeVolume, ec2.ResourceTypeNetworkInterface}
 		for _, r := range resources {
-			spec := types.TagSpecification{ResourceType: r}
+			spec := &ec2.TagSpecification{ResourceType: aws.String(r)}
 
 			// We need to sort keys for tests to work
 			keys := make([]string, 0, len(i.Tags))
@@ -648,7 +634,7 @@ func (s *Service) runInstance(role string, i *infrav1.Instance) (*infrav1.Instan
 			}
 			sort.Strings(keys)
 			for _, key := range keys {
-				spec.Tags = append(spec.Tags, types.Tag{
+				spec.Tags = append(spec.Tags, &ec2.Tag{
 					Key:   aws.String(key),
 					Value: aws.String(i.Tags[key]),
 				})
@@ -666,11 +652,11 @@ func (s *Service) runInstance(role string, i *infrav1.Instance) (*infrav1.Instan
 	}
 	input.MetadataOptions = getInstanceMetadataOptionsRequest(i.InstanceMetadataOptions)
 	input.PrivateDnsNameOptions = getPrivateDNSNameOptionsRequest(i.PrivateDNSName)
-	input.CapacityReservationSpecification = getCapacityReservationSpecification(i.CapacityReservationID, i.CapacityReservationPreference)
+	input.CapacityReservationSpecification = getCapacityReservationSpecification(i.CapacityReservationID)
 
 	if i.Tenancy != "" {
-		input.Placement = &types.Placement{
-			Tenancy: types.Tenancy(i.Tenancy),
+		input.Placement = &ec2.Placement{
+			Tenancy: &i.Tenancy,
 		}
 	}
 
@@ -680,63 +666,39 @@ func (s *Service) runInstance(role string, i *infrav1.Instance) (*infrav1.Instan
 
 	if i.PlacementGroupName != "" {
 		if input.Placement == nil {
-			input.Placement = &types.Placement{}
+			input.Placement = &ec2.Placement{}
 		}
 		input.Placement.GroupName = &i.PlacementGroupName
 		if i.PlacementGroupPartition != 0 {
-			input.Placement.PartitionNumber = utils.ToInt32Pointer(&i.PlacementGroupPartition)
+			input.Placement.PartitionNumber = &i.PlacementGroupPartition
 		}
 	}
 
-	if i.HostID != nil {
-		if i.HostAffinity == nil {
-			i.HostAffinity = aws.String("default")
-		}
-		if len(i.Tenancy) == 0 {
-			i.Tenancy = "host"
-		}
-		s.scope.Debug("Running instance with dedicated host placement",
-			"hostId", i.HostID,
-			"affinity", i.HostAffinity)
-		if input.Placement != nil {
-			s.scope.Warn("Placement already set for instance, overwriting with dedicated host placement",
-				"hostId", i.HostID,
-				"affinity", i.HostAffinity,
-				"placement", input.Placement)
-		}
-
-		input.Placement = &types.Placement{
-			Tenancy:  types.Tenancy(i.Tenancy),
-			Affinity: i.HostAffinity,
-			HostId:   i.HostID,
-		}
-	}
-
-	out, err := s.EC2Client.RunInstances(context.TODO(), input)
+	out, err := s.EC2Client.RunInstancesWithContext(context.TODO(), input)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to run instance")
 	}
 
 	if len(out.Instances) == 0 {
-		return nil, errors.Errorf("no instance returned for reservation %v", out)
+		return nil, errors.Errorf("no instance returned for reservation %v", out.GoString())
 	}
 
 	return s.SDKToInstance(out.Instances[0])
 }
 
-func volumeToBlockDeviceMapping(v *infrav1.Volume) types.BlockDeviceMapping {
-	ebsDevice := &types.EbsBlockDevice{
+func volumeToBlockDeviceMapping(v *infrav1.Volume) *ec2.BlockDeviceMapping {
+	ebsDevice := &ec2.EbsBlockDevice{
 		DeleteOnTermination: aws.Bool(true),
-		VolumeSize:          utils.ToInt32Pointer(&v.Size),
+		VolumeSize:          aws.Int64(v.Size),
 		Encrypted:           v.Encrypted,
 	}
 
 	if v.Throughput != nil {
-		ebsDevice.Throughput = utils.ToInt32Pointer(v.Throughput)
+		ebsDevice.Throughput = v.Throughput
 	}
 
 	if v.IOPS != 0 {
-		ebsDevice.Iops = utils.ToInt32Pointer(&v.IOPS)
+		ebsDevice.Iops = aws.Int64(v.IOPS)
 	}
 
 	if v.EncryptionKey != "" {
@@ -745,10 +707,10 @@ func volumeToBlockDeviceMapping(v *infrav1.Volume) types.BlockDeviceMapping {
 	}
 
 	if v.Type != "" {
-		ebsDevice.VolumeType = types.VolumeType(string(v.Type))
+		ebsDevice.VolumeType = aws.String(string(v.Type))
 	}
 
-	return types.BlockDeviceMapping{
+	return &ec2.BlockDeviceMapping{
 		DeviceName: &v.DeviceName,
 		Ebs:        ebsDevice,
 	}
@@ -766,9 +728,9 @@ func (s *Service) GetInstanceSecurityGroups(instanceID string) (map[string][]str
 	for _, eni := range enis {
 		var groups []string
 		for _, group := range eni.Groups {
-			groups = append(groups, aws.ToString(group.GroupId))
+			groups = append(groups, aws.StringValue(group.GroupId))
 		}
-		out[aws.ToString(eni.NetworkInterfaceId)] = groups
+		out[aws.StringValue(eni.NetworkInterfaceId)] = groups
 	}
 	return out, nil
 }
@@ -786,7 +748,7 @@ func (s *Service) UpdateInstanceSecurityGroups(instanceID string, ids []string) 
 	s.scope.Debug("Found ENIs on instance", "number-of-enis", len(enis), "instance-id", instanceID)
 
 	for _, eni := range enis {
-		if err := s.attachSecurityGroupsToNetworkInterface(ids, aws.ToString(eni.NetworkInterfaceId)); err != nil {
+		if err := s.attachSecurityGroupsToNetworkInterface(ids, aws.StringValue(eni.NetworkInterfaceId)); err != nil {
 			return errors.Wrapf(err, "failed to modify network interfaces on instance %q", instanceID)
 		}
 	}
@@ -799,60 +761,60 @@ func (s *Service) UpdateInstanceSecurityGroups(instanceID string, ids []string) 
 // We may not always have to perform each action, so we check what we're
 // receiving to avoid calling AWS if we don't need to.
 func (s *Service) UpdateResourceTags(resourceID *string, create, remove map[string]string) error {
-	s.scope.Debug("Attempting to update tags on resource", "resource-id", aws.ToString(resourceID))
+	s.scope.Debug("Attempting to update tags on resource", "resource-id", *resourceID)
 
 	// If we have anything to create or update
 	if len(create) > 0 {
-		s.scope.Debug("Attempting to create tags on resource", "resource-id", aws.ToString(resourceID))
+		s.scope.Debug("Attempting to create tags on resource", "resource-id", *resourceID)
 
 		// Convert our create map into an array of *ec2.Tag
 		createTagsInput := converters.MapToTags(create)
 
 		// Create the CreateTags input.
 		input := &ec2.CreateTagsInput{
-			Resources: []string{aws.ToString(resourceID)},
+			Resources: []*string{resourceID},
 			Tags:      createTagsInput,
 		}
 
 		// Create/Update tags in AWS.
-		if _, err := s.EC2Client.CreateTags(context.TODO(), input); err != nil {
-			return errors.Wrapf(err, "failed to create tags for resource %q: %+v", aws.ToString(resourceID), create)
+		if _, err := s.EC2Client.CreateTagsWithContext(context.TODO(), input); err != nil {
+			return errors.Wrapf(err, "failed to create tags for resource %q: %+v", *resourceID, create)
 		}
 	}
 
 	// If we have anything to remove
 	if len(remove) > 0 {
-		s.scope.Debug("Attempting to delete tags on resource", "resource-id", aws.ToString(resourceID))
+		s.scope.Debug("Attempting to delete tags on resource", "resource-id", *resourceID)
 
 		// Convert our remove map into an array of *ec2.Tag
 		removeTagsInput := converters.MapToTags(remove)
 
 		// Create the DeleteTags input
 		input := &ec2.DeleteTagsInput{
-			Resources: []string{aws.ToString(resourceID)},
+			Resources: []*string{resourceID},
 			Tags:      removeTagsInput,
 		}
 
 		// Delete tags in AWS.
-		if _, err := s.EC2Client.DeleteTags(context.TODO(), input); err != nil {
-			return errors.Wrapf(err, "failed to delete tags for resource %q: %v", aws.ToString(resourceID), remove)
+		if _, err := s.EC2Client.DeleteTagsWithContext(context.TODO(), input); err != nil {
+			return errors.Wrapf(err, "failed to delete tags for resource %q: %v", *resourceID, remove)
 		}
 	}
 
 	return nil
 }
 
-func (s *Service) getInstanceENIs(instanceID string) ([]types.NetworkInterface, error) {
+func (s *Service) getInstanceENIs(instanceID string) ([]*ec2.NetworkInterface, error) {
 	input := &ec2.DescribeNetworkInterfacesInput{
-		Filters: []types.Filter{
+		Filters: []*ec2.Filter{
 			{
 				Name:   aws.String("attachment.instance-id"),
-				Values: []string{instanceID},
+				Values: []*string{aws.String(instanceID)},
 			},
 		},
 	}
 
-	output, err := s.EC2Client.DescribeNetworkInterfaces(context.TODO(), input)
+	output, err := s.EC2Client.DescribeNetworkInterfacesWithContext(context.TODO(), input)
 	if err != nil {
 		return nil, err
 	}
@@ -862,10 +824,10 @@ func (s *Service) getInstanceENIs(instanceID string) ([]types.NetworkInterface, 
 
 func (s *Service) getImageRootDevice(imageID string) (*string, error) {
 	input := &ec2.DescribeImagesInput{
-		ImageIds: []string{imageID},
+		ImageIds: []*string{aws.String(imageID)},
 	}
 
-	output, err := s.EC2Client.DescribeImages(context.TODO(), input)
+	output, err := s.EC2Client.DescribeImagesWithContext(context.TODO(), input)
 	if err != nil {
 		return nil, err
 	}
@@ -877,12 +839,12 @@ func (s *Service) getImageRootDevice(imageID string) (*string, error) {
 	return output.Images[0].RootDeviceName, nil
 }
 
-func (s *Service) getImageSnapshotSize(imageID string) (*int32, error) {
+func (s *Service) getImageSnapshotSize(imageID string) (*int64, error) {
 	input := &ec2.DescribeImagesInput{
-		ImageIds: []string{imageID},
+		ImageIds: []*string{aws.String(imageID)},
 	}
 
-	output, err := s.EC2Client.DescribeImages(context.TODO(), input)
+	output, err := s.EC2Client.DescribeImagesWithContext(context.TODO(), input)
 	if err != nil {
 		return nil, err
 	}
@@ -910,13 +872,13 @@ func (s *Service) getImageSnapshotSize(imageID string) (*int32, error) {
 // SDKToInstance populates all instance fields except for rootVolumeSize,
 // because EC2.DescribeInstances does not return the size of storage devices. An
 // additional call to EC2 is required to get this value.
-func (s *Service) SDKToInstance(v types.Instance) (*infrav1.Instance, error) {
+func (s *Service) SDKToInstance(v *ec2.Instance) (*infrav1.Instance, error) {
 	i := &infrav1.Instance{
-		ID:           aws.ToString(v.InstanceId),
-		State:        infrav1.InstanceState(string(v.State.Name)),
-		Type:         string(v.InstanceType),
-		SubnetID:     aws.ToString(v.SubnetId),
-		ImageID:      aws.ToString(v.ImageId),
+		ID:           aws.StringValue(v.InstanceId),
+		State:        infrav1.InstanceState(*v.State.Name),
+		Type:         aws.StringValue(v.InstanceType),
+		SubnetID:     aws.StringValue(v.SubnetId),
+		ImageID:      aws.StringValue(v.ImageId),
 		SSHKeyName:   v.KeyName,
 		PrivateIP:    v.PrivateIpAddress,
 		PublicIP:     v.PublicIpAddress,
@@ -928,7 +890,7 @@ func (s *Service) SDKToInstance(v types.Instance) (*infrav1.Instance, error) {
 	// TODO: Handle this comparison more safely, perhaps by querying IAM for the
 	// instance profile ARN and comparing to the ARN returned by EC2
 	if v.IamInstanceProfile != nil && v.IamInstanceProfile.Arn != nil {
-		split := strings.Split(aws.ToString(v.IamInstanceProfile.Arn), "instance-profile/")
+		split := strings.Split(aws.StringValue(v.IamInstanceProfile.Arn), "instance-profile/")
 		if len(split) > 1 && split[1] != "" {
 			i.IAMProfile = split[1]
 		}
@@ -944,7 +906,7 @@ func (s *Service) SDKToInstance(v types.Instance) (*infrav1.Instance, error) {
 
 	i.Addresses = s.getInstanceAddresses(v)
 
-	i.AvailabilityZone = aws.ToString(v.Placement.AvailabilityZone)
+	i.AvailabilityZone = aws.StringValue(v.Placement.AvailabilityZone)
 
 	for _, volume := range v.BlockDeviceMappings {
 		i.VolumeIDs = append(i.VolumeIDs, *volume.Ebs.VolumeId)
@@ -952,11 +914,17 @@ func (s *Service) SDKToInstance(v types.Instance) (*infrav1.Instance, error) {
 
 	if v.MetadataOptions != nil {
 		metadataOptions := &infrav1.InstanceMetadataOptions{}
-		metadataOptions.HTTPEndpoint = infrav1.InstanceMetadataState(string(v.MetadataOptions.HttpEndpoint))
-		metadataOptions.HTTPTokens = infrav1.HTTPTokensState(string(v.MetadataOptions.HttpTokens))
-		metadataOptions.InstanceMetadataTags = infrav1.InstanceMetadataState(string(v.MetadataOptions.InstanceMetadataTags))
+		if v.MetadataOptions.HttpEndpoint != nil {
+			metadataOptions.HTTPEndpoint = infrav1.InstanceMetadataState(*v.MetadataOptions.HttpEndpoint)
+		}
 		if v.MetadataOptions.HttpPutResponseHopLimit != nil {
-			metadataOptions.HTTPPutResponseHopLimit = int64(*v.MetadataOptions.HttpPutResponseHopLimit)
+			metadataOptions.HTTPPutResponseHopLimit = *v.MetadataOptions.HttpPutResponseHopLimit
+		}
+		if v.MetadataOptions.HttpTokens != nil {
+			metadataOptions.HTTPTokens = infrav1.HTTPTokensState(*v.MetadataOptions.HttpTokens)
+		}
+		if v.MetadataOptions.InstanceMetadataTags != nil {
+			metadataOptions.InstanceMetadataTags = infrav1.InstanceMetadataState(*v.MetadataOptions.InstanceMetadataTags)
 		}
 
 		i.InstanceMetadataOptions = metadataOptions
@@ -966,60 +934,49 @@ func (s *Service) SDKToInstance(v types.Instance) (*infrav1.Instance, error) {
 		i.PrivateDNSName = &infrav1.PrivateDNSName{
 			EnableResourceNameDNSAAAARecord: v.PrivateDnsNameOptions.EnableResourceNameDnsAAAARecord,
 			EnableResourceNameDNSARecord:    v.PrivateDnsNameOptions.EnableResourceNameDnsARecord,
-			HostnameType:                    aws.String(string(v.PrivateDnsNameOptions.HostnameType)),
+			HostnameType:                    v.PrivateDnsNameOptions.HostnameType,
 		}
 	}
 
 	return i, nil
 }
 
-func (s *Service) getInstanceAddresses(instance types.Instance) []clusterv1.MachineAddress {
+func (s *Service) getInstanceAddresses(instance *ec2.Instance) []clusterv1.MachineAddress {
 	addresses := []clusterv1.MachineAddress{}
 	// Check if the DHCP Option Set has domain name set
 	domainName := s.GetDHCPOptionSetDomainName(s.EC2Client, instance.VpcId)
 	for _, eni := range instance.NetworkInterfaces {
-		if addr := aws.ToString(eni.PrivateDnsName); addr != "" {
-			privateDNSAddress := clusterv1.MachineAddress{
-				Type:    clusterv1.MachineInternalDNS,
-				Address: addr,
-			}
-			addresses = append(addresses, privateDNSAddress)
-
-			if domainName != nil {
-				// Add secondary private DNS Name with domain name set in DHCP Option Set
-				additionalPrivateDNSAddress := clusterv1.MachineAddress{
-					Type:    clusterv1.MachineInternalDNS,
-					Address: fmt.Sprintf("%s.%s", strings.Split(privateDNSAddress.Address, ".")[0], *domainName),
-				}
-				addresses = append(addresses, additionalPrivateDNSAddress)
-			}
+		privateDNSAddress := clusterv1.MachineAddress{
+			Type:    clusterv1.MachineInternalDNS,
+			Address: aws.StringValue(eni.PrivateDnsName),
+		}
+		privateIPAddress := clusterv1.MachineAddress{
+			Type:    clusterv1.MachineInternalIP,
+			Address: aws.StringValue(eni.PrivateIpAddress),
 		}
 
-		if addr := aws.ToString(eni.PrivateIpAddress); addr != "" {
-			privateIPAddress := clusterv1.MachineAddress{
-				Type:    clusterv1.MachineInternalIP,
-				Address: addr,
+		addresses = append(addresses, privateDNSAddress, privateIPAddress)
+
+		if domainName != nil {
+			// Add secondary private DNS Name with domain name set in DHCP Option Set
+			additionalPrivateDNSAddress := clusterv1.MachineAddress{
+				Type:    clusterv1.MachineInternalDNS,
+				Address: fmt.Sprintf("%s.%s", strings.Split(privateDNSAddress.Address, ".")[0], *domainName),
 			}
-			addresses = append(addresses, privateIPAddress)
+			addresses = append(addresses, additionalPrivateDNSAddress)
 		}
 
 		// An elastic IP is attached if association is non nil pointer
 		if eni.Association != nil {
-			if addr := aws.ToString(eni.Association.PublicDnsName); addr != "" {
-				publicDNSAddress := clusterv1.MachineAddress{
-					Type:    clusterv1.MachineExternalDNS,
-					Address: addr,
-				}
-				addresses = append(addresses, publicDNSAddress)
+			publicDNSAddress := clusterv1.MachineAddress{
+				Type:    clusterv1.MachineExternalDNS,
+				Address: aws.StringValue(eni.Association.PublicDnsName),
 			}
-
-			if addr := aws.ToString(eni.Association.PublicIp); addr != "" {
-				publicIPAddress := clusterv1.MachineAddress{
-					Type:    clusterv1.MachineExternalIP,
-					Address: addr,
-				}
-				addresses = append(addresses, publicIPAddress)
+			publicIPAddress := clusterv1.MachineAddress{
+				Type:    clusterv1.MachineExternalIP,
+				Address: aws.StringValue(eni.Association.PublicIp),
 			}
+			addresses = append(addresses, publicDNSAddress, publicIPAddress)
 		}
 	}
 
@@ -1028,18 +985,18 @@ func (s *Service) getInstanceAddresses(instance types.Instance) []clusterv1.Mach
 
 func (s *Service) getNetworkInterfaceSecurityGroups(interfaceID string) ([]string, error) {
 	input := &ec2.DescribeNetworkInterfaceAttributeInput{
-		Attribute:          types.NetworkInterfaceAttributeGroupSet,
+		Attribute:          aws.String("groupSet"),
 		NetworkInterfaceId: aws.String(interfaceID),
 	}
 
-	output, err := s.EC2Client.DescribeNetworkInterfaceAttribute(context.TODO(), input)
+	output, err := s.EC2Client.DescribeNetworkInterfaceAttributeWithContext(context.TODO(), input)
 	if err != nil {
 		return nil, err
 	}
 
 	groups := make([]string, len(output.Groups))
 	for i := range output.Groups {
-		groups[i] = aws.ToString(output.Groups[i].GroupId)
+		groups[i] = aws.StringValue(output.Groups[i].GroupId)
 	}
 
 	return groups, nil
@@ -1050,10 +1007,10 @@ func (s *Service) attachSecurityGroupsToNetworkInterface(groups []string, interf
 
 	input := &ec2.ModifyNetworkInterfaceAttributeInput{
 		NetworkInterfaceId: aws.String(interfaceID),
-		Groups:             groups,
+		Groups:             aws.StringSlice(groups),
 	}
 
-	if _, err := s.EC2Client.ModifyNetworkInterfaceAttribute(context.TODO(), input); err != nil {
+	if _, err := s.EC2Client.ModifyNetworkInterfaceAttributeWithContext(context.TODO(), input); err != nil {
 		return errors.Wrapf(err, "failed to modify interface %q to have security groups %v", interfaceID, groups)
 	}
 	return nil
@@ -1074,10 +1031,10 @@ func (s *Service) DetachSecurityGroupsFromNetworkInterface(groups []string, inte
 
 	input := &ec2.ModifyNetworkInterfaceAttributeInput{
 		NetworkInterfaceId: aws.String(interfaceID),
-		Groups:             remainingGroups,
+		Groups:             aws.StringSlice(remainingGroups),
 	}
 
-	if _, err := s.EC2Client.ModifyNetworkInterfaceAttribute(context.TODO(), input); err != nil {
+	if _, err := s.EC2Client.ModifyNetworkInterfaceAttributeWithContext(context.TODO(), input); err != nil {
 		return errors.Wrapf(err, "failed to modify interface %q", interfaceID)
 	}
 	return nil
@@ -1096,7 +1053,7 @@ func (s *Service) checkRootVolume(rootVolume *infrav1.Volume, imageID string) (*
 		return nil, errors.Wrapf(err, "failed to get root volume from image %q", imageID)
 	}
 
-	if rootVolume.Size < int64(*snapshotSize) {
+	if rootVolume.Size < *snapshotSize {
 		return nil, errors.Errorf("root volume size (%d) must be greater than or equal to snapshot size (%d)", rootVolume.Size, *snapshotSize)
 	}
 
@@ -1106,15 +1063,15 @@ func (s *Service) checkRootVolume(rootVolume *infrav1.Volume, imageID string) (*
 // ModifyInstanceMetadataOptions modifies the metadata options of the given EC2 instance.
 func (s *Service) ModifyInstanceMetadataOptions(instanceID string, options *infrav1.InstanceMetadataOptions) error {
 	input := &ec2.ModifyInstanceMetadataOptionsInput{
-		HttpEndpoint:            types.InstanceMetadataEndpointState(string(options.HTTPEndpoint)),
-		HttpPutResponseHopLimit: utils.ToInt32Pointer(&options.HTTPPutResponseHopLimit),
-		HttpTokens:              types.HttpTokensState(string(options.HTTPTokens)),
-		InstanceMetadataTags:    types.InstanceMetadataTagsState(string(options.InstanceMetadataTags)),
+		HttpEndpoint:            aws.String(string(options.HTTPEndpoint)),
+		HttpPutResponseHopLimit: aws.Int64(options.HTTPPutResponseHopLimit),
+		HttpTokens:              aws.String(string(options.HTTPTokens)),
+		InstanceMetadataTags:    aws.String(string(options.InstanceMetadataTags)),
 		InstanceId:              aws.String(instanceID),
 	}
 
 	s.scope.Info("Updating instance metadata options", "instance id", instanceID, "options", input)
-	if _, err := s.EC2Client.ModifyInstanceMetadataOptions(context.TODO(), input); err != nil {
+	if _, err := s.EC2Client.ModifyInstanceMetadataOptionsWithContext(context.TODO(), input); err != nil {
 		return err
 	}
 
@@ -1122,7 +1079,7 @@ func (s *Service) ModifyInstanceMetadataOptions(instanceID string, options *infr
 }
 
 // GetDHCPOptionSetDomainName returns the domain DNS name for the VPC from the DHCP Options.
-func (s *Service) GetDHCPOptionSetDomainName(ec2client common.EC2API, vpcID *string) *string {
+func (s *Service) GetDHCPOptionSetDomainName(ec2client ec2iface.EC2API, vpcID *string) *string {
 	log := s.scope.GetLogger()
 
 	if vpcID == nil {
@@ -1131,34 +1088,34 @@ func (s *Service) GetDHCPOptionSetDomainName(ec2client common.EC2API, vpcID *str
 	}
 
 	vpcInput := &ec2.DescribeVpcsInput{
-		VpcIds: []string{aws.ToString(vpcID)},
+		VpcIds: []*string{vpcID},
 	}
 
-	vpcResult, err := ec2client.DescribeVpcs(context.TODO(), vpcInput)
+	vpcResult, err := ec2client.DescribeVpcs(vpcInput)
 	if err != nil {
-		log.Info("failed to describe VPC, skipping DHCP Option Set discovery", "vpcID", aws.ToString(vpcID), "Error", err.Error())
+		log.Info("failed to describe VPC, skipping DHCP Option Set discovery", "vpcID", *vpcID, "Error", err.Error())
 		return nil
 	}
 
 	dhcpInput := &ec2.DescribeDhcpOptionsInput{
-		DhcpOptionsIds: []string{aws.ToString(vpcResult.Vpcs[0].DhcpOptionsId)},
+		DhcpOptionsIds: []*string{vpcResult.Vpcs[0].DhcpOptionsId},
 	}
 
-	dhcpResult, err := ec2client.DescribeDhcpOptions(context.TODO(), dhcpInput)
+	dhcpResult, err := ec2client.DescribeDhcpOptions(dhcpInput)
 	if err != nil {
 		log.Error(err, "failed to describe DHCP Options Set", "DhcpOptionsSet", *dhcpResult)
 		return nil
 	}
 
 	for _, dhcpConfig := range dhcpResult.DhcpOptions[0].DhcpConfigurations {
-		if aws.ToString(dhcpConfig.Key) == "domain-name" {
+		if *dhcpConfig.Key == "domain-name" {
 			if len(dhcpConfig.Values) == 0 {
 				return nil
 			}
 			domainName := dhcpConfig.Values[0].Value
 			// default domainName is 'ec2.internal' in us-east-1 and 'region.compute.internal' in the other regions.
-			if (s.scope.Region() == "us-east-1" && aws.ToString(domainName) == "ec2.internal") ||
-				(s.scope.Region() != "us-east-1" && aws.ToString(domainName) == fmt.Sprintf("%s.compute.internal", s.scope.Region())) {
+			if (s.scope.Region() == "us-east-1" && *domainName == "ec2.internal") ||
+				(s.scope.Region() != "us-east-1" && *domainName == fmt.Sprintf("%s.compute.internal", s.scope.Region())) {
 				return nil
 			}
 
@@ -1179,27 +1136,22 @@ func filterGroups(list []string, strToFilter string) (newList []string) {
 	return
 }
 
-func getCapacityReservationSpecification(capacityReservationID *string, capacityReservationPreference infrav1.CapacityReservationPreference) *types.CapacityReservationSpecification {
-	if capacityReservationID == nil && capacityReservationPreference == "" {
+func getCapacityReservationSpecification(capacityReservationID *string) *ec2.CapacityReservationSpecification {
+	if capacityReservationID == nil {
+		//  Not targeting any specific Capacity Reservation
 		return nil
 	}
-	var spec types.CapacityReservationSpecification
-	if capacityReservationID != nil {
-		spec.CapacityReservationTarget = &types.CapacityReservationTarget{
+
+	return &ec2.CapacityReservationSpecification{
+		CapacityReservationTarget: &ec2.CapacityReservationTarget{
 			CapacityReservationId: capacityReservationID,
-		}
+		},
 	}
-	spec.CapacityReservationPreference = CapacityReservationPreferenceToSDK(capacityReservationPreference)
-	return &spec
 }
 
-func getInstanceMarketOptionsRequest(i *infrav1.Instance) (*types.InstanceMarketOptionsRequest, error) {
+func getInstanceMarketOptionsRequest(i *infrav1.Instance) (*ec2.InstanceMarketOptionsRequest, error) {
 	if i.MarketType != "" && i.MarketType == infrav1.MarketTypeCapacityBlock && i.SpotMarketOptions != nil {
 		return nil, errors.New("can't create spot capacity-blocks, remove spot market request")
-	}
-
-	if (i.MarketType == infrav1.MarketTypeSpot || i.SpotMarketOptions != nil) && i.CapacityReservationID != nil {
-		return nil, errors.New("unable to generate marketOptions for spot instance, capacityReservationID is incompatible with marketType spot and spotMarketOptions")
 	}
 
 	// Infer MarketType if not explicitly set
@@ -1211,38 +1163,34 @@ func getInstanceMarketOptionsRequest(i *infrav1.Instance) (*types.InstanceMarket
 		i.MarketType = infrav1.MarketTypeOnDemand
 	}
 
-	if i.MarketType == infrav1.MarketTypeSpot && i.SpotMarketOptions == nil {
-		i.SpotMarketOptions = &infrav1.SpotMarketOptions{}
-	}
-
 	switch i.MarketType {
 	case infrav1.MarketTypeCapacityBlock:
 		if i.CapacityReservationID == nil {
 			return nil, errors.Errorf("capacityReservationID is required when CapacityBlock is enabled")
 		}
-		return &types.InstanceMarketOptionsRequest{
-			MarketType: types.MarketTypeCapacityBlock,
+		return &ec2.InstanceMarketOptionsRequest{
+			MarketType: aws.String(ec2.MarketTypeCapacityBlock),
 		}, nil
 
 	case infrav1.MarketTypeSpot:
 		// Set required values for Spot instances
-		spotOpts := &types.SpotMarketOptions{
+		spotOpts := &ec2.SpotMarketOptions{
 			// The following two options ensure that:
 			// - If an instance is interrupted, it is terminated rather than hibernating or stopping
 			// - No replacement instance will be created if the instance is interrupted
 			// - If the spot request cannot immediately be fulfilled, it will not be created
 			// This behaviour should satisfy the 1:1 mapping of Machines to Instances as
 			// assumed by the Cluster API.
-			InstanceInterruptionBehavior: types.InstanceInterruptionBehaviorTerminate,
-			SpotInstanceType:             types.SpotInstanceTypeOneTime,
+			InstanceInterruptionBehavior: aws.String(ec2.InstanceInterruptionBehaviorTerminate),
+			SpotInstanceType:             aws.String(ec2.SpotInstanceTypeOneTime),
 		}
 
-		if maxPrice := aws.ToString(i.SpotMarketOptions.MaxPrice); maxPrice != "" {
+		if maxPrice := aws.StringValue(i.SpotMarketOptions.MaxPrice); maxPrice != "" {
 			spotOpts.MaxPrice = aws.String(maxPrice)
 		}
 
-		return &types.InstanceMarketOptionsRequest{
-			MarketType:  types.MarketTypeSpot,
+		return &ec2.InstanceMarketOptionsRequest{
+			MarketType:  aws.String(ec2.MarketTypeSpot),
 			SpotOptions: spotOpts,
 		}, nil
 	case infrav1.MarketTypeOnDemand:
@@ -1254,36 +1202,36 @@ func getInstanceMarketOptionsRequest(i *infrav1.Instance) (*types.InstanceMarket
 	}
 }
 
-func getInstanceMetadataOptionsRequest(metadataOptions *infrav1.InstanceMetadataOptions) *types.InstanceMetadataOptionsRequest {
+func getInstanceMetadataOptionsRequest(metadataOptions *infrav1.InstanceMetadataOptions) *ec2.InstanceMetadataOptionsRequest {
 	if metadataOptions == nil {
 		return nil
 	}
 
-	request := &types.InstanceMetadataOptionsRequest{}
+	request := &ec2.InstanceMetadataOptionsRequest{}
 	if metadataOptions.HTTPEndpoint != "" {
-		request.HttpEndpoint = types.InstanceMetadataEndpointState(string(metadataOptions.HTTPEndpoint))
+		request.SetHttpEndpoint(string(metadataOptions.HTTPEndpoint))
 	}
 	if metadataOptions.HTTPPutResponseHopLimit != 0 {
-		request.HttpPutResponseHopLimit = utils.ToInt32Pointer(&metadataOptions.HTTPPutResponseHopLimit)
+		request.SetHttpPutResponseHopLimit(metadataOptions.HTTPPutResponseHopLimit)
 	}
 	if metadataOptions.HTTPTokens != "" {
-		request.HttpTokens = types.HttpTokensState(string(metadataOptions.HTTPTokens))
+		request.SetHttpTokens(string(metadataOptions.HTTPTokens))
 	}
 	if metadataOptions.InstanceMetadataTags != "" {
-		request.InstanceMetadataTags = types.InstanceMetadataTagsState(string(metadataOptions.InstanceMetadataTags))
+		request.SetInstanceMetadataTags(string(metadataOptions.InstanceMetadataTags))
 	}
 
 	return request
 }
 
-func getPrivateDNSNameOptionsRequest(privateDNSName *infrav1.PrivateDNSName) *types.PrivateDnsNameOptionsRequest {
+func getPrivateDNSNameOptionsRequest(privateDNSName *infrav1.PrivateDNSName) *ec2.PrivateDnsNameOptionsRequest {
 	if privateDNSName == nil {
 		return nil
 	}
 
-	return &types.PrivateDnsNameOptionsRequest{
+	return &ec2.PrivateDnsNameOptionsRequest{
 		EnableResourceNameDnsAAAARecord: privateDNSName.EnableResourceNameDNSAAAARecord,
 		EnableResourceNameDnsARecord:    privateDNSName.EnableResourceNameDNSARecord,
-		HostnameType:                    types.HostnameType(aws.ToString(privateDNSName.HostnameType)),
+		HostnameType:                    privateDNSName.HostnameType,
 	}
 }

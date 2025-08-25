@@ -20,9 +20,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/ec2"
-	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -55,14 +54,14 @@ func TestReconcileInternetGateways(t *testing.T) {
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DescribeInternetGateways(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeInternetGatewaysInput{})).
+				m.DescribeInternetGatewaysWithContext(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeInternetGatewaysInput{})).
 					Return(&ec2.DescribeInternetGatewaysOutput{
-						InternetGateways: []types.InternetGateway{
+						InternetGateways: []*ec2.InternetGateway{
 							{
 								InternetGatewayId: aws.String("igw-0"),
-								Attachments: []types.InternetGatewayAttachment{
+								Attachments: []*ec2.InternetGatewayAttachment{
 									{
-										State: types.AttachmentStatusAttached,
+										State: aws.String(ec2.AttachmentStatusAttached),
 										VpcId: aws.String("vpc-gateways"),
 									},
 								},
@@ -70,7 +69,7 @@ func TestReconcileInternetGateways(t *testing.T) {
 						},
 					}, nil)
 
-				m.CreateTags(context.TODO(), gomock.AssignableToTypeOf(&ec2.CreateTagsInput{})).
+				m.CreateTagsWithContext(context.TODO(), gomock.AssignableToTypeOf(&ec2.CreateTagsInput{})).
 					Return(nil, nil)
 			},
 		},
@@ -85,14 +84,14 @@ func TestReconcileInternetGateways(t *testing.T) {
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DescribeInternetGateways(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeInternetGatewaysInput{})).
+				m.DescribeInternetGatewaysWithContext(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeInternetGatewaysInput{})).
 					Return(&ec2.DescribeInternetGatewaysOutput{}, nil)
 
-				m.CreateInternetGateway(context.TODO(), gomock.AssignableToTypeOf(&ec2.CreateInternetGatewayInput{})).
+				m.CreateInternetGatewayWithContext(context.TODO(), gomock.AssignableToTypeOf(&ec2.CreateInternetGatewayInput{})).
 					Return(&ec2.CreateInternetGatewayOutput{
-						InternetGateway: &types.InternetGateway{
+						InternetGateway: &ec2.InternetGateway{
 							InternetGatewayId: aws.String("igw-1"),
-							Tags: []types.Tag{
+							Tags: []*ec2.Tag{
 								{
 									Key:   aws.String(infrav1.ClusterTagKey("test-cluster")),
 									Value: aws.String("owned"),
@@ -109,7 +108,7 @@ func TestReconcileInternetGateways(t *testing.T) {
 						},
 					}, nil)
 
-				m.AttachInternetGateway(context.TODO(), gomock.Eq(&ec2.AttachInternetGatewayInput{
+				m.AttachInternetGatewayWithContext(context.TODO(), gomock.Eq(&ec2.AttachInternetGatewayInput{
 					InternetGatewayId: aws.String("igw-1"),
 					VpcId:             aws.String("vpc-gateways"),
 				})).
@@ -183,11 +182,11 @@ func TestDeleteInternetGateways(t *testing.T) {
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DescribeInternetGateways(context.TODO(), gomock.Eq(&ec2.DescribeInternetGatewaysInput{
-					Filters: []types.Filter{
+				m.DescribeInternetGatewaysWithContext(context.TODO(), gomock.Eq(&ec2.DescribeInternetGatewaysInput{
+					Filters: []*ec2.Filter{
 						{
 							Name:   aws.String("attachment.vpc-id"),
-							Values: []string{"vpc-gateways"},
+							Values: aws.StringSlice([]string{"vpc-gateways"}),
 						},
 					},
 				})).Return(&ec2.DescribeInternetGatewaysOutput{}, nil)
@@ -204,25 +203,25 @@ func TestDeleteInternetGateways(t *testing.T) {
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DescribeInternetGateways(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeInternetGatewaysInput{})).
+				m.DescribeInternetGatewaysWithContext(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeInternetGatewaysInput{})).
 					Return(&ec2.DescribeInternetGatewaysOutput{
-						InternetGateways: []types.InternetGateway{
+						InternetGateways: []*ec2.InternetGateway{
 							{
 								InternetGatewayId: aws.String("igw-0"),
-								Attachments: []types.InternetGatewayAttachment{
+								Attachments: []*ec2.InternetGatewayAttachment{
 									{
-										State: types.AttachmentStatusAttached,
+										State: aws.String(ec2.AttachmentStatusAttached),
 										VpcId: aws.String("vpc-gateways"),
 									},
 								},
 							},
 						},
 					}, nil)
-				m.DetachInternetGateway(context.TODO(), &ec2.DetachInternetGatewayInput{
+				m.DetachInternetGatewayWithContext(context.TODO(), &ec2.DetachInternetGatewayInput{
 					InternetGatewayId: aws.String("igw-0"),
 					VpcId:             aws.String("vpc-gateways"),
 				}).Return(&ec2.DetachInternetGatewayOutput{}, nil)
-				m.DeleteInternetGateway(context.TODO(), &ec2.DeleteInternetGatewayInput{
+				m.DeleteInternetGatewayWithContext(context.TODO(), &ec2.DeleteInternetGatewayInput{
 					InternetGatewayId: aws.String("igw-0"),
 				}).Return(&ec2.DeleteInternetGatewayOutput{}, nil)
 			},

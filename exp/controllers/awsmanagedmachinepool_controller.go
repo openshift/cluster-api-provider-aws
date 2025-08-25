@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"time"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -54,11 +53,11 @@ import (
 type AWSManagedMachinePoolReconciler struct {
 	client.Client
 	Recorder                     record.EventRecorder
+	Endpoints                    []scope.ServiceEndpoint
 	EnableIAM                    bool
 	AllowAdditionalRoles         bool
 	WatchFilterValue             string
 	TagUnmanagedNetworkResources bool
-	MaxWaitActiveUpdateDelete    time.Duration
 }
 
 // SetupWithManager is used to setup the controller.
@@ -156,17 +155,16 @@ func (r *AWSManagedMachinePoolReconciler) Reconcile(ctx context.Context, req ctr
 	}
 
 	machinePoolScope, err := scope.NewManagedMachinePoolScope(scope.ManagedMachinePoolScopeParams{
-		Logger:                    log,
-		Client:                    r.Client,
-		ControllerName:            "awsmanagedmachinepool",
-		Cluster:                   cluster,
-		ControlPlane:              controlPlane,
-		MachinePool:               machinePool,
-		ManagedMachinePool:        awsPool,
-		EnableIAM:                 r.EnableIAM,
-		AllowAdditionalRoles:      r.AllowAdditionalRoles,
-		InfraCluster:              managedControlPlaneScope,
-		MaxWaitActiveUpdateDelete: r.MaxWaitActiveUpdateDelete,
+		Client:               r.Client,
+		ControllerName:       "awsmanagedmachinepool",
+		Cluster:              cluster,
+		ControlPlane:         controlPlane,
+		MachinePool:          machinePool,
+		ManagedMachinePool:   awsPool,
+		EnableIAM:            r.EnableIAM,
+		AllowAdditionalRoles: r.AllowAdditionalRoles,
+		Endpoints:            r.Endpoints,
+		InfraCluster:         managedControlPlaneScope,
 	})
 	if err != nil {
 		return ctrl.Result{}, errors.Wrap(err, "failed to create scope")
@@ -190,14 +188,13 @@ func (r *AWSManagedMachinePoolReconciler) Reconcile(ctx context.Context, req ctr
 		return ctrl.Result{}, r.reconcileDelete(ctx, machinePoolScope, managedControlPlaneScope)
 	}
 
-	return ctrl.Result{}, r.reconcileNormal(ctx, machinePoolScope, managedControlPlaneScope, managedControlPlaneScope)
+	return ctrl.Result{}, r.reconcileNormal(ctx, machinePoolScope, managedControlPlaneScope)
 }
 
 func (r *AWSManagedMachinePoolReconciler) reconcileNormal(
 	ctx context.Context,
 	machinePoolScope *scope.ManagedMachinePoolScope,
 	ec2Scope scope.EC2Scope,
-	s3Scope scope.S3Scope,
 ) error {
 	machinePoolScope.Info("Reconciling AWSManagedMachinePool")
 
@@ -218,8 +215,7 @@ func (r *AWSManagedMachinePoolReconciler) reconcileNormal(
 		runPostLaunchTemplateUpdateOperation := func() error {
 			return nil
 		}
-		var objectStoreSvc services.ObjectStoreInterface // nil because no S3 bucket support for `AWSManagedControlPlane` yet
-		if err := reconSvc.ReconcileLaunchTemplate(ctx, machinePoolScope, machinePoolScope, s3Scope, ec2svc, objectStoreSvc, canUpdateLaunchTemplate, runPostLaunchTemplateUpdateOperation); err != nil {
+		if err := reconSvc.ReconcileLaunchTemplate(machinePoolScope, ec2svc, canUpdateLaunchTemplate, runPostLaunchTemplateUpdateOperation); err != nil {
 			r.Recorder.Eventf(machinePoolScope.ManagedMachinePool, corev1.EventTypeWarning, "FailedLaunchTemplateReconcile", "Failed to reconcile launch template: %v", err)
 			machinePoolScope.Error(err, "failed to reconcile launch template")
 			conditions.MarkFalse(machinePoolScope.ManagedMachinePool, expinfrav1.LaunchTemplateReadyCondition, expinfrav1.LaunchTemplateReconcileFailedReason, clusterv1.ConditionSeverityError, "")
@@ -247,7 +243,7 @@ func (r *AWSManagedMachinePoolReconciler) reconcileNormal(
 }
 
 func (r *AWSManagedMachinePoolReconciler) reconcileDelete(
-	ctx context.Context,
+	_ context.Context,
 	machinePoolScope *scope.ManagedMachinePoolScope,
 	ec2Scope scope.EC2Scope,
 ) error {
@@ -256,13 +252,13 @@ func (r *AWSManagedMachinePoolReconciler) reconcileDelete(
 	ekssvc := eks.NewNodegroupService(machinePoolScope)
 	ec2Svc := ec2.NewService(ec2Scope)
 
-	if err := ekssvc.ReconcilePoolDelete(ctx); err != nil {
+	if err := ekssvc.ReconcilePoolDelete(); err != nil {
 		return errors.Wrapf(err, "failed to reconcile machine pool deletion for AWSManagedMachinePool %s/%s", machinePoolScope.ManagedMachinePool.Namespace, machinePoolScope.ManagedMachinePool.Name)
 	}
 
 	if machinePoolScope.ManagedMachinePool.Spec.AWSLaunchTemplate != nil {
 		launchTemplateID := machinePoolScope.ManagedMachinePool.Status.LaunchTemplateID
-		launchTemplate, _, _, _, err := ec2Svc.GetLaunchTemplate(machinePoolScope.LaunchTemplateName())
+		launchTemplate, _, _, err := ec2Svc.GetLaunchTemplate(machinePoolScope.LaunchTemplateName())
 		if err != nil {
 			return err
 		}

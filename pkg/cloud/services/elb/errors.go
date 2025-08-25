@@ -19,7 +19,8 @@ package elb
 import (
 	"net/http"
 
-	elbtypes "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing/types"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/service/elb"
 	"github.com/pkg/errors"
 
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/awserrors"
@@ -70,7 +71,7 @@ func IsNotFound(err error) bool {
 		return true
 	}
 	if code, ok := awserrors.Code(errors.Cause(err)); ok {
-		if code == (&elbtypes.AccessPointNotFoundException{}).ErrorCode() {
+		if code == elb.ErrCodeAccessPointNotFoundException {
 			return true
 		}
 	}
@@ -90,6 +91,12 @@ func IsAccessDenied(err error) bool {
 // IsConflict returns true if the error was created by NewConflict.
 func IsConflict(err error) bool {
 	return ReasonForError(err) == http.StatusConflict
+}
+
+// IsSDKError returns true if the error is of type awserr.Error.
+func IsSDKError(err error) (ok bool) {
+	_, ok = errors.Cause(err).(awserr.Error)
+	return
 }
 
 // IsInstanceNotRunning returns true if the error was created by NewInstanceNotRunning.

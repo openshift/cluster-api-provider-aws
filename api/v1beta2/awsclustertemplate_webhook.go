@@ -17,9 +17,6 @@ limitations under the License.
 package v1beta2
 
 import (
-	"context"
-	"fmt"
-
 	"github.com/google/go-cmp/cmp"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -30,40 +27,24 @@ import (
 )
 
 func (r *AWSClusterTemplate) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	w := new(awsClusterTemplateWebhook)
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
-		WithValidator(w).
-		WithDefaulter(w).
 		Complete()
 }
 
 // +kubebuilder:webhook:verbs=create;update,path=/validate-infrastructure-cluster-x-k8s-io-v1beta2-awsclustertemplate,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=awsclustertemplates,versions=v1beta2,name=validation.awsclustertemplate.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 // +kubebuilder:webhook:verbs=create;update,path=/mutate-infrastructure-cluster-x-k8s-io-v1beta2-awsclustertemplate,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=awsclustertemplates,versions=v1beta2,name=default.awsclustertemplate.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 
-type awsClusterTemplateWebhook struct{}
-
-var _ webhook.CustomDefaulter = &awsClusterTemplateWebhook{}
-var _ webhook.CustomValidator = &awsClusterTemplateWebhook{}
+var _ webhook.Defaulter = &AWSClusterTemplate{}
+var _ webhook.Validator = &AWSClusterTemplate{}
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type.
-func (*awsClusterTemplateWebhook) Default(_ context.Context, obj runtime.Object) error {
-	r, ok := obj.(*AWSClusterTemplate)
-	if !ok {
-		return fmt.Errorf("expected an AWSClusterTemplate object but got %T", r)
-	}
-
+func (r *AWSClusterTemplate) Default() {
 	SetObjectDefaults_AWSClusterTemplate(r)
-	return nil
 }
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (*awsClusterTemplateWebhook) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
-	r, ok := obj.(*AWSClusterTemplate)
-	if !ok {
-		return nil, fmt.Errorf("expected an AWSClusterTemplate object but got %T", r)
-	}
-
+func (r *AWSClusterTemplate) ValidateCreate() (admission.Warnings, error) {
 	var allErrs field.ErrorList
 
 	allErrs = append(allErrs, r.Spec.Template.Spec.Bastion.Validate()...)
@@ -73,13 +54,8 @@ func (*awsClusterTemplateWebhook) ValidateCreate(_ context.Context, obj runtime.
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (*awsClusterTemplateWebhook) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
-	r, ok := newObj.(*AWSClusterTemplate)
-	if !ok {
-		return nil, fmt.Errorf("expected an AWSClusterTemplate object but got %T", r)
-	}
-
-	old := oldObj.(*AWSClusterTemplate)
+func (r *AWSClusterTemplate) ValidateUpdate(oldRaw runtime.Object) (admission.Warnings, error) {
+	old := oldRaw.(*AWSClusterTemplate)
 
 	if !cmp.Equal(r.Spec, old.Spec) {
 		return nil, apierrors.NewBadRequest("AWSClusterTemplate.Spec is immutable")
@@ -88,6 +64,6 @@ func (*awsClusterTemplateWebhook) ValidateUpdate(_ context.Context, oldObj, newO
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (*awsClusterTemplateWebhook) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
+func (r *AWSClusterTemplate) ValidateDelete() (admission.Warnings, error) {
 	return nil, nil
 }

@@ -20,12 +20,12 @@ limitations under the License.
 package shared
 
 import (
-	"context"
 	"flag"
 	"strings"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/iam"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/client"
+	"github.com/aws/aws-sdk-go/service/iam"
 	"k8s.io/apimachinery/pkg/runtime"
 	cgscheme "k8s.io/client-go/kubernetes/scheme"
 
@@ -72,8 +72,6 @@ const (
 
 	ClassicElbTestKubernetesFrom = "CLASSICELB_TEST_KUBERNETES_VERSION_FROM"
 	ClassicElbTestKubernetesTo   = "CLASSICELB_TEST_KUBERNETES_VERSION_TO"
-
-	DedicatedHostFlavor = "dedicated-host"
 )
 
 // ResourceQuotaFilePath is the path to the file that contains the resource usage.
@@ -121,8 +119,8 @@ func (m MultitenancyRole) RoleName() string {
 }
 
 // SetEnvVars sets the environment variables for the role.
-func (m MultitenancyRole) SetEnvVars(ctx context.Context, cfg *aws.Config) error {
-	arn, err := m.RoleARN(ctx, cfg)
+func (m MultitenancyRole) SetEnvVars(prov client.ConfigProvider) error {
+	arn, err := m.RoleARN(prov)
 	if err != nil {
 		return err
 	}
@@ -133,16 +131,16 @@ func (m MultitenancyRole) SetEnvVars(ctx context.Context, cfg *aws.Config) error
 }
 
 // RoleARN returns the role ARN.
-func (m MultitenancyRole) RoleARN(ctx context.Context, cfg *aws.Config) (string, error) {
+func (m MultitenancyRole) RoleARN(prov client.ConfigProvider) (string, error) {
 	if roleARN, ok := roleLookupCache[m.RoleName()]; ok {
 		return roleARN, nil
 	}
-	iamSvc := iam.NewFromConfig(*cfg)
-	role, err := iamSvc.GetRole(ctx, &iam.GetRoleInput{RoleName: aws.String(m.RoleName())})
+	iamSvc := iam.New(prov)
+	role, err := iamSvc.GetRole(&iam.GetRoleInput{RoleName: aws.String(m.RoleName())})
 	if err != nil {
 		return "", err
 	}
-	roleARN := *role.Role.Arn
+	roleARN := aws.StringValue(role.Role.Arn)
 	roleLookupCache[m.RoleName()] = roleARN
 	return roleARN, nil
 }

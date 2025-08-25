@@ -60,7 +60,7 @@ var _ = ginkgo.Context("[unmanaged] [functional] [ClusterClass]", func() {
 			defer shared.ReleaseResources(requiredResources, ginkgo.GinkgoParallelProcess(), flock.New(shared.ResourceQuotaFilePath))
 			namespace := shared.SetupSpecNamespace(ctx, specName, e2eCtx)
 			defer shared.DumpSpecResourcesAndCleanup(ctx, "", namespace, e2eCtx)
-			Expect(shared.SetMultitenancyEnvVars(ctx, e2eCtx.AWSSession)).To(Succeed())
+			Expect(shared.SetMultitenancyEnvVars(e2eCtx.AWSSession)).To(Succeed())
 
 			ginkgo.By("Creating cluster")
 			clusterName := fmt.Sprintf("cluster-%s", util.RandomString(6))
@@ -74,7 +74,7 @@ var _ = ginkgo.Context("[unmanaged] [functional] [ClusterClass]", func() {
 					Flavor:                   shared.NestedMultitenancyClusterClassFlavor,
 					Namespace:                namespace.Name,
 					ClusterName:              clusterName,
-					KubernetesVersion:        e2eCtx.E2EConfig.MustGetVariable(shared.KubernetesVersion),
+					KubernetesVersion:        e2eCtx.E2EConfig.GetVariable(shared.KubernetesVersion),
 					ControlPlaneMachineCount: ptr.To[int64](1),
 					WorkerMachineCount:       ptr.To[int64](0),
 				},
@@ -171,7 +171,7 @@ var _ = ginkgo.Context("[unmanaged] [functional] [ClusterClass]", func() {
 			shared.DumpSpecResourcesAndCleanup(ctx, "", namespace, e2eCtx)
 			if !e2eCtx.Settings.SkipCleanup {
 				ginkgo.By("Deleting the management cluster infrastructure")
-				mgmtClusterInfra.DeleteInfrastructure(ctx)
+				mgmtClusterInfra.DeleteInfrastructure()
 			}
 		})
 

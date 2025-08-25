@@ -19,9 +19,8 @@ package identityprovider
 import (
 	"context"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/eks"
-	ekstypes "github.com/aws/aws-sdk-go-v2/service/eks/types"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/eks"
 	"github.com/pkg/errors"
 
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/wait"
@@ -42,9 +41,9 @@ func (w *WaitIdentityProviderAssociatedProcedure) Name() string {
 // Do waits for the identity provider to be associated.
 func (w *WaitIdentityProviderAssociatedProcedure) Do(ctx context.Context) error {
 	if err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (bool, error) {
-		out, err := w.plan.eksClient.DescribeIdentityProviderConfig(ctx, &eks.DescribeIdentityProviderConfigInput{
+		out, err := w.plan.eksClient.DescribeIdentityProviderConfigWithContext(ctx, &eks.DescribeIdentityProviderConfigInput{
 			ClusterName: aws.String(w.plan.clusterName),
-			IdentityProviderConfig: &ekstypes.IdentityProviderConfig{
+			IdentityProviderConfig: &eks.IdentityProviderConfig{
 				Name: aws.String(w.plan.currentIdentityProvider.IdentityProviderConfigName),
 				Type: oidcType,
 			},
@@ -54,7 +53,7 @@ func (w *WaitIdentityProviderAssociatedProcedure) Do(ctx context.Context) error 
 			return false, err
 		}
 
-		if out.IdentityProviderConfig.Oidc.Status == ekstypes.ConfigStatusActive {
+		if aws.StringValue(out.IdentityProviderConfig.Oidc.Status) == eks.ConfigStatusActive {
 			return true, nil
 		}
 
@@ -79,9 +78,9 @@ func (d *DisassociateIdentityProviderConfig) Name() string {
 // Do disassociates the identity provider.
 func (d *DisassociateIdentityProviderConfig) Do(ctx context.Context) error {
 	if err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (bool, error) {
-		_, err := d.plan.eksClient.DisassociateIdentityProviderConfig(ctx, &eks.DisassociateIdentityProviderConfigInput{
+		_, err := d.plan.eksClient.DisassociateIdentityProviderConfigWithContext(ctx, &eks.DisassociateIdentityProviderConfigInput{
 			ClusterName: aws.String(d.plan.clusterName),
-			IdentityProviderConfig: &ekstypes.IdentityProviderConfig{
+			IdentityProviderConfig: &eks.IdentityProviderConfig{
 				Name: aws.String(d.plan.currentIdentityProvider.IdentityProviderConfigName),
 				Type: oidcType,
 			},
@@ -114,23 +113,23 @@ func (a *AssociateIdentityProviderProcedure) Do(ctx context.Context) error {
 	oidc := a.plan.desiredIdentityProvider
 	input := &eks.AssociateIdentityProviderConfigInput{
 		ClusterName: aws.String(a.plan.clusterName),
-		Oidc: &ekstypes.OidcIdentityProviderConfigRequest{
+		Oidc: &eks.OidcIdentityProviderConfigRequest{
 			ClientId:                   aws.String(oidc.ClientID),
 			GroupsClaim:                aws.String(oidc.GroupsClaim),
 			GroupsPrefix:               aws.String(oidc.GroupsPrefix),
 			IdentityProviderConfigName: aws.String(oidc.IdentityProviderConfigName),
 			IssuerUrl:                  aws.String(oidc.IssuerURL),
-			RequiredClaims:             oidc.RequiredClaims,
+			RequiredClaims:             aws.StringMap(oidc.RequiredClaims),
 			UsernameClaim:              aws.String(oidc.UsernameClaim),
 			UsernamePrefix:             aws.String(oidc.UsernamePrefix),
 		},
 	}
 
 	if len(oidc.Tags) > 0 {
-		input.Tags = oidc.Tags
+		input.Tags = aws.StringMap(oidc.Tags)
 	}
 
-	_, err := a.plan.eksClient.AssociateIdentityProviderConfig(ctx, input)
+	_, err := a.plan.eksClient.AssociateIdentityProviderConfigWithContext(ctx, input)
 	if err != nil {
 		return errors.Wrap(err, "failed associating identity provider")
 	}
@@ -149,11 +148,11 @@ func (u *UpdatedIdentityProviderTagsProcedure) Name() string {
 }
 
 // Do updates the tags for the identity provider.
-func (u *UpdatedIdentityProviderTagsProcedure) Do(ctx context.Context) error {
+func (u *UpdatedIdentityProviderTagsProcedure) Do(_ context.Context) error {
 	arn := u.plan.currentIdentityProvider.IdentityProviderConfigArn
-	_, err := u.plan.eksClient.TagResource(ctx, &eks.TagResourceInput{
+	_, err := u.plan.eksClient.TagResource(&eks.TagResourceInput{
 		ResourceArn: &arn,
-		Tags:        u.plan.desiredIdentityProvider.Tags,
+		Tags:        aws.StringMap(u.plan.desiredIdentityProvider.Tags),
 	})
 
 	if err != nil {
@@ -174,15 +173,15 @@ func (r *RemoveIdentityProviderTagsProcedure) Name() string {
 }
 
 // Do removes the tags from the identity provider.
-func (r *RemoveIdentityProviderTagsProcedure) Do(ctx context.Context) error {
-	keys := make([]string, 0, len(r.plan.currentIdentityProvider.Tags))
+func (r *RemoveIdentityProviderTagsProcedure) Do(_ context.Context) error {
+	keys := make([]*string, 0, len(r.plan.currentIdentityProvider.Tags))
 
 	for key := range r.plan.currentIdentityProvider.Tags {
-		keys = append(keys, key)
+		keys = append(keys, aws.String(key))
 	}
 
 	arn := r.plan.currentIdentityProvider.IdentityProviderConfigArn
-	_, err := r.plan.eksClient.UntagResource(ctx, &eks.UntagResourceInput{
+	_, err := r.plan.eksClient.UntagResource(&eks.UntagResourceInput{
 		ResourceArn: &arn,
 		TagKeys:     keys,
 	})

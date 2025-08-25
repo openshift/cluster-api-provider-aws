@@ -22,9 +22,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/ec2"
-	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
 	. "github.com/onsi/gomega"
@@ -76,37 +75,37 @@ func TestReconcileRouteTables(t *testing.T) {
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DescribeRouteTables(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeRouteTablesInput{})).
+				m.DescribeRouteTablesWithContext(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeRouteTablesInput{})).
 					Return(&ec2.DescribeRouteTablesOutput{}, nil)
 
-				privateRouteTable := m.CreateRouteTable(context.TODO(), matchRouteTableInput(&ec2.CreateRouteTableInput{VpcId: aws.String("vpc-routetables")})).
-					Return(&ec2.CreateRouteTableOutput{RouteTable: &types.RouteTable{RouteTableId: aws.String("rt-1")}}, nil)
+				privateRouteTable := m.CreateRouteTableWithContext(context.TODO(), matchRouteTableInput(&ec2.CreateRouteTableInput{VpcId: aws.String("vpc-routetables")})).
+					Return(&ec2.CreateRouteTableOutput{RouteTable: &ec2.RouteTable{RouteTableId: aws.String("rt-1")}}, nil)
 
-				m.CreateRoute(context.TODO(), gomock.Eq(&ec2.CreateRouteInput{
+				m.CreateRouteWithContext(context.TODO(), gomock.Eq(&ec2.CreateRouteInput{
 					NatGatewayId:         aws.String("nat-01"),
 					DestinationCidrBlock: aws.String("0.0.0.0/0"),
 					RouteTableId:         aws.String("rt-1"),
 				})).
 					After(privateRouteTable)
 
-				m.AssociateRouteTable(context.TODO(), gomock.Eq(&ec2.AssociateRouteTableInput{
+				m.AssociateRouteTableWithContext(context.TODO(), gomock.Eq(&ec2.AssociateRouteTableInput{
 					RouteTableId: aws.String("rt-1"),
 					SubnetId:     aws.String("subnet-routetables-private"),
 				})).
 					Return(&ec2.AssociateRouteTableOutput{}, nil).
 					After(privateRouteTable)
 
-				publicRouteTable := m.CreateRouteTable(context.TODO(), matchRouteTableInput(&ec2.CreateRouteTableInput{VpcId: aws.String("vpc-routetables")})).
-					Return(&ec2.CreateRouteTableOutput{RouteTable: &types.RouteTable{RouteTableId: aws.String("rt-2")}}, nil)
+				publicRouteTable := m.CreateRouteTableWithContext(context.TODO(), matchRouteTableInput(&ec2.CreateRouteTableInput{VpcId: aws.String("vpc-routetables")})).
+					Return(&ec2.CreateRouteTableOutput{RouteTable: &ec2.RouteTable{RouteTableId: aws.String("rt-2")}}, nil)
 
-				m.CreateRoute(context.TODO(), gomock.Eq(&ec2.CreateRouteInput{
+				m.CreateRouteWithContext(context.TODO(), gomock.Eq(&ec2.CreateRouteInput{
 					GatewayId:            aws.String("igw-01"),
 					DestinationCidrBlock: aws.String("0.0.0.0/0"),
 					RouteTableId:         aws.String("rt-2"),
 				})).
 					After(publicRouteTable)
 
-				m.AssociateRouteTable(context.TODO(), gomock.Eq(&ec2.AssociateRouteTableInput{
+				m.AssociateRouteTableWithContext(context.TODO(), gomock.Eq(&ec2.AssociateRouteTableInput{
 					RouteTableId: aws.String("rt-2"),
 					SubnetId:     aws.String("subnet-routetables-public"),
 				})).
@@ -148,51 +147,51 @@ func TestReconcileRouteTables(t *testing.T) {
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DescribeRouteTables(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeRouteTablesInput{})).
+				m.DescribeRouteTablesWithContext(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeRouteTablesInput{})).
 					Return(&ec2.DescribeRouteTablesOutput{}, nil)
 
-				privateRouteTable := m.CreateRouteTable(context.TODO(), matchRouteTableInput(&ec2.CreateRouteTableInput{VpcId: aws.String("vpc-routetables")})).
-					Return(&ec2.CreateRouteTableOutput{RouteTable: &types.RouteTable{RouteTableId: aws.String("rt-1")}}, nil)
+				privateRouteTable := m.CreateRouteTableWithContext(context.TODO(), matchRouteTableInput(&ec2.CreateRouteTableInput{VpcId: aws.String("vpc-routetables")})).
+					Return(&ec2.CreateRouteTableOutput{RouteTable: &ec2.RouteTable{RouteTableId: aws.String("rt-1")}}, nil)
 
-				m.CreateRoute(context.TODO(), gomock.Eq(&ec2.CreateRouteInput{
+				m.CreateRouteWithContext(context.TODO(), gomock.Eq(&ec2.CreateRouteInput{
 					NatGatewayId:         aws.String("nat-01"),
 					DestinationCidrBlock: aws.String("0.0.0.0/0"),
 					RouteTableId:         aws.String("rt-1"),
 				})).
 					After(privateRouteTable)
 
-				m.CreateRoute(context.TODO(), gomock.Eq(&ec2.CreateRouteInput{
+				m.CreateRouteWithContext(context.TODO(), gomock.Eq(&ec2.CreateRouteInput{
 					DestinationIpv6CidrBlock:    aws.String("::/0"),
 					EgressOnlyInternetGatewayId: aws.String("eigw-01"),
 					RouteTableId:                aws.String("rt-1"),
 				})).
 					After(privateRouteTable)
 
-				m.AssociateRouteTable(context.TODO(), gomock.Eq(&ec2.AssociateRouteTableInput{
+				m.AssociateRouteTableWithContext(context.TODO(), gomock.Eq(&ec2.AssociateRouteTableInput{
 					RouteTableId: aws.String("rt-1"),
 					SubnetId:     aws.String("subnet-routetables-private"),
 				})).
 					Return(&ec2.AssociateRouteTableOutput{}, nil).
 					After(privateRouteTable)
 
-				publicRouteTable := m.CreateRouteTable(context.TODO(), matchRouteTableInput(&ec2.CreateRouteTableInput{VpcId: aws.String("vpc-routetables")})).
-					Return(&ec2.CreateRouteTableOutput{RouteTable: &types.RouteTable{RouteTableId: aws.String("rt-2")}}, nil)
+				publicRouteTable := m.CreateRouteTableWithContext(context.TODO(), matchRouteTableInput(&ec2.CreateRouteTableInput{VpcId: aws.String("vpc-routetables")})).
+					Return(&ec2.CreateRouteTableOutput{RouteTable: &ec2.RouteTable{RouteTableId: aws.String("rt-2")}}, nil)
 
-				m.CreateRoute(context.TODO(), gomock.Eq(&ec2.CreateRouteInput{
+				m.CreateRouteWithContext(context.TODO(), gomock.Eq(&ec2.CreateRouteInput{
 					GatewayId:            aws.String("igw-01"),
 					DestinationCidrBlock: aws.String("0.0.0.0/0"),
 					RouteTableId:         aws.String("rt-2"),
 				})).
 					After(publicRouteTable)
 
-				m.CreateRoute(context.TODO(), gomock.Eq(&ec2.CreateRouteInput{
+				m.CreateRouteWithContext(context.TODO(), gomock.Eq(&ec2.CreateRouteInput{
 					DestinationIpv6CidrBlock: aws.String("::/0"),
 					GatewayId:                aws.String("igw-01"),
 					RouteTableId:             aws.String("rt-2"),
 				})).
 					After(publicRouteTable)
 
-				m.AssociateRouteTable(context.TODO(), gomock.Eq(&ec2.AssociateRouteTableInput{
+				m.AssociateRouteTableWithContext(context.TODO(), gomock.Eq(&ec2.AssociateRouteTableInput{
 					RouteTableId: aws.String("rt-2"),
 					SubnetId:     aws.String("subnet-routetables-public"),
 				})).
@@ -234,51 +233,51 @@ func TestReconcileRouteTables(t *testing.T) {
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DescribeRouteTables(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeRouteTablesInput{})).
+				m.DescribeRouteTablesWithContext(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeRouteTablesInput{})).
 					Return(&ec2.DescribeRouteTablesOutput{}, nil)
 
-				privateRouteTable := m.CreateRouteTable(context.TODO(), matchRouteTableInput(&ec2.CreateRouteTableInput{VpcId: aws.String("vpc-routetables")})).
-					Return(&ec2.CreateRouteTableOutput{RouteTable: &types.RouteTable{RouteTableId: aws.String("rt-1")}}, nil)
+				privateRouteTable := m.CreateRouteTableWithContext(context.TODO(), matchRouteTableInput(&ec2.CreateRouteTableInput{VpcId: aws.String("vpc-routetables")})).
+					Return(&ec2.CreateRouteTableOutput{RouteTable: &ec2.RouteTable{RouteTableId: aws.String("rt-1")}}, nil)
 
-				m.CreateRoute(context.TODO(), gomock.Eq(&ec2.CreateRouteInput{
+				m.CreateRouteWithContext(context.TODO(), gomock.Eq(&ec2.CreateRouteInput{
 					NatGatewayId:         aws.String("nat-01"),
 					DestinationCidrBlock: aws.String("0.0.0.0/0"),
 					RouteTableId:         aws.String("rt-1"),
 				})).
 					After(privateRouteTable)
 
-				m.CreateRoute(context.TODO(), gomock.Eq(&ec2.CreateRouteInput{
+				m.CreateRouteWithContext(context.TODO(), gomock.Eq(&ec2.CreateRouteInput{
 					DestinationIpv6CidrBlock:    aws.String("::/0"),
 					EgressOnlyInternetGatewayId: aws.String("eigw-01"),
 					RouteTableId:                aws.String("rt-1"),
 				})).
 					After(privateRouteTable)
 
-				m.AssociateRouteTable(context.TODO(), gomock.Eq(&ec2.AssociateRouteTableInput{
+				m.AssociateRouteTableWithContext(context.TODO(), gomock.Eq(&ec2.AssociateRouteTableInput{
 					RouteTableId: aws.String("rt-1"),
 					SubnetId:     aws.String("subnet-routetables-private"),
 				})).
 					Return(&ec2.AssociateRouteTableOutput{}, nil).
 					After(privateRouteTable)
 
-				publicRouteTable := m.CreateRouteTable(context.TODO(), matchRouteTableInput(&ec2.CreateRouteTableInput{VpcId: aws.String("vpc-routetables")})).
-					Return(&ec2.CreateRouteTableOutput{RouteTable: &types.RouteTable{RouteTableId: aws.String("rt-2")}}, nil)
+				publicRouteTable := m.CreateRouteTableWithContext(context.TODO(), matchRouteTableInput(&ec2.CreateRouteTableInput{VpcId: aws.String("vpc-routetables")})).
+					Return(&ec2.CreateRouteTableOutput{RouteTable: &ec2.RouteTable{RouteTableId: aws.String("rt-2")}}, nil)
 
-				m.CreateRoute(context.TODO(), gomock.Eq(&ec2.CreateRouteInput{
+				m.CreateRouteWithContext(context.TODO(), gomock.Eq(&ec2.CreateRouteInput{
 					GatewayId:            aws.String("igw-01"),
 					DestinationCidrBlock: aws.String("0.0.0.0/0"),
 					RouteTableId:         aws.String("rt-2"),
 				})).
 					After(publicRouteTable)
 
-				m.CreateRoute(context.TODO(), gomock.Eq(&ec2.CreateRouteInput{
+				m.CreateRouteWithContext(context.TODO(), gomock.Eq(&ec2.CreateRouteInput{
 					DestinationIpv6CidrBlock: aws.String("::/0"),
 					GatewayId:                aws.String("igw-01"),
 					RouteTableId:             aws.String("rt-2"),
 				})).
 					After(publicRouteTable)
 
-				m.AssociateRouteTable(context.TODO(), gomock.Eq(&ec2.AssociateRouteTableInput{
+				m.AssociateRouteTableWithContext(context.TODO(), gomock.Eq(&ec2.AssociateRouteTableInput{
 					RouteTableId: aws.String("rt-2"),
 					SubnetId:     aws.String("subnet-routetables-public"),
 				})).
@@ -311,7 +310,7 @@ func TestReconcileRouteTables(t *testing.T) {
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DescribeRouteTables(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeRouteTablesInput{})).
+				m.DescribeRouteTablesWithContext(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeRouteTablesInput{})).
 					Return(&ec2.DescribeRouteTablesOutput{}, nil)
 			},
 			err: errors.New(`no nat gateways available in "us-east-1a"`),
@@ -342,23 +341,23 @@ func TestReconcileRouteTables(t *testing.T) {
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DescribeRouteTables(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeRouteTablesInput{})).
+				m.DescribeRouteTablesWithContext(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeRouteTablesInput{})).
 					Return(&ec2.DescribeRouteTablesOutput{
-						RouteTables: []types.RouteTable{
+						RouteTables: []*ec2.RouteTable{
 							{
 								RouteTableId: aws.String("route-table-private"),
-								Associations: []types.RouteTableAssociation{
+								Associations: []*ec2.RouteTableAssociation{
 									{
 										SubnetId: aws.String("subnet-routetables-private"),
 									},
 								},
-								Routes: []types.Route{
+								Routes: []*ec2.Route{
 									{
 										DestinationCidrBlock: aws.String("0.0.0.0/0"),
 										NatGatewayId:         aws.String("outdated-nat-01"),
 									},
 								},
-								Tags: []types.Tag{
+								Tags: []*ec2.Tag{
 									{
 										Key:   aws.String("kubernetes.io/cluster/test-cluster"),
 										Value: aws.String("owned"),
@@ -379,18 +378,18 @@ func TestReconcileRouteTables(t *testing.T) {
 							},
 							{
 								RouteTableId: aws.String("route-table-public"),
-								Associations: []types.RouteTableAssociation{
+								Associations: []*ec2.RouteTableAssociation{
 									{
 										SubnetId: aws.String("subnet-routetables-public"),
 									},
 								},
-								Routes: []types.Route{
+								Routes: []*ec2.Route{
 									{
 										DestinationCidrBlock: aws.String("0.0.0.0/0"),
 										GatewayId:            aws.String("igw-01"),
 									},
 								},
-								Tags: []types.Tag{
+								Tags: []*ec2.Tag{
 									{
 										Key:   aws.String("kubernetes.io/cluster/test-cluster"),
 										Value: aws.String("owned"),
@@ -412,7 +411,7 @@ func TestReconcileRouteTables(t *testing.T) {
 						},
 					}, nil)
 
-				m.ReplaceRoute(context.TODO(), gomock.Eq(
+				m.ReplaceRouteWithContext(context.TODO(), gomock.Eq(
 					&ec2.ReplaceRouteInput{
 						DestinationCidrBlock: aws.String("0.0.0.0/0"),
 						RouteTableId:         aws.String("route-table-private"),
@@ -447,17 +446,17 @@ func TestReconcileRouteTables(t *testing.T) {
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DescribeRouteTables(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeRouteTablesInput{})).
+				m.DescribeRouteTablesWithContext(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeRouteTablesInput{})).
 					Return(&ec2.DescribeRouteTablesOutput{
-						RouteTables: []types.RouteTable{
+						RouteTables: []*ec2.RouteTable{
 							{
 								RouteTableId: aws.String("route-table-private"),
-								Associations: []types.RouteTableAssociation{
+								Associations: []*ec2.RouteTableAssociation{
 									{
 										SubnetId: aws.String("subnet-routetables-private"),
 									},
 								},
-								Routes: []types.Route{
+								Routes: []*ec2.Route{
 									{
 										DestinationCidrBlock: aws.String("0.0.0.0/0"),
 										NatGatewayId:         aws.String("nat-01"),
@@ -467,7 +466,7 @@ func TestReconcileRouteTables(t *testing.T) {
 										DestinationPrefixListId: aws.String("pl-foobar"),
 									},
 								},
-								Tags: []types.Tag{
+								Tags: []*ec2.Tag{
 									{
 										Key:   aws.String("kubernetes.io/cluster/test-cluster"),
 										Value: aws.String("owned"),
@@ -488,18 +487,18 @@ func TestReconcileRouteTables(t *testing.T) {
 							},
 							{
 								RouteTableId: aws.String("route-table-public"),
-								Associations: []types.RouteTableAssociation{
+								Associations: []*ec2.RouteTableAssociation{
 									{
 										SubnetId: aws.String("subnet-routetables-public"),
 									},
 								},
-								Routes: []types.Route{
+								Routes: []*ec2.Route{
 									{
 										DestinationCidrBlock: aws.String("0.0.0.0/0"),
 										GatewayId:            aws.String("igw-01"),
 									},
 								},
-								Tags: []types.Tag{
+								Tags: []*ec2.Tag{
 									{
 										Key:   aws.String("kubernetes.io/cluster/test-cluster"),
 										Value: aws.String("owned"),
@@ -542,20 +541,20 @@ func TestReconcileRouteTables(t *testing.T) {
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DescribeRouteTables(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeRouteTablesInput{})).
+				m.DescribeRouteTablesWithContext(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeRouteTablesInput{})).
 					Return(&ec2.DescribeRouteTablesOutput{}, nil)
 
-				m.CreateRouteTable(context.TODO(), matchRouteTableInput(&ec2.CreateRouteTableInput{VpcId: aws.String("vpc-rtbs")})).
-					Return(&ec2.CreateRouteTableOutput{RouteTable: &types.RouteTable{RouteTableId: aws.String("rt-1")}}, nil)
+				m.CreateRouteTableWithContext(context.TODO(), matchRouteTableInput(&ec2.CreateRouteTableInput{VpcId: aws.String("vpc-rtbs")})).
+					Return(&ec2.CreateRouteTableOutput{RouteTable: &ec2.RouteTable{RouteTableId: aws.String("rt-1")}}, nil)
 
-				m.CreateRoute(context.TODO(), gomock.Eq(&ec2.CreateRouteInput{
+				m.CreateRouteWithContext(context.TODO(), gomock.Eq(&ec2.CreateRouteInput{
 					GatewayId:            aws.String("igw-01"),
 					DestinationCidrBlock: aws.String("0.0.0.0/0"),
 					RouteTableId:         aws.String("rt-1"),
 				})).
 					Return(nil, awserrors.NewNotFound("MissingParameter"))
 
-				m.DeleteRouteTable(context.TODO(), gomock.AssignableToTypeOf(&ec2.DeleteRouteTableInput{})).
+				m.DeleteRouteTableWithContext(context.TODO(), gomock.AssignableToTypeOf(&ec2.DeleteRouteTableInput{})).
 					Return(&ec2.DeleteRouteTableOutput{}, nil)
 			},
 			err: errors.New(`failed to create route in route table "rt-1"`),
@@ -603,35 +602,35 @@ func TestReconcileRouteTables(t *testing.T) {
 
 // Delete Route Table(s).
 var (
-	stubEc2RouteTablePrivate = types.RouteTable{
+	stubEc2RouteTablePrivate = &ec2.RouteTable{
 		RouteTableId: aws.String("route-table-private"),
-		Associations: []types.RouteTableAssociation{
+		Associations: []*ec2.RouteTableAssociation{
 			{
 				SubnetId: nil,
 			},
 		},
-		Routes: []types.Route{
+		Routes: []*ec2.Route{
 			{
 				DestinationCidrBlock: aws.String("0.0.0.0/0"),
 				NatGatewayId:         aws.String("outdated-nat-01"),
 			},
 		},
 	}
-	stubEc2RouteTablePublicWithAssociations = types.RouteTable{
+	stubEc2RouteTablePublicWithAssociations = &ec2.RouteTable{
 		RouteTableId: aws.String("route-table-public"),
-		Associations: []types.RouteTableAssociation{
+		Associations: []*ec2.RouteTableAssociation{
 			{
 				SubnetId:                aws.String("subnet-routetables-public"),
 				RouteTableAssociationId: aws.String("route-table-public"),
 			},
 		},
-		Routes: []types.Route{
+		Routes: []*ec2.Route{
 			{
 				DestinationCidrBlock: aws.String("0.0.0.0/0"),
 				GatewayId:            aws.String("igw-01"),
 			},
 		},
-		Tags: []types.Tag{
+		Tags: []*ec2.Tag{
 			{
 				Key:   aws.String("kubernetes.io/cluster/test-cluster"),
 				Value: aws.String("owned"),
@@ -657,7 +656,7 @@ func TestDeleteRouteTables(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	describeRouteTableOutput := &ec2.DescribeRouteTablesOutput{
-		RouteTables: []types.RouteTable{
+		RouteTables: []*ec2.RouteTable{
 			stubEc2RouteTablePrivate,
 			stubEc2RouteTablePublicWithAssociations,
 		},
@@ -682,18 +681,18 @@ func TestDeleteRouteTables(t *testing.T) {
 			name:  "Should delete route table successfully",
 			input: &infrav1.NetworkSpec{},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DescribeRouteTables(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeRouteTablesInput{})).
+				m.DescribeRouteTablesWithContext(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeRouteTablesInput{})).
 					Return(describeRouteTableOutput, nil)
 
-				m.DeleteRouteTable(context.TODO(), gomock.Eq(&ec2.DeleteRouteTableInput{
+				m.DeleteRouteTableWithContext(context.TODO(), gomock.Eq(&ec2.DeleteRouteTableInput{
 					RouteTableId: aws.String("route-table-private"),
 				})).Return(&ec2.DeleteRouteTableOutput{}, nil)
 
-				m.DisassociateRouteTable(context.TODO(), gomock.Eq(&ec2.DisassociateRouteTableInput{
+				m.DisassociateRouteTableWithContext(context.TODO(), gomock.Eq(&ec2.DisassociateRouteTableInput{
 					AssociationId: aws.String("route-table-public"),
 				})).Return(&ec2.DisassociateRouteTableOutput{}, nil)
 
-				m.DeleteRouteTable(context.TODO(), gomock.Eq(&ec2.DeleteRouteTableInput{
+				m.DeleteRouteTableWithContext(context.TODO(), gomock.Eq(&ec2.DeleteRouteTableInput{
 					RouteTableId: aws.String("route-table-public"),
 				})).Return(&ec2.DeleteRouteTableOutput{}, nil)
 			},
@@ -702,7 +701,7 @@ func TestDeleteRouteTables(t *testing.T) {
 			name:  "Should return error if describe route table fails",
 			input: &infrav1.NetworkSpec{},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DescribeRouteTables(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeRouteTablesInput{})).
+				m.DescribeRouteTablesWithContext(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeRouteTablesInput{})).
 					Return(nil, awserrors.NewFailedDependency("failed dependency"))
 			},
 			wantErr: true,
@@ -711,10 +710,10 @@ func TestDeleteRouteTables(t *testing.T) {
 			name:  "Should return error if delete route table fails",
 			input: &infrav1.NetworkSpec{},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DescribeRouteTables(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeRouteTablesInput{})).
+				m.DescribeRouteTablesWithContext(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeRouteTablesInput{})).
 					Return(describeRouteTableOutput, nil)
 
-				m.DeleteRouteTable(context.TODO(), gomock.Eq(&ec2.DeleteRouteTableInput{
+				m.DeleteRouteTableWithContext(context.TODO(), gomock.Eq(&ec2.DeleteRouteTableInput{
 					RouteTableId: aws.String("route-table-private"),
 				})).Return(nil, awserrors.NewNotFound("not found"))
 			},
@@ -724,14 +723,14 @@ func TestDeleteRouteTables(t *testing.T) {
 			name:  "Should return error if disassociate route table fails",
 			input: &infrav1.NetworkSpec{},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DescribeRouteTables(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeRouteTablesInput{})).
+				m.DescribeRouteTablesWithContext(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeRouteTablesInput{})).
 					Return(describeRouteTableOutput, nil)
 
-				m.DeleteRouteTable(context.TODO(), gomock.Eq(&ec2.DeleteRouteTableInput{
+				m.DeleteRouteTableWithContext(context.TODO(), gomock.Eq(&ec2.DeleteRouteTableInput{
 					RouteTableId: aws.String("route-table-private"),
 				})).Return(&ec2.DeleteRouteTableOutput{}, nil)
 
-				m.DisassociateRouteTable(context.TODO(), gomock.Eq(&ec2.DisassociateRouteTableInput{
+				m.DisassociateRouteTableWithContext(context.TODO(), gomock.Eq(&ec2.DisassociateRouteTableInput{
 					AssociationId: aws.String("route-table-public"),
 				})).Return(nil, awserrors.NewNotFound("not found"))
 			},
@@ -783,7 +782,7 @@ func TestDeleteRouteTable(t *testing.T) {
 
 	testCases := []struct {
 		name    string
-		input   types.RouteTable
+		input   *ec2.RouteTable
 		expect  func(m *mocks.MockEC2APIMockRecorder)
 		wantErr bool
 	}{
@@ -791,7 +790,7 @@ func TestDeleteRouteTable(t *testing.T) {
 			name:  "Should delete route table successfully",
 			input: stubEc2RouteTablePrivate,
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DeleteRouteTable(context.TODO(), gomock.AssignableToTypeOf(&ec2.DeleteRouteTableInput{})).
+				m.DeleteRouteTableWithContext(context.TODO(), gomock.AssignableToTypeOf(&ec2.DeleteRouteTableInput{})).
 					Return(&ec2.DeleteRouteTableOutput{}, nil)
 			},
 		},
@@ -799,7 +798,7 @@ func TestDeleteRouteTable(t *testing.T) {
 			name:  "Should return error if delete route table fails",
 			input: stubEc2RouteTablePrivate,
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DeleteRouteTable(context.TODO(), gomock.AssignableToTypeOf(&ec2.DeleteRouteTableInput{})).
+				m.DeleteRouteTableWithContext(context.TODO(), gomock.AssignableToTypeOf(&ec2.DeleteRouteTableInput{})).
 					Return(nil, awserrors.NewNotFound("not found"))
 			},
 			wantErr: true,
@@ -808,7 +807,7 @@ func TestDeleteRouteTable(t *testing.T) {
 			name:  "Should return error if disassociate route table fails",
 			input: stubEc2RouteTablePublicWithAssociations,
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DisassociateRouteTable(context.TODO(), gomock.Eq(&ec2.DisassociateRouteTableInput{
+				m.DisassociateRouteTableWithContext(context.TODO(), gomock.Eq(&ec2.DisassociateRouteTableInput{
 					AssociationId: aws.String("route-table-public"),
 				})).Return(nil, awserrors.NewNotFound("not found"))
 			},
@@ -1351,7 +1350,7 @@ func TestService_getRoutesForSubnet(t *testing.T) {
 				}
 			}
 			if len(tc.want) > 0 {
-				if !cmp.Equal(got, tc.want, cmp.AllowUnexported(ec2.CreateRouteInput{})) {
+				if !cmp.Equal(got, tc.want) {
 					t.Errorf("got unexpect routes:\n%v", cmp.Diff(got, tc.want))
 				}
 			}

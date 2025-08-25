@@ -21,15 +21,13 @@ import (
 	"encoding/base64"
 	"testing"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/ec2"
-	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
-	"github.com/aws/aws-sdk-go-v2/service/ssm"
-	ssmtypes "github.com/aws/aws-sdk-go-v2/service/ssm/types"
-	"github.com/aws/smithy-go"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -82,22 +80,12 @@ users:
 
 var testUserDataHash = userdata.ComputeHash([]byte(testUserData))
 
-var testBootstrapData = []byte("different from testUserData since bootstrap data may be in S3 while EC2 user data points to that S3 object")
-var testBootstrapDataHash = userdata.ComputeHash(testBootstrapData)
-
-func defaultEC2AndDataTags(name string, clusterName string, userDataSecretKey types.NamespacedName, bootstrapDataHash string) []ec2types.Tag {
+func defaultEC2AndUserDataSecretKeyTags(name string, clusterName string, userDataSecretKey types.NamespacedName) []*ec2.Tag {
 	tags := defaultEC2Tags(name, clusterName)
-	tags = append(
-		tags,
-		ec2types.Tag{
-			Key:   aws.String(infrav1.LaunchTemplateBootstrapDataSecret),
-			Value: aws.String(userDataSecretKey.String()),
-		},
-		ec2types.Tag{
-			Key:   aws.String(infrav1.LaunchTemplateBootstrapDataHash),
-			Value: aws.String(bootstrapDataHash),
-		})
-
+	tags = append(tags, &ec2.Tag{
+		Key:   aws.String(infrav1.LaunchTemplateBootstrapDataSecret),
+		Value: aws.String(userDataSecretKey.String()),
+	})
 	sortTags(tags)
 	return tags
 }
@@ -124,14 +112,15 @@ func TestGetLaunchTemplate(t *testing.T) {
 			name:               "Should not return error if no launch template exist with given name",
 			launchTemplateName: "foo",
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DescribeLaunchTemplateVersions(context.TODO(), gomock.Eq(&ec2.DescribeLaunchTemplateVersionsInput{
+				m.DescribeLaunchTemplateVersionsWithContext(context.TODO(), gomock.Eq(&ec2.DescribeLaunchTemplateVersionsInput{
 					LaunchTemplateName: aws.String("foo"),
-					Versions:           []string{"$Latest"},
+					Versions:           []*string{aws.String("$Latest")},
 				})).
-					Return(nil, &smithy.GenericAPIError{
-						Code:    awserrors.LaunchTemplateNameNotFound,
-						Message: "The specified launch template, with template name foo, does not exist.",
-					})
+					Return(nil, awserr.New(
+						awserrors.LaunchTemplateNameNotFound,
+						"The specified launch template, with template name foo, does not exist.",
+						nil,
+					))
 			},
 			check: func(g *WithT, launchTemplate *expinfrav1.AWSLaunchTemplate, userDataHash string, err error) {
 				g.Expect(err).NotTo(HaveOccurred())
@@ -143,9 +132,9 @@ func TestGetLaunchTemplate(t *testing.T) {
 			name:               "Should return error if AWS failed during launch template fetching",
 			launchTemplateName: "foo",
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DescribeLaunchTemplateVersions(context.TODO(), gomock.Eq(&ec2.DescribeLaunchTemplateVersionsInput{
+				m.DescribeLaunchTemplateVersionsWithContext(context.TODO(), gomock.Eq(&ec2.DescribeLaunchTemplateVersionsInput{
 					LaunchTemplateName: aws.String("foo"),
-					Versions:           []string{"$Latest"},
+					Versions:           []*string{aws.String("$Latest")},
 				})).Return(nil, awserrors.NewFailedDependency("dependency failure"))
 			},
 			check: func(g *WithT, launchTemplate *expinfrav1.AWSLaunchTemplate, userDataHash string, err error) {
@@ -158,9 +147,9 @@ func TestGetLaunchTemplate(t *testing.T) {
 			name:               "Should not return with error if no launch template versions received from AWS",
 			launchTemplateName: "foo",
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DescribeLaunchTemplateVersions(context.TODO(), gomock.Eq(&ec2.DescribeLaunchTemplateVersionsInput{
+				m.DescribeLaunchTemplateVersionsWithContext(context.TODO(), gomock.Eq(&ec2.DescribeLaunchTemplateVersionsInput{
 					LaunchTemplateName: aws.String("foo"),
-					Versions:           []string{"$Latest"},
+					Versions:           []*string{aws.String("$Latest")},
 				})).Return(nil, nil)
 			},
 			check: func(g *WithT, launchTemplate *expinfrav1.AWSLaunchTemplate, userDataHash string, err error) {
@@ -173,35 +162,35 @@ func TestGetLaunchTemplate(t *testing.T) {
 			name:               "Should successfully return launch template if exist with given name",
 			launchTemplateName: "foo",
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DescribeLaunchTemplateVersions(context.TODO(), gomock.Eq(&ec2.DescribeLaunchTemplateVersionsInput{
+				m.DescribeLaunchTemplateVersionsWithContext(context.TODO(), gomock.Eq(&ec2.DescribeLaunchTemplateVersionsInput{
 					LaunchTemplateName: aws.String("foo"),
-					Versions:           []string{"$Latest"},
+					Versions:           []*string{aws.String("$Latest")},
 				})).Return(&ec2.DescribeLaunchTemplateVersionsOutput{
-					LaunchTemplateVersions: []ec2types.LaunchTemplateVersion{
+					LaunchTemplateVersions: []*ec2.LaunchTemplateVersion{
 						{
 							LaunchTemplateId:   aws.String("lt-12345"),
 							LaunchTemplateName: aws.String("foo"),
-							LaunchTemplateData: &ec2types.ResponseLaunchTemplateData{
-								SecurityGroupIds: []string{"sg-id"},
+							LaunchTemplateData: &ec2.ResponseLaunchTemplateData{
+								SecurityGroupIds: []*string{aws.String("sg-id")},
 								ImageId:          aws.String("foo-image"),
-								IamInstanceProfile: &ec2types.LaunchTemplateIamInstanceProfileSpecification{
+								IamInstanceProfile: &ec2.LaunchTemplateIamInstanceProfileSpecification{
 									Arn: aws.String("instance-profile/foo-profile"),
 								},
 								KeyName: aws.String("foo-keyname"),
-								BlockDeviceMappings: []ec2types.LaunchTemplateBlockDeviceMapping{
+								BlockDeviceMappings: []*ec2.LaunchTemplateBlockDeviceMapping{
 									{
 										DeviceName: aws.String("foo-device"),
-										Ebs: &ec2types.LaunchTemplateEbsBlockDevice{
+										Ebs: &ec2.LaunchTemplateEbsBlockDevice{
 											Encrypted:  aws.Bool(true),
-											VolumeSize: aws.Int32(16),
-											VolumeType: ec2types.VolumeTypeGp2,
+											VolumeSize: aws.Int64(16),
+											VolumeType: aws.String("cool"),
 										},
 									},
 								},
-								NetworkInterfaces: []ec2types.LaunchTemplateInstanceNetworkInterfaceSpecification{
+								NetworkInterfaces: []*ec2.LaunchTemplateInstanceNetworkInterfaceSpecification{
 									{
-										DeviceIndex: aws.Int32(1),
-										Groups:      []string{"foo-group"},
+										DeviceIndex: aws.Int64(1),
+										Groups:      []*string{aws.String("foo-group")},
 									},
 								},
 								UserData: aws.String(base64.StdEncoding.EncodeToString([]byte(testUserData))),
@@ -232,35 +221,35 @@ func TestGetLaunchTemplate(t *testing.T) {
 			name:               "Should return computed userData if AWS returns empty userData",
 			launchTemplateName: "foo",
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DescribeLaunchTemplateVersions(context.TODO(), gomock.Eq(&ec2.DescribeLaunchTemplateVersionsInput{
+				m.DescribeLaunchTemplateVersionsWithContext(context.TODO(), gomock.Eq(&ec2.DescribeLaunchTemplateVersionsInput{
 					LaunchTemplateName: aws.String("foo"),
-					Versions:           []string{"$Latest"},
+					Versions:           []*string{aws.String("$Latest")},
 				})).Return(&ec2.DescribeLaunchTemplateVersionsOutput{
-					LaunchTemplateVersions: []ec2types.LaunchTemplateVersion{
+					LaunchTemplateVersions: []*ec2.LaunchTemplateVersion{
 						{
 							LaunchTemplateId:   aws.String("lt-12345"),
 							LaunchTemplateName: aws.String("foo"),
-							LaunchTemplateData: &ec2types.ResponseLaunchTemplateData{
-								SecurityGroupIds: []string{"sg-id"},
+							LaunchTemplateData: &ec2.ResponseLaunchTemplateData{
+								SecurityGroupIds: []*string{aws.String("sg-id")},
 								ImageId:          aws.String("foo-image"),
-								IamInstanceProfile: &ec2types.LaunchTemplateIamInstanceProfileSpecification{
+								IamInstanceProfile: &ec2.LaunchTemplateIamInstanceProfileSpecification{
 									Arn: aws.String("instance-profile/foo-profile"),
 								},
 								KeyName: aws.String("foo-keyname"),
-								BlockDeviceMappings: []ec2types.LaunchTemplateBlockDeviceMapping{
+								BlockDeviceMappings: []*ec2.LaunchTemplateBlockDeviceMapping{
 									{
 										DeviceName: aws.String("foo-device"),
-										Ebs: &ec2types.LaunchTemplateEbsBlockDevice{
+										Ebs: &ec2.LaunchTemplateEbsBlockDevice{
 											Encrypted:  aws.Bool(true),
-											VolumeSize: aws.Int32(16),
-											VolumeType: ec2types.VolumeTypeGp2,
+											VolumeSize: aws.Int64(16),
+											VolumeType: aws.String("cool"),
 										},
 									},
 								},
-								NetworkInterfaces: []ec2types.LaunchTemplateInstanceNetworkInterfaceSpecification{
+								NetworkInterfaces: []*ec2.LaunchTemplateInstanceNetworkInterfaceSpecification{
 									{
-										DeviceIndex: aws.Int32(1),
-										Groups:      []string{"foo-group"},
+										DeviceIndex: aws.Int64(1),
+										Groups:      []*string{aws.String("foo-group")},
 									},
 								},
 							},
@@ -306,7 +295,7 @@ func TestGetLaunchTemplate(t *testing.T) {
 				tc.expect(mockEC2Client.EXPECT())
 			}
 
-			launchTemplate, userData, _, _, err := s.GetLaunchTemplate(tc.launchTemplateName)
+			launchTemplate, userData, _, err := s.GetLaunchTemplate(tc.launchTemplateName)
 			tc.check(g, launchTemplate, userData, err)
 		})
 	}
@@ -314,39 +303,38 @@ func TestGetLaunchTemplate(t *testing.T) {
 
 func TestServiceSDKToLaunchTemplate(t *testing.T) {
 	tests := []struct {
-		name                  string
-		input                 ec2types.LaunchTemplateVersion
-		wantLT                *expinfrav1.AWSLaunchTemplate
-		wantUserDataHash      string
-		wantDataSecretKey     *types.NamespacedName
-		wantBootstrapDataHash *string
-		wantErr               bool
+		name              string
+		input             *ec2.LaunchTemplateVersion
+		wantLT            *expinfrav1.AWSLaunchTemplate
+		wantHash          string
+		wantDataSecretKey *types.NamespacedName
+		wantErr           bool
 	}{
 		{
 			name: "lots of input",
-			input: ec2types.LaunchTemplateVersion{
+			input: &ec2.LaunchTemplateVersion{
 				LaunchTemplateId:   aws.String("lt-12345"),
 				LaunchTemplateName: aws.String("foo"),
-				LaunchTemplateData: &ec2types.ResponseLaunchTemplateData{
+				LaunchTemplateData: &ec2.ResponseLaunchTemplateData{
 					ImageId: aws.String("foo-image"),
-					IamInstanceProfile: &ec2types.LaunchTemplateIamInstanceProfileSpecification{
+					IamInstanceProfile: &ec2.LaunchTemplateIamInstanceProfileSpecification{
 						Arn: aws.String("instance-profile/foo-profile"),
 					},
 					KeyName: aws.String("foo-keyname"),
-					BlockDeviceMappings: []ec2types.LaunchTemplateBlockDeviceMapping{
+					BlockDeviceMappings: []*ec2.LaunchTemplateBlockDeviceMapping{
 						{
 							DeviceName: aws.String("foo-device"),
-							Ebs: &ec2types.LaunchTemplateEbsBlockDevice{
+							Ebs: &ec2.LaunchTemplateEbsBlockDevice{
 								Encrypted:  aws.Bool(true),
-								VolumeSize: aws.Int32(16),
-								VolumeType: ec2types.VolumeTypeGp2,
+								VolumeSize: aws.Int64(16),
+								VolumeType: aws.String("cool"),
 							},
 						},
 					},
-					NetworkInterfaces: []ec2types.LaunchTemplateInstanceNetworkInterfaceSpecification{
+					NetworkInterfaces: []*ec2.LaunchTemplateInstanceNetworkInterfaceSpecification{
 						{
-							DeviceIndex: aws.Int32(1),
-							Groups:      []string{"foo-group"},
+							DeviceIndex: aws.Int64(1),
+							Groups:      []*string{aws.String("foo-group")},
 						},
 					},
 					UserData: aws.String(base64.StdEncoding.EncodeToString([]byte(testUserData))),
@@ -362,182 +350,44 @@ func TestServiceSDKToLaunchTemplate(t *testing.T) {
 				SSHKeyName:         aws.String("foo-keyname"),
 				VersionNumber:      aws.Int64(1),
 			},
-			wantUserDataHash:      testUserDataHash,
-			wantDataSecretKey:     nil, // respective tag is not given
-			wantBootstrapDataHash: nil, // respective tag is not given
-		},
-		{
-			name: "spot market options",
-			input: ec2types.LaunchTemplateVersion{
-				LaunchTemplateId:   aws.String("lt-12345"),
-				LaunchTemplateName: aws.String("foo"),
-				LaunchTemplateData: &ec2types.ResponseLaunchTemplateData{
-					ImageId: aws.String("foo-image"),
-					IamInstanceProfile: &ec2types.LaunchTemplateIamInstanceProfileSpecification{
-						Arn: aws.String("instance-profile/foo-profile"),
-					},
-					KeyName: aws.String("foo-keyname"),
-					InstanceMarketOptions: &ec2types.LaunchTemplateInstanceMarketOptions{
-						MarketType: ec2types.MarketTypeSpot,
-						SpotOptions: &ec2types.LaunchTemplateSpotMarketOptions{
-							MaxPrice: aws.String("0.05"),
-						},
-					},
-					UserData: aws.String(base64.StdEncoding.EncodeToString([]byte(testUserData))),
-				},
-				VersionNumber: aws.Int64(1),
-			},
-			wantLT: &expinfrav1.AWSLaunchTemplate{
-				Name: "foo",
-				AMI: infrav1.AMIReference{
-					ID: aws.String("foo-image"),
-				},
-				IamInstanceProfile: "foo-profile",
-				SSHKeyName:         aws.String("foo-keyname"),
-				VersionNumber:      aws.Int64(1),
-				SpotMarketOptions: &infrav1.SpotMarketOptions{
-					MaxPrice: aws.String("0.05"),
-				},
-			},
-			wantUserDataHash:  testUserDataHash,
-			wantDataSecretKey: nil,
-		},
-		{
-			name: "spot market options with no max price",
-			input: ec2types.LaunchTemplateVersion{
-				LaunchTemplateId:   aws.String("lt-12345"),
-				LaunchTemplateName: aws.String("foo"),
-				LaunchTemplateData: &ec2types.ResponseLaunchTemplateData{
-					ImageId: aws.String("foo-image"),
-					IamInstanceProfile: &ec2types.LaunchTemplateIamInstanceProfileSpecification{
-						Arn: aws.String("instance-profile/foo-profile"),
-					},
-					KeyName: aws.String("foo-keyname"),
-					InstanceMarketOptions: &ec2types.LaunchTemplateInstanceMarketOptions{
-						MarketType:  ec2types.MarketTypeSpot,
-						SpotOptions: &ec2types.LaunchTemplateSpotMarketOptions{},
-					},
-					UserData: aws.String(base64.StdEncoding.EncodeToString([]byte(testUserData))),
-				},
-				VersionNumber: aws.Int64(1),
-			},
-			wantLT: &expinfrav1.AWSLaunchTemplate{
-				Name: "foo",
-				AMI: infrav1.AMIReference{
-					ID: aws.String("foo-image"),
-				},
-				IamInstanceProfile: "foo-profile",
-				SSHKeyName:         aws.String("foo-keyname"),
-				VersionNumber:      aws.Int64(1),
-				SpotMarketOptions:  &infrav1.SpotMarketOptions{},
-			},
-			wantUserDataHash:  testUserDataHash,
-			wantDataSecretKey: nil,
-		},
-		{
-			name: "spot market options without SpotOptions",
-			input: ec2types.LaunchTemplateVersion{
-				LaunchTemplateId:   aws.String("lt-12345"),
-				LaunchTemplateName: aws.String("foo"),
-				LaunchTemplateData: &ec2types.ResponseLaunchTemplateData{
-					ImageId: aws.String("foo-image"),
-					IamInstanceProfile: &ec2types.LaunchTemplateIamInstanceProfileSpecification{
-						Arn: aws.String("instance-profile/foo-profile"),
-					},
-					KeyName: aws.String("foo-keyname"),
-					InstanceMarketOptions: &ec2types.LaunchTemplateInstanceMarketOptions{
-						MarketType: ec2types.MarketTypeSpot,
-					},
-					UserData: aws.String(base64.StdEncoding.EncodeToString([]byte(testUserData))),
-				},
-				VersionNumber: aws.Int64(1),
-			},
-			wantLT: &expinfrav1.AWSLaunchTemplate{
-				Name: "foo",
-				AMI: infrav1.AMIReference{
-					ID: aws.String("foo-image"),
-				},
-				IamInstanceProfile: "foo-profile",
-				SSHKeyName:         aws.String("foo-keyname"),
-				VersionNumber:      aws.Int64(1),
-				SpotMarketOptions:  &infrav1.SpotMarketOptions{},
-			},
-			wantUserDataHash:  testUserDataHash,
-			wantDataSecretKey: nil,
-		},
-		{
-			name: "non-spot market type",
-			input: ec2types.LaunchTemplateVersion{
-				LaunchTemplateId:   aws.String("lt-12345"),
-				LaunchTemplateName: aws.String("foo"),
-				LaunchTemplateData: &ec2types.ResponseLaunchTemplateData{
-					ImageId: aws.String("foo-image"),
-					IamInstanceProfile: &ec2types.LaunchTemplateIamInstanceProfileSpecification{
-						Arn: aws.String("instance-profile/foo-profile"),
-					},
-					KeyName: aws.String("foo-keyname"),
-					InstanceMarketOptions: &ec2types.LaunchTemplateInstanceMarketOptions{
-						MarketType: ec2types.MarketTypeCapacityBlock,
-						SpotOptions: &ec2types.LaunchTemplateSpotMarketOptions{
-							MaxPrice: aws.String("0.05"),
-						},
-					},
-					UserData: aws.String(base64.StdEncoding.EncodeToString([]byte(testUserData))),
-				},
-				VersionNumber: aws.Int64(1),
-			},
-			wantLT: &expinfrav1.AWSLaunchTemplate{
-				Name: "foo",
-				AMI: infrav1.AMIReference{
-					ID: aws.String("foo-image"),
-				},
-				IamInstanceProfile: "foo-profile",
-				SSHKeyName:         aws.String("foo-keyname"),
-				VersionNumber:      aws.Int64(1),
-				SpotMarketOptions:  nil, // Should be nil since market type is not "spot"
-			},
-			wantUserDataHash:  testUserDataHash,
-			wantDataSecretKey: nil,
+			wantHash:          testUserDataHash,
+			wantDataSecretKey: nil, // respective tag is not given
 		},
 		{
 			name: "tag of bootstrap secret",
-			input: ec2types.LaunchTemplateVersion{
+			input: &ec2.LaunchTemplateVersion{
 				LaunchTemplateId:   aws.String("lt-12345"),
 				LaunchTemplateName: aws.String("foo"),
-				LaunchTemplateData: &ec2types.ResponseLaunchTemplateData{
+				LaunchTemplateData: &ec2.ResponseLaunchTemplateData{
 					ImageId: aws.String("foo-image"),
-					IamInstanceProfile: &ec2types.LaunchTemplateIamInstanceProfileSpecification{
+					IamInstanceProfile: &ec2.LaunchTemplateIamInstanceProfileSpecification{
 						Arn: aws.String("instance-profile/foo-profile"),
 					},
 					KeyName: aws.String("foo-keyname"),
-					BlockDeviceMappings: []ec2types.LaunchTemplateBlockDeviceMapping{
+					BlockDeviceMappings: []*ec2.LaunchTemplateBlockDeviceMapping{
 						{
 							DeviceName: aws.String("foo-device"),
-							Ebs: &ec2types.LaunchTemplateEbsBlockDevice{
+							Ebs: &ec2.LaunchTemplateEbsBlockDevice{
 								Encrypted:  aws.Bool(true),
-								VolumeSize: aws.Int32(16),
-								VolumeType: ec2types.VolumeTypeGp2,
+								VolumeSize: aws.Int64(16),
+								VolumeType: aws.String("cool"),
 							},
 						},
 					},
-					NetworkInterfaces: []ec2types.LaunchTemplateInstanceNetworkInterfaceSpecification{
+					NetworkInterfaces: []*ec2.LaunchTemplateInstanceNetworkInterfaceSpecification{
 						{
-							DeviceIndex: aws.Int32(1),
-							Groups:      []string{"foo-group"},
+							DeviceIndex: aws.Int64(1),
+							Groups:      []*string{aws.String("foo-group")},
 						},
 					},
-					TagSpecifications: []ec2types.LaunchTemplateTagSpecification{
+					TagSpecifications: []*ec2.LaunchTemplateTagSpecification{
 						{
-							ResourceType: ec2types.ResourceTypeInstance,
-							Tags: []ec2types.Tag{
+							ResourceType: aws.String(ec2.ResourceTypeInstance),
+							Tags: []*ec2.Tag{
 								{
 									Key:   aws.String("sigs.k8s.io/cluster-api-provider-aws/bootstrap-data-secret"),
 									Value: aws.String("bootstrap-secret-ns/bootstrap-secret"),
 								},
-								{
-									Key:   aws.String("sigs.k8s.io/cluster-api-provider-aws/bootstrap-data-hash"),
-									Value: aws.String(testBootstrapDataHash),
-								},
 							},
 						},
 					},
@@ -554,29 +404,26 @@ func TestServiceSDKToLaunchTemplate(t *testing.T) {
 				SSHKeyName:         aws.String("foo-keyname"),
 				VersionNumber:      aws.Int64(1),
 			},
-			wantUserDataHash:      testUserDataHash,
-			wantDataSecretKey:     &types.NamespacedName{Namespace: "bootstrap-secret-ns", Name: "bootstrap-secret"},
-			wantBootstrapDataHash: &testBootstrapDataHash,
+			wantHash:          testUserDataHash,
+			wantDataSecretKey: &types.NamespacedName{Namespace: "bootstrap-secret-ns", Name: "bootstrap-secret"},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g := NewWithT(t)
 			s := &Service{}
-			gotLT, gotUserDataHash, gotDataSecretKey, gotBootstrapDataHash, err := s.SDKToLaunchTemplate(tt.input)
+			gotLT, gotHash, gotDataSecretKey, err := s.SDKToLaunchTemplate(tt.input)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("error mismatch: got %v, wantErr %v", err, tt.wantErr)
 			}
 			if !cmp.Equal(gotLT, tt.wantLT) {
 				t.Fatalf("launchTemplate mismatch: got %v, want %v", gotLT, tt.wantLT)
 			}
-			if !cmp.Equal(gotUserDataHash, tt.wantUserDataHash) {
-				t.Fatalf("userDataHash mismatch: got %v, want %v", gotUserDataHash, tt.wantUserDataHash)
+			if !cmp.Equal(gotHash, tt.wantHash) {
+				t.Fatalf("userDataHash mismatch: got %v, want %v", gotHash, tt.wantHash)
 			}
 			if !cmp.Equal(gotDataSecretKey, tt.wantDataSecretKey) {
 				t.Fatalf("userDataSecretKey mismatch: got %v, want %v", gotDataSecretKey, tt.wantDataSecretKey)
 			}
-			g.Expect(gotBootstrapDataHash).To(Equal(tt.wantBootstrapDataHash))
 		})
 	}
 }
@@ -593,20 +440,6 @@ func TestServiceLaunchTemplateNeedsUpdate(t *testing.T) {
 		want     bool
 		wantErr  bool
 	}{
-		{
-			name: "only core security groups, order shouldn't matter",
-			incoming: &expinfrav1.AWSLaunchTemplate{
-				AdditionalSecurityGroups: []infrav1.AWSResourceReference{},
-			},
-			existing: &expinfrav1.AWSLaunchTemplate{
-				AdditionalSecurityGroups: []infrav1.AWSResourceReference{
-					{ID: aws.String("sg-222")},
-					{ID: aws.String("sg-111")},
-				},
-			},
-			want:    false,
-			wantErr: false,
-		},
 		{
 			name: "the same security groups",
 			incoming: &expinfrav1.AWSLaunchTemplate{
@@ -664,10 +497,6 @@ func TestServiceLaunchTemplateNeedsUpdate(t *testing.T) {
 				IamInstanceProfile: DefaultAmiNameFormat,
 			},
 			existing: &expinfrav1.AWSLaunchTemplate{
-				AdditionalSecurityGroups: []infrav1.AWSResourceReference{
-					{ID: aws.String("sg-111")},
-					{ID: aws.String("sg-222")},
-				},
 				IamInstanceProfile: "some-other-profile",
 			},
 			want: true,
@@ -678,10 +507,6 @@ func TestServiceLaunchTemplateNeedsUpdate(t *testing.T) {
 				InstanceType: "t3.micro",
 			},
 			existing: &expinfrav1.AWSLaunchTemplate{
-				AdditionalSecurityGroups: []infrav1.AWSResourceReference{
-					{ID: aws.String("sg-111")},
-					{ID: aws.String("sg-222")},
-				},
 				InstanceType: "t3.large",
 			},
 			want: true,
@@ -699,10 +524,10 @@ func TestServiceLaunchTemplateNeedsUpdate(t *testing.T) {
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DescribeSecurityGroups(context.TODO(), gomock.Eq(&ec2.DescribeSecurityGroupsInput{Filters: []ec2types.Filter{{Name: aws.String("sg-1"), Values: []string{"test-1"}}}})).
-					Return(&ec2.DescribeSecurityGroupsOutput{SecurityGroups: []ec2types.SecurityGroup{{GroupId: aws.String("sg-1")}}}, nil)
-				m.DescribeSecurityGroups(context.TODO(), gomock.Eq(&ec2.DescribeSecurityGroupsInput{Filters: []ec2types.Filter{{Name: aws.String("sg-2"), Values: []string{"test-2"}}}})).
-					Return(&ec2.DescribeSecurityGroupsOutput{SecurityGroups: []ec2types.SecurityGroup{{GroupId: aws.String("sg-2")}}}, nil)
+				m.DescribeSecurityGroupsWithContext(context.TODO(), gomock.Eq(&ec2.DescribeSecurityGroupsInput{Filters: []*ec2.Filter{{Name: aws.String("sg-1"), Values: aws.StringSlice([]string{"test-1"})}}})).
+					Return(&ec2.DescribeSecurityGroupsOutput{SecurityGroups: []*ec2.SecurityGroup{{GroupId: aws.String("sg-1")}}}, nil)
+				m.DescribeSecurityGroupsWithContext(context.TODO(), gomock.Eq(&ec2.DescribeSecurityGroupsInput{Filters: []*ec2.Filter{{Name: aws.String("sg-2"), Values: aws.StringSlice([]string{"test-2"})}}})).
+					Return(&ec2.DescribeSecurityGroupsOutput{SecurityGroups: []*ec2.SecurityGroup{{GroupId: aws.String("sg-2")}}}, nil)
 			},
 			want:    true,
 			wantErr: false,
@@ -715,14 +540,9 @@ func TestServiceLaunchTemplateNeedsUpdate(t *testing.T) {
 					HTTPTokens:              infrav1.HTTPTokensStateRequired,
 				},
 			},
-			existing: &expinfrav1.AWSLaunchTemplate{
-				AdditionalSecurityGroups: []infrav1.AWSResourceReference{
-					{ID: aws.String("sg-111")},
-					{ID: aws.String("sg-222")},
-				},
-			},
-			want:    true,
-			wantErr: false,
+			existing: &expinfrav1.AWSLaunchTemplate{},
+			want:     true,
+			wantErr:  false,
 		},
 		{
 			name:     "new launch template instance metadata options, removing IMDSv2 requirement",
@@ -732,180 +552,6 @@ func TestServiceLaunchTemplateNeedsUpdate(t *testing.T) {
 					HTTPPutResponseHopLimit: 1,
 					HTTPTokens:              infrav1.HTTPTokensStateRequired,
 				},
-			},
-			want:    true,
-			wantErr: false,
-		},
-		{
-			name: "Should return true if incoming SpotMarketOptions is different from existing SpotMarketOptions",
-			incoming: &expinfrav1.AWSLaunchTemplate{
-				SpotMarketOptions: &infrav1.SpotMarketOptions{
-					MaxPrice: aws.String("0.10"),
-				},
-			},
-			existing: &expinfrav1.AWSLaunchTemplate{
-				AdditionalSecurityGroups: []infrav1.AWSResourceReference{
-					{ID: aws.String("sg-111")},
-					{ID: aws.String("sg-222")},
-				},
-				SpotMarketOptions: &infrav1.SpotMarketOptions{
-					MaxPrice: aws.String("0.05"),
-				},
-			},
-			want:    true,
-			wantErr: false,
-		},
-		{
-			name: "Should return true if incoming adds SpotMarketOptions and existing has none",
-			incoming: &expinfrav1.AWSLaunchTemplate{
-				SpotMarketOptions: &infrav1.SpotMarketOptions{
-					MaxPrice: aws.String("0.10"),
-				},
-			},
-			existing: &expinfrav1.AWSLaunchTemplate{
-				AdditionalSecurityGroups: []infrav1.AWSResourceReference{
-					{ID: aws.String("sg-111")},
-					{ID: aws.String("sg-222")},
-				},
-				SpotMarketOptions: nil,
-			},
-			want:    true,
-			wantErr: false,
-		},
-		{
-			name: "Should return true if incoming removes SpotMarketOptions and existing has some",
-			incoming: &expinfrav1.AWSLaunchTemplate{
-				SpotMarketOptions: nil,
-			},
-			existing: &expinfrav1.AWSLaunchTemplate{
-				AdditionalSecurityGroups: []infrav1.AWSResourceReference{
-					{ID: aws.String("sg-111")},
-					{ID: aws.String("sg-222")},
-				},
-				SpotMarketOptions: &infrav1.SpotMarketOptions{
-					MaxPrice: aws.String("0.05"),
-				},
-			},
-			want:    true,
-			wantErr: false,
-		},
-		{
-			name: "Should return true if SSH key names are different",
-			incoming: &expinfrav1.AWSLaunchTemplate{
-				SSHKeyName: aws.String("new-key"),
-			},
-			existing: &expinfrav1.AWSLaunchTemplate{
-				AdditionalSecurityGroups: []infrav1.AWSResourceReference{
-					{ID: aws.String("sg-111")},
-					{ID: aws.String("sg-222")},
-				},
-				SSHKeyName: aws.String("old-key"),
-			},
-			want:    true,
-			wantErr: false,
-		},
-		{
-			name: "Should return true if one has SSH key name and other doesn't",
-			incoming: &expinfrav1.AWSLaunchTemplate{
-				SSHKeyName: aws.String("new-key"),
-			},
-			existing: &expinfrav1.AWSLaunchTemplate{
-				AdditionalSecurityGroups: []infrav1.AWSResourceReference{
-					{ID: aws.String("sg-111")},
-					{ID: aws.String("sg-222")},
-				},
-				SSHKeyName: nil,
-			},
-			want:    true,
-			wantErr: false,
-		},
-		{
-			name: "Should return true if incoming PrivateDNSName is different from existing PrivateDNSName",
-			incoming: &expinfrav1.AWSLaunchTemplate{
-				PrivateDNSName: &infrav1.PrivateDNSName{
-					EnableResourceNameDNSARecord:    aws.Bool(true),
-					EnableResourceNameDNSAAAARecord: aws.Bool(false),
-					HostnameType:                    aws.String("resource-name"),
-				},
-			},
-			existing: &expinfrav1.AWSLaunchTemplate{
-				AdditionalSecurityGroups: []infrav1.AWSResourceReference{
-					{ID: aws.String("sg-111")},
-					{ID: aws.String("sg-222")},
-				},
-				PrivateDNSName: &infrav1.PrivateDNSName{
-					EnableResourceNameDNSARecord:    aws.Bool(false),
-					EnableResourceNameDNSAAAARecord: aws.Bool(false),
-					HostnameType:                    aws.String("ip-name"),
-				},
-			},
-			want:    true,
-			wantErr: false,
-		},
-		{
-			name: "Should return true if incoming adds PrivateDNSName and existing has none",
-			incoming: &expinfrav1.AWSLaunchTemplate{
-				PrivateDNSName: &infrav1.PrivateDNSName{
-					EnableResourceNameDNSARecord:    aws.Bool(true),
-					EnableResourceNameDNSAAAARecord: aws.Bool(false),
-					HostnameType:                    aws.String("resource-name"),
-				},
-			},
-			existing: &expinfrav1.AWSLaunchTemplate{
-				AdditionalSecurityGroups: []infrav1.AWSResourceReference{
-					{ID: aws.String("sg-111")},
-					{ID: aws.String("sg-222")},
-				},
-				PrivateDNSName: nil,
-			},
-			want:    true,
-			wantErr: false,
-		},
-		{
-			name: "Should return true if incoming removes PrivateDNSName and existing has some",
-			incoming: &expinfrav1.AWSLaunchTemplate{
-				PrivateDNSName: nil,
-			},
-			existing: &expinfrav1.AWSLaunchTemplate{
-				AdditionalSecurityGroups: []infrav1.AWSResourceReference{
-					{ID: aws.String("sg-111")},
-					{ID: aws.String("sg-222")},
-				},
-				PrivateDNSName: &infrav1.PrivateDNSName{
-					EnableResourceNameDNSARecord:    aws.Bool(true),
-					EnableResourceNameDNSAAAARecord: aws.Bool(false),
-					HostnameType:                    aws.String("resource-name"),
-				},
-			},
-			want:    true,
-			wantErr: false,
-		},
-		{
-			name: "Should return true if capacity reservation IDs are different",
-			incoming: &expinfrav1.AWSLaunchTemplate{
-				CapacityReservationID: aws.String("new-reservation"),
-			},
-			existing: &expinfrav1.AWSLaunchTemplate{
-				AdditionalSecurityGroups: []infrav1.AWSResourceReference{
-					{ID: aws.String("sg-111")},
-					{ID: aws.String("sg-222")},
-				},
-				CapacityReservationID: aws.String("old-reservation"),
-			},
-			want:    true,
-			wantErr: false,
-		},
-		{
-			name: "Should return true if one has capacity reservation ID and other doesn't",
-			incoming: &expinfrav1.AWSLaunchTemplate{
-				CapacityReservationID: aws.String("new-reservation"),
-			},
-			existing: &expinfrav1.AWSLaunchTemplate{
-				AdditionalSecurityGroups: []infrav1.AWSResourceReference{
-					{ID: aws.String("sg-111")},
-					{ID: aws.String("sg-222")},
-				},
-				CapacityReservationID: nil,
 			},
 			want:    true,
 			wantErr: false,
@@ -979,13 +625,14 @@ func TestGetLaunchTemplateID(t *testing.T) {
 			name:               "Should not return error if launch template does not exist",
 			launchTemplateName: "foo",
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DescribeLaunchTemplateVersions(context.TODO(), gomock.Eq(&ec2.DescribeLaunchTemplateVersionsInput{
+				m.DescribeLaunchTemplateVersionsWithContext(context.TODO(), gomock.Eq(&ec2.DescribeLaunchTemplateVersionsInput{
 					LaunchTemplateName: aws.String("foo"),
-					Versions:           []string{"$Latest"},
-				})).Return(nil, &smithy.GenericAPIError{
-					Code:    awserrors.LaunchTemplateNameNotFound,
-					Message: "The specified launch template, with template name foo, does not exist.",
-				})
+					Versions:           []*string{aws.String("$Latest")},
+				})).Return(nil, awserr.New(
+					awserrors.LaunchTemplateNameNotFound,
+					"The specified launch template, with template name foo, does not exist.",
+					nil,
+				))
 			},
 			check: func(g *WithT, launchTemplateID string, err error) {
 				g.Expect(err).NotTo(HaveOccurred())
@@ -996,9 +643,9 @@ func TestGetLaunchTemplateID(t *testing.T) {
 			name:               "Should return with error if AWS failed to fetch launch template",
 			launchTemplateName: "foo",
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DescribeLaunchTemplateVersions(context.TODO(), gomock.Eq(&ec2.DescribeLaunchTemplateVersionsInput{
+				m.DescribeLaunchTemplateVersionsWithContext(context.TODO(), gomock.Eq(&ec2.DescribeLaunchTemplateVersionsInput{
 					LaunchTemplateName: aws.String("foo"),
-					Versions:           []string{"$Latest"},
+					Versions:           []*string{aws.String("$Latest")},
 				})).Return(nil, awserrors.NewFailedDependency("Dependency issue from AWS"))
 			},
 			check: func(g *WithT, launchTemplateID string, err error) {
@@ -1010,9 +657,9 @@ func TestGetLaunchTemplateID(t *testing.T) {
 			name:               "Should not return error if AWS returns no launch template versions info in output",
 			launchTemplateName: "foo",
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DescribeLaunchTemplateVersions(context.TODO(), gomock.Eq(&ec2.DescribeLaunchTemplateVersionsInput{
+				m.DescribeLaunchTemplateVersionsWithContext(context.TODO(), gomock.Eq(&ec2.DescribeLaunchTemplateVersionsInput{
 					LaunchTemplateName: aws.String("foo"),
-					Versions:           []string{"$Latest"},
+					Versions:           []*string{aws.String("$Latest")},
 				})).Return(nil, nil)
 			},
 			check: func(g *WithT, launchTemplateID string, err error) {
@@ -1024,34 +671,34 @@ func TestGetLaunchTemplateID(t *testing.T) {
 			name:               "Should successfully return launch template ID for given name if exists",
 			launchTemplateName: "foo",
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DescribeLaunchTemplateVersions(context.TODO(), gomock.Eq(&ec2.DescribeLaunchTemplateVersionsInput{
+				m.DescribeLaunchTemplateVersionsWithContext(context.TODO(), gomock.Eq(&ec2.DescribeLaunchTemplateVersionsInput{
 					LaunchTemplateName: aws.String("foo"),
-					Versions:           []string{"$Latest"},
+					Versions:           []*string{aws.String("$Latest")},
 				})).Return(&ec2.DescribeLaunchTemplateVersionsOutput{
-					LaunchTemplateVersions: []ec2types.LaunchTemplateVersion{
+					LaunchTemplateVersions: []*ec2.LaunchTemplateVersion{
 						{
 							LaunchTemplateId:   aws.String("lt-12345"),
 							LaunchTemplateName: aws.String("foo"),
-							LaunchTemplateData: &ec2types.ResponseLaunchTemplateData{
+							LaunchTemplateData: &ec2.ResponseLaunchTemplateData{
 								ImageId: aws.String("foo-image"),
-								IamInstanceProfile: &ec2types.LaunchTemplateIamInstanceProfileSpecification{
+								IamInstanceProfile: &ec2.LaunchTemplateIamInstanceProfileSpecification{
 									Arn: aws.String("instance-profile/foo-profile"),
 								},
 								KeyName: aws.String("foo-keyname"),
-								BlockDeviceMappings: []ec2types.LaunchTemplateBlockDeviceMapping{
+								BlockDeviceMappings: []*ec2.LaunchTemplateBlockDeviceMapping{
 									{
 										DeviceName: aws.String("foo-device"),
-										Ebs: &ec2types.LaunchTemplateEbsBlockDevice{
+										Ebs: &ec2.LaunchTemplateEbsBlockDevice{
 											Encrypted:  aws.Bool(true),
-											VolumeSize: aws.Int32(16),
-											VolumeType: ec2types.VolumeTypeGp2,
+											VolumeSize: aws.Int64(16),
+											VolumeType: aws.String("cool"),
 										},
 									},
 								},
-								NetworkInterfaces: []ec2types.LaunchTemplateInstanceNetworkInterfaceSpecification{
+								NetworkInterfaces: []*ec2.LaunchTemplateInstanceNetworkInterfaceSpecification{
 									{
-										DeviceIndex: aws.Int32(1),
-										Groups:      []string{"foo-group"},
+										DeviceIndex: aws.Int64(1),
+										Groups:      []*string{aws.String("foo-group")},
 									},
 								},
 								UserData: aws.String(base64.StdEncoding.EncodeToString([]byte(testUserData))),
@@ -1106,7 +753,7 @@ func TestDeleteLaunchTemplate(t *testing.T) {
 			name:      "Should not return error if successfully deletes given launch template ID",
 			versionID: "1",
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DeleteLaunchTemplate(context.TODO(), gomock.Eq(&ec2.DeleteLaunchTemplateInput{
+				m.DeleteLaunchTemplateWithContext(context.TODO(), gomock.Eq(&ec2.DeleteLaunchTemplateInput{
 					LaunchTemplateId: aws.String("1"),
 				})).Return(&ec2.DeleteLaunchTemplateOutput{}, nil)
 			},
@@ -1115,7 +762,7 @@ func TestDeleteLaunchTemplate(t *testing.T) {
 			name:      "Should return error if failed to delete given launch template ID",
 			versionID: "1",
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DeleteLaunchTemplate(context.TODO(), gomock.Eq(&ec2.DeleteLaunchTemplateInput{
+				m.DeleteLaunchTemplateWithContext(context.TODO(), gomock.Eq(&ec2.DeleteLaunchTemplateInput{
 					LaunchTemplateId: aws.String("1"),
 				})).Return(nil, awserrors.NewFailedDependency("dependency failure"))
 			},
@@ -1180,57 +827,48 @@ func TestCreateLaunchTemplate(t *testing.T) {
 				sgMap[infrav1.SecurityGroupLB] = infrav1.SecurityGroup{ID: "2"}
 
 				expectedInput := &ec2.CreateLaunchTemplateInput{
-					LaunchTemplateData: &ec2types.RequestLaunchTemplateData{
-						InstanceType: ec2types.InstanceTypeT3Large,
-						IamInstanceProfile: &ec2types.LaunchTemplateIamInstanceProfileSpecificationRequest{
+					LaunchTemplateData: &ec2.RequestLaunchTemplateData{
+						InstanceType: aws.String("t3.large"),
+						IamInstanceProfile: &ec2.LaunchTemplateIamInstanceProfileSpecificationRequest{
 							Name: aws.String("instance-profile"),
 						},
 						KeyName:          aws.String("default"),
 						UserData:         ptr.To[string](base64.StdEncoding.EncodeToString(userData)),
-						SecurityGroupIds: []string{"nodeSG", "lbSG", "1"},
+						SecurityGroupIds: aws.StringSlice([]string{"nodeSG", "lbSG", "1"}),
 						ImageId:          aws.String("imageID"),
-						InstanceMarketOptions: &ec2types.LaunchTemplateInstanceMarketOptionsRequest{
-							MarketType: ec2types.MarketTypeSpot,
-							SpotOptions: &ec2types.LaunchTemplateSpotMarketOptionsRequest{
+						InstanceMarketOptions: &ec2.LaunchTemplateInstanceMarketOptionsRequest{
+							MarketType: aws.String("spot"),
+							SpotOptions: &ec2.LaunchTemplateSpotMarketOptionsRequest{
 								MaxPrice: aws.String("0.9"),
 							},
 						},
-						TagSpecifications: []ec2types.LaunchTemplateTagSpecificationRequest{
+						TagSpecifications: []*ec2.LaunchTemplateTagSpecificationRequest{
 							{
-								ResourceType: ec2types.ResourceTypeInstance,
-								Tags:         defaultEC2AndDataTags("aws-mp-name", "cluster-name", userDataSecretKey, testBootstrapDataHash),
+								ResourceType: aws.String(ec2.ResourceTypeInstance),
+								Tags:         defaultEC2AndUserDataSecretKeyTags("aws-mp-name", "cluster-name", userDataSecretKey),
 							},
 							{
-								ResourceType: ec2types.ResourceTypeVolume,
+								ResourceType: aws.String(ec2.ResourceTypeVolume),
 								Tags:         defaultEC2Tags("aws-mp-name", "cluster-name"),
 							},
 						},
 					},
 					LaunchTemplateName: aws.String("aws-mp-name"),
-					TagSpecifications: []ec2types.TagSpecification{
+					TagSpecifications: []*ec2.TagSpecification{
 						{
-							ResourceType: ec2types.ResourceTypeLaunchTemplate,
+							ResourceType: aws.String(ec2.ResourceTypeLaunchTemplate),
 							Tags:         defaultEC2Tags("aws-mp-name", "cluster-name"),
 						},
 					},
 				}
-				m.CreateLaunchTemplate(context.TODO(), gomock.AssignableToTypeOf(expectedInput)).Return(&ec2.CreateLaunchTemplateOutput{
-					LaunchTemplate: &ec2types.LaunchTemplate{
+				m.CreateLaunchTemplateWithContext(context.TODO(), gomock.AssignableToTypeOf(expectedInput)).Return(&ec2.CreateLaunchTemplateOutput{
+					LaunchTemplate: &ec2.LaunchTemplate{
 						LaunchTemplateId: aws.String("launch-template-id"),
 					},
-				}, nil).Do(func(ctx context.Context, arg *ec2.CreateLaunchTemplateInput, requestOptions ...ec2.Options) {
+				}, nil).Do(func(ctx context.Context, arg *ec2.CreateLaunchTemplateInput, requestOptions ...request.Option) {
 					// formatting added to match arrays during cmp.Equal
 					formatTagsInput(arg)
-					if !cmp.Equal(expectedInput, arg, cmpopts.IgnoreUnexported(
-						ec2types.LaunchTemplateIamInstanceProfileSpecificationRequest{},
-						ec2types.LaunchTemplateSpotMarketOptionsRequest{},
-						ec2types.LaunchTemplateInstanceMarketOptionsRequest{},
-						ec2types.Tag{},
-						ec2types.LaunchTemplateTagSpecificationRequest{},
-						ec2types.RequestLaunchTemplateData{},
-						ec2types.TagSpecification{},
-						ec2.CreateLaunchTemplateInput{},
-					)) {
+					if !cmp.Equal(expectedInput, arg) {
 						t.Fatalf("mismatch in input expected: %+v, got: %+v, diff: %s", expectedInput, arg, cmp.Diff(expectedInput, arg))
 					}
 				})
@@ -1249,62 +887,53 @@ func TestCreateLaunchTemplate(t *testing.T) {
 				sgMap[infrav1.SecurityGroupLB] = infrav1.SecurityGroup{ID: "2"}
 
 				expectedInput := &ec2.CreateLaunchTemplateInput{
-					LaunchTemplateData: &ec2types.RequestLaunchTemplateData{
-						InstanceType: ec2types.InstanceTypeT3Large,
-						IamInstanceProfile: &ec2types.LaunchTemplateIamInstanceProfileSpecificationRequest{
+					LaunchTemplateData: &ec2.RequestLaunchTemplateData{
+						InstanceType: aws.String("t3.large"),
+						IamInstanceProfile: &ec2.LaunchTemplateIamInstanceProfileSpecificationRequest{
 							Name: aws.String("instance-profile"),
 						},
 						KeyName:          aws.String("default"),
 						UserData:         ptr.To[string](base64.StdEncoding.EncodeToString(userData)),
-						SecurityGroupIds: []string{"nodeSG", "lbSG", "sg-1"},
+						SecurityGroupIds: aws.StringSlice([]string{"nodeSG", "lbSG", "sg-1"}),
 						ImageId:          aws.String("imageID"),
-						InstanceMarketOptions: &ec2types.LaunchTemplateInstanceMarketOptionsRequest{
-							MarketType: ec2types.MarketTypeSpot,
-							SpotOptions: &ec2types.LaunchTemplateSpotMarketOptionsRequest{
+						InstanceMarketOptions: &ec2.LaunchTemplateInstanceMarketOptionsRequest{
+							MarketType: aws.String("spot"),
+							SpotOptions: &ec2.LaunchTemplateSpotMarketOptionsRequest{
 								MaxPrice: aws.String("0.9"),
 							},
 						},
-						TagSpecifications: []ec2types.LaunchTemplateTagSpecificationRequest{
+						TagSpecifications: []*ec2.LaunchTemplateTagSpecificationRequest{
 							{
-								ResourceType: ec2types.ResourceTypeInstance,
-								Tags:         defaultEC2AndDataTags("aws-mp-name", "cluster-name", userDataSecretKey, testBootstrapDataHash),
+								ResourceType: aws.String(ec2.ResourceTypeInstance),
+								Tags:         defaultEC2AndUserDataSecretKeyTags("aws-mp-name", "cluster-name", userDataSecretKey),
 							},
 							{
-								ResourceType: ec2types.ResourceTypeVolume,
+								ResourceType: aws.String(ec2.ResourceTypeVolume),
 								Tags:         defaultEC2Tags("aws-mp-name", "cluster-name"),
 							},
 						},
 					},
 					LaunchTemplateName: aws.String("aws-mp-name"),
-					TagSpecifications: []ec2types.TagSpecification{
+					TagSpecifications: []*ec2.TagSpecification{
 						{
-							ResourceType: ec2types.ResourceTypeLaunchTemplate,
+							ResourceType: aws.String(ec2.ResourceTypeLaunchTemplate),
 							Tags:         defaultEC2Tags("aws-mp-name", "cluster-name"),
 						},
 					},
 				}
-				m.CreateLaunchTemplate(context.TODO(), gomock.AssignableToTypeOf(expectedInput)).Return(&ec2.CreateLaunchTemplateOutput{
-					LaunchTemplate: &ec2types.LaunchTemplate{
+				m.CreateLaunchTemplateWithContext(context.TODO(), gomock.AssignableToTypeOf(expectedInput)).Return(&ec2.CreateLaunchTemplateOutput{
+					LaunchTemplate: &ec2.LaunchTemplate{
 						LaunchTemplateId: aws.String("launch-template-id"),
 					},
-				}, nil).Do(func(ctx context.Context, arg *ec2.CreateLaunchTemplateInput, requestOptions ...ec2.Options) {
+				}, nil).Do(func(ctx context.Context, arg *ec2.CreateLaunchTemplateInput, requestOptions ...request.Option) {
 					// formatting added to match arrays during reflect.DeepEqual
 					formatTagsInput(arg)
-					if !cmp.Equal(expectedInput, arg, cmpopts.IgnoreUnexported(
-						ec2types.LaunchTemplateIamInstanceProfileSpecificationRequest{},
-						ec2types.LaunchTemplateSpotMarketOptionsRequest{},
-						ec2types.LaunchTemplateInstanceMarketOptionsRequest{},
-						ec2types.Tag{},
-						ec2types.LaunchTemplateTagSpecificationRequest{},
-						ec2types.RequestLaunchTemplateData{},
-						ec2types.TagSpecification{},
-						ec2.CreateLaunchTemplateInput{},
-					)) {
+					if !cmp.Equal(expectedInput, arg) {
 						t.Fatalf("mismatch in input expected: %+v, got: %+v", expectedInput, arg)
 					}
 				})
-				m.DescribeSecurityGroups(context.TODO(), gomock.Eq(&ec2.DescribeSecurityGroupsInput{Filters: []ec2types.Filter{{Name: aws.String("sg-1"), Values: []string{"test"}}}})).
-					Return(&ec2.DescribeSecurityGroupsOutput{SecurityGroups: []ec2types.SecurityGroup{{GroupId: aws.String("sg-1")}}}, nil)
+				m.DescribeSecurityGroupsWithContext(context.TODO(), gomock.Eq(&ec2.DescribeSecurityGroupsInput{Filters: []*ec2.Filter{{Name: aws.String("sg-1"), Values: aws.StringSlice([]string{"test"})}}})).
+					Return(&ec2.DescribeSecurityGroupsOutput{SecurityGroups: []*ec2.SecurityGroup{{GroupId: aws.String("sg-1")}}}, nil)
 			},
 			check: func(g *WithT, id string, err error) {
 				g.Expect(id).Should(Equal("launch-template-id"))
@@ -1320,54 +949,45 @@ func TestCreateLaunchTemplate(t *testing.T) {
 				sgMap[infrav1.SecurityGroupLB] = infrav1.SecurityGroup{ID: "2"}
 
 				expectedInput := &ec2.CreateLaunchTemplateInput{
-					LaunchTemplateData: &ec2types.RequestLaunchTemplateData{
-						InstanceType: ec2types.InstanceTypeT3Large,
-						IamInstanceProfile: &ec2types.LaunchTemplateIamInstanceProfileSpecificationRequest{
+					LaunchTemplateData: &ec2.RequestLaunchTemplateData{
+						InstanceType: aws.String("t3.large"),
+						IamInstanceProfile: &ec2.LaunchTemplateIamInstanceProfileSpecificationRequest{
 							Name: aws.String("instance-profile"),
 						},
 						KeyName:          aws.String("default"),
 						UserData:         ptr.To[string](base64.StdEncoding.EncodeToString(userData)),
-						SecurityGroupIds: []string{"nodeSG", "lbSG", "1"},
+						SecurityGroupIds: aws.StringSlice([]string{"nodeSG", "lbSG", "1"}),
 						ImageId:          aws.String("imageID"),
-						InstanceMarketOptions: &ec2types.LaunchTemplateInstanceMarketOptionsRequest{
-							MarketType: ec2types.MarketTypeSpot,
-							SpotOptions: &ec2types.LaunchTemplateSpotMarketOptionsRequest{
+						InstanceMarketOptions: &ec2.LaunchTemplateInstanceMarketOptionsRequest{
+							MarketType: aws.String("spot"),
+							SpotOptions: &ec2.LaunchTemplateSpotMarketOptionsRequest{
 								MaxPrice: aws.String("0.9"),
 							},
 						},
-						TagSpecifications: []ec2types.LaunchTemplateTagSpecificationRequest{
+						TagSpecifications: []*ec2.LaunchTemplateTagSpecificationRequest{
 							{
-								ResourceType: ec2types.ResourceTypeInstance,
-								Tags:         defaultEC2AndDataTags("aws-mp-name", "cluster-name", userDataSecretKey, testBootstrapDataHash),
+								ResourceType: aws.String(ec2.ResourceTypeInstance),
+								Tags:         defaultEC2AndUserDataSecretKeyTags("aws-mp-name", "cluster-name", userDataSecretKey),
 							},
 							{
-								ResourceType: ec2types.ResourceTypeVolume,
+								ResourceType: aws.String(ec2.ResourceTypeVolume),
 								Tags:         defaultEC2Tags("aws-mp-name", "cluster-name"),
 							},
 						},
 					},
 					LaunchTemplateName: aws.String("aws-mp-name"),
-					TagSpecifications: []ec2types.TagSpecification{
+					TagSpecifications: []*ec2.TagSpecification{
 						{
-							ResourceType: ec2types.ResourceTypeLaunchTemplate,
+							ResourceType: aws.String(ec2.ResourceTypeLaunchTemplate),
 							Tags:         defaultEC2Tags("aws-mp-name", "cluster-name"),
 						},
 					},
 				}
-				m.CreateLaunchTemplate(context.TODO(), gomock.AssignableToTypeOf(expectedInput)).Return(nil,
-					awserrors.NewFailedDependency("dependency failure")).Do(func(ctx context.Context, arg *ec2.CreateLaunchTemplateInput, requestOptions ...ec2.Options) {
+				m.CreateLaunchTemplateWithContext(context.TODO(), gomock.AssignableToTypeOf(expectedInput)).Return(nil,
+					awserrors.NewFailedDependency("dependency failure")).Do(func(ctx context.Context, arg *ec2.CreateLaunchTemplateInput, requestOptions ...request.Option) {
 					// formatting added to match arrays during cmp.Equal
 					formatTagsInput(arg)
-					if !cmp.Equal(expectedInput, arg, cmpopts.IgnoreUnexported(
-						ec2types.LaunchTemplateIamInstanceProfileSpecificationRequest{},
-						ec2types.LaunchTemplateSpotMarketOptionsRequest{},
-						ec2types.LaunchTemplateInstanceMarketOptionsRequest{},
-						ec2types.Tag{},
-						ec2types.LaunchTemplateTagSpecificationRequest{},
-						ec2types.RequestLaunchTemplateData{},
-						ec2types.TagSpecification{},
-						ec2.CreateLaunchTemplateInput{},
-					)) {
+					if !cmp.Equal(expectedInput, arg) {
 						t.Fatalf("mismatch in input expected: %+v, got: %+v", expectedInput, arg)
 					}
 				})
@@ -1402,7 +1022,7 @@ func TestCreateLaunchTemplate(t *testing.T) {
 				tc.expect(g, mockEC2Client.EXPECT())
 			}
 
-			launchTemplate, err := s.CreateLaunchTemplate(ms, aws.String("imageID"), userDataSecretKey, userData, testBootstrapDataHash)
+			launchTemplate, err := s.CreateLaunchTemplate(ms, aws.String("imageID"), userDataSecretKey, userData)
 			tc.check(g, launchTemplate, err)
 		})
 	}
@@ -1430,23 +1050,11 @@ func TestLaunchTemplateDataCreation(t *testing.T) {
 			Namespace: "bootstrap-secret-ns",
 			Name:      "bootstrap-secret",
 		}
-		launchTemplate, err := s.CreateLaunchTemplate(ms, aws.String("imageID"), userDataSecretKey, nil, "")
+		launchTemplate, err := s.CreateLaunchTemplate(ms, aws.String("imageID"), userDataSecretKey, nil)
 		g.Expect(err).To(HaveOccurred())
 		g.Expect(launchTemplate).Should(BeEmpty())
 	})
 }
-
-var LaunchTemplateVersionIgnoreUnexported = cmpopts.IgnoreUnexported(
-	ec2types.CapacityReservationTarget{},
-	ec2types.LaunchTemplateCapacityReservationSpecificationRequest{},
-	ec2types.LaunchTemplateIamInstanceProfileSpecificationRequest{},
-	ec2types.LaunchTemplateSpotMarketOptionsRequest{},
-	ec2types.LaunchTemplateInstanceMarketOptionsRequest{},
-	ec2types.Tag{},
-	ec2types.LaunchTemplateTagSpecificationRequest{},
-	ec2types.RequestLaunchTemplateData{},
-	ec2.CreateLaunchTemplateVersionInput{},
-)
 
 func TestCreateLaunchTemplateVersion(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
@@ -1468,8 +1076,7 @@ func TestCreateLaunchTemplateVersion(t *testing.T) {
 		awsResourceReference []infrav1.AWSResourceReference
 		expect               func(m *mocks.MockEC2APIMockRecorder)
 		wantErr              bool
-		mpScopeUpdater       func(*scope.MachinePoolScope)
-		marketType           ec2types.MarketType
+		marketType           *string
 	}{
 		{
 			name:                 "Should successfully creates launch template version",
@@ -1480,44 +1087,44 @@ func TestCreateLaunchTemplateVersion(t *testing.T) {
 				sgMap[infrav1.SecurityGroupLB] = infrav1.SecurityGroup{ID: "2"}
 
 				expectedInput := &ec2.CreateLaunchTemplateVersionInput{
-					LaunchTemplateData: &ec2types.RequestLaunchTemplateData{
-						InstanceType: ec2types.InstanceTypeT3Large,
-						IamInstanceProfile: &ec2types.LaunchTemplateIamInstanceProfileSpecificationRequest{
+					LaunchTemplateData: &ec2.RequestLaunchTemplateData{
+						InstanceType: aws.String("t3.large"),
+						IamInstanceProfile: &ec2.LaunchTemplateIamInstanceProfileSpecificationRequest{
 							Name: aws.String("instance-profile"),
 						},
 						KeyName:          aws.String("default"),
 						UserData:         ptr.To[string](base64.StdEncoding.EncodeToString(userData)),
-						SecurityGroupIds: []string{"nodeSG", "lbSG", "1"},
+						SecurityGroupIds: aws.StringSlice([]string{"nodeSG", "lbSG", "1"}),
 						ImageId:          aws.String("imageID"),
-						InstanceMarketOptions: &ec2types.LaunchTemplateInstanceMarketOptionsRequest{
-							MarketType: ec2types.MarketTypeSpot,
-							SpotOptions: &ec2types.LaunchTemplateSpotMarketOptionsRequest{
+						InstanceMarketOptions: &ec2.LaunchTemplateInstanceMarketOptionsRequest{
+							MarketType: aws.String("spot"),
+							SpotOptions: &ec2.LaunchTemplateSpotMarketOptionsRequest{
 								MaxPrice: aws.String("0.9"),
 							},
 						},
-						TagSpecifications: []ec2types.LaunchTemplateTagSpecificationRequest{
+						TagSpecifications: []*ec2.LaunchTemplateTagSpecificationRequest{
 							{
-								ResourceType: ec2types.ResourceTypeInstance,
-								Tags:         defaultEC2AndDataTags("aws-mp-name", "cluster-name", userDataSecretKey, testBootstrapDataHash),
+								ResourceType: aws.String(ec2.ResourceTypeInstance),
+								Tags:         defaultEC2AndUserDataSecretKeyTags("aws-mp-name", "cluster-name", userDataSecretKey),
 							},
 							{
-								ResourceType: ec2types.ResourceTypeVolume,
+								ResourceType: aws.String(ec2.ResourceTypeVolume),
 								Tags:         defaultEC2Tags("aws-mp-name", "cluster-name"),
 							},
 						},
 					},
 					LaunchTemplateId: aws.String("launch-template-id"),
 				}
-				m.CreateLaunchTemplateVersion(context.TODO(), gomock.AssignableToTypeOf(expectedInput)).Return(&ec2.CreateLaunchTemplateVersionOutput{
-					LaunchTemplateVersion: &ec2types.LaunchTemplateVersion{
+				m.CreateLaunchTemplateVersionWithContext(context.TODO(), gomock.AssignableToTypeOf(expectedInput)).Return(&ec2.CreateLaunchTemplateVersionOutput{
+					LaunchTemplateVersion: &ec2.LaunchTemplateVersion{
 						LaunchTemplateId: aws.String("launch-template-id"),
 					},
 				}, nil).Do(
-					func(ctx context.Context, arg *ec2.CreateLaunchTemplateVersionInput, requestOptions ...ec2.Options) {
+					func(ctx context.Context, arg *ec2.CreateLaunchTemplateVersionInput, requestOptions ...request.Option) {
 						// formatting added to match tags slice during cmp.Equal()
 						formatTagsInput(arg)
-						if !cmp.Equal(expectedInput, arg, LaunchTemplateVersionIgnoreUnexported) {
-							t.Fatalf("mismatch in input expected: %+v, but got %+v, diff: %s", expectedInput, arg, cmp.Diff(expectedInput, arg, LaunchTemplateVersionIgnoreUnexported))
+						if !cmp.Equal(expectedInput, arg) {
+							t.Fatalf("mismatch in input expected: %+v, but got %+v, diff: %s", expectedInput, arg, cmp.Diff(expectedInput, arg))
 						}
 					})
 			},
@@ -1525,117 +1132,48 @@ func TestCreateLaunchTemplateVersion(t *testing.T) {
 		{
 			name:                 "Should successfully create launch template version with capacity-block",
 			awsResourceReference: []infrav1.AWSResourceReference{{ID: aws.String("1")}},
-			mpScopeUpdater: func(mps *scope.MachinePoolScope) {
-				spec := mps.AWSMachinePool.Spec
-				spec.AWSLaunchTemplate.CapacityReservationID = aws.String("cr-12345678901234567")
-				spec.AWSLaunchTemplate.MarketType = infrav1.MarketTypeCapacityBlock
-				spec.AWSLaunchTemplate.SpotMarketOptions = nil
-				mps.AWSMachinePool.Spec = spec
-			},
+			marketType:           aws.String(ec2.MarketTypeCapacityBlock),
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
 				sgMap := make(map[infrav1.SecurityGroupRole]infrav1.SecurityGroup)
 				sgMap[infrav1.SecurityGroupNode] = infrav1.SecurityGroup{ID: "1"}
 				sgMap[infrav1.SecurityGroupLB] = infrav1.SecurityGroup{ID: "2"}
 
 				expectedInput := &ec2.CreateLaunchTemplateVersionInput{
-					LaunchTemplateData: &ec2types.RequestLaunchTemplateData{
-						InstanceType: ec2types.InstanceTypeT3Large,
-						IamInstanceProfile: &ec2types.LaunchTemplateIamInstanceProfileSpecificationRequest{
+					LaunchTemplateData: &ec2.RequestLaunchTemplateData{
+						InstanceType: aws.String("t3.large"),
+						IamInstanceProfile: &ec2.LaunchTemplateIamInstanceProfileSpecificationRequest{
 							Name: aws.String("instance-profile"),
 						},
 						KeyName:          aws.String("default"),
 						UserData:         ptr.To[string](base64.StdEncoding.EncodeToString(userData)),
-						SecurityGroupIds: []string{"nodeSG", "lbSG", "1"},
+						SecurityGroupIds: aws.StringSlice([]string{"nodeSG", "lbSG", "1"}),
 						ImageId:          aws.String("imageID"),
-						InstanceMarketOptions: &ec2types.LaunchTemplateInstanceMarketOptionsRequest{
-							MarketType: ec2types.MarketTypeCapacityBlock,
+						InstanceMarketOptions: &ec2.LaunchTemplateInstanceMarketOptionsRequest{
+							MarketType: aws.String(ec2.MarketTypeCapacityBlock),
 						},
-						CapacityReservationSpecification: &ec2types.LaunchTemplateCapacityReservationSpecificationRequest{
-							CapacityReservationTarget: &ec2types.CapacityReservationTarget{
-								CapacityReservationId: aws.String("cr-12345678901234567"),
-							},
-						},
-						TagSpecifications: []ec2types.LaunchTemplateTagSpecificationRequest{
+						TagSpecifications: []*ec2.LaunchTemplateTagSpecificationRequest{
 							{
-								ResourceType: ec2types.ResourceTypeInstance,
-								Tags:         defaultEC2AndDataTags("aws-mp-name", "cluster-name", userDataSecretKey, testBootstrapDataHash),
+								ResourceType: aws.String(ec2.ResourceTypeInstance),
+								Tags:         defaultEC2AndUserDataSecretKeyTags("aws-mp-name", "cluster-name", userDataSecretKey),
 							},
 							{
-								ResourceType: ec2types.ResourceTypeVolume,
+								ResourceType: aws.String(ec2.ResourceTypeVolume),
 								Tags:         defaultEC2Tags("aws-mp-name", "cluster-name"),
 							},
 						},
 					},
 					LaunchTemplateId: aws.String("launch-template-id"),
 				}
-				m.CreateLaunchTemplateVersion(context.TODO(), gomock.AssignableToTypeOf(expectedInput)).Return(&ec2.CreateLaunchTemplateVersionOutput{
-					LaunchTemplateVersion: &ec2types.LaunchTemplateVersion{
+				m.CreateLaunchTemplateVersionWithContext(context.TODO(), gomock.AssignableToTypeOf(expectedInput)).Return(&ec2.CreateLaunchTemplateVersionOutput{
+					LaunchTemplateVersion: &ec2.LaunchTemplateVersion{
 						LaunchTemplateId: aws.String("launch-template-id"),
 					},
 				}, nil).Do(
-					func(ctx context.Context, arg *ec2.CreateLaunchTemplateVersionInput, requestOptions ...ec2.Options) {
+					func(ctx context.Context, arg *ec2.CreateLaunchTemplateVersionInput, requestOptions ...request.Option) {
 						// formatting added to match tags slice during cmp.Equal()
 						formatTagsInput(arg)
-						if !cmp.Equal(expectedInput, arg, LaunchTemplateVersionIgnoreUnexported) {
-							t.Fatalf("mismatch in input expected: %+v, but got %+v, diff: %s", expectedInput, arg, cmp.Diff(expectedInput, arg, LaunchTemplateVersionIgnoreUnexported))
-						}
-					})
-			},
-		},
-		{
-			name:                 "Should successfully create launch template version with capacity reservation ID and preference",
-			awsResourceReference: []infrav1.AWSResourceReference{{ID: aws.String("1")}},
-			mpScopeUpdater: func(mps *scope.MachinePoolScope) {
-				spec := mps.AWSMachinePool.Spec
-				spec.AWSLaunchTemplate.CapacityReservationID = aws.String("cr-12345678901234567")
-				spec.AWSLaunchTemplate.CapacityReservationPreference = infrav1.CapacityReservationPreferenceOnly
-				spec.AWSLaunchTemplate.SpotMarketOptions = nil
-				mps.AWSMachinePool.Spec = spec
-			},
-			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				sgMap := make(map[infrav1.SecurityGroupRole]infrav1.SecurityGroup)
-				sgMap[infrav1.SecurityGroupNode] = infrav1.SecurityGroup{ID: "1"}
-				sgMap[infrav1.SecurityGroupLB] = infrav1.SecurityGroup{ID: "2"}
-
-				expectedInput := &ec2.CreateLaunchTemplateVersionInput{
-					LaunchTemplateData: &ec2types.RequestLaunchTemplateData{
-						InstanceType: ec2types.InstanceTypeT3Large,
-						IamInstanceProfile: &ec2types.LaunchTemplateIamInstanceProfileSpecificationRequest{
-							Name: aws.String("instance-profile"),
-						},
-						KeyName:          aws.String("default"),
-						UserData:         ptr.To[string](base64.StdEncoding.EncodeToString(userData)),
-						SecurityGroupIds: []string{"nodeSG", "lbSG", "1"},
-						ImageId:          aws.String("imageID"),
-						CapacityReservationSpecification: &ec2types.LaunchTemplateCapacityReservationSpecificationRequest{
-							CapacityReservationTarget: &ec2types.CapacityReservationTarget{
-								CapacityReservationId: aws.String("cr-12345678901234567"),
-							},
-							CapacityReservationPreference: ec2types.CapacityReservationPreferenceCapacityReservationsOnly,
-						},
-						TagSpecifications: []ec2types.LaunchTemplateTagSpecificationRequest{
-							{
-								ResourceType: ec2types.ResourceTypeInstance,
-								Tags:         defaultEC2AndDataTags("aws-mp-name", "cluster-name", userDataSecretKey, testBootstrapDataHash),
-							},
-							{
-								ResourceType: ec2types.ResourceTypeVolume,
-								Tags:         defaultEC2Tags("aws-mp-name", "cluster-name"),
-							},
-						},
-					},
-					LaunchTemplateId: aws.String("launch-template-id"),
-				}
-				m.CreateLaunchTemplateVersion(context.TODO(), gomock.AssignableToTypeOf(expectedInput)).Return(&ec2.CreateLaunchTemplateVersionOutput{
-					LaunchTemplateVersion: &ec2types.LaunchTemplateVersion{
-						LaunchTemplateId: aws.String("launch-template-id"),
-					},
-				}, nil).Do(
-					func(ctx context.Context, arg *ec2.CreateLaunchTemplateVersionInput, requestOptions ...ec2.Options) {
-						// formatting added to match tags slice during cmp.Equal()
-						formatTagsInput(arg)
-						if !cmp.Equal(expectedInput, arg, LaunchTemplateVersionIgnoreUnexported) {
-							t.Fatalf("mismatch in input expected: %+v, but got %+v, diff: %s", expectedInput, arg, cmp.Diff(expectedInput, arg, LaunchTemplateVersionIgnoreUnexported))
+						if !cmp.Equal(expectedInput, arg) {
+							t.Fatalf("mismatch in input expected: %+v, but got %+v, diff: %s", expectedInput, arg, cmp.Diff(expectedInput, arg))
 						}
 					})
 			},
@@ -1649,40 +1187,40 @@ func TestCreateLaunchTemplateVersion(t *testing.T) {
 				sgMap[infrav1.SecurityGroupLB] = infrav1.SecurityGroup{ID: "2"}
 
 				expectedInput := &ec2.CreateLaunchTemplateVersionInput{
-					LaunchTemplateData: &ec2types.RequestLaunchTemplateData{
-						InstanceType: ec2types.InstanceTypeT3Large,
-						IamInstanceProfile: &ec2types.LaunchTemplateIamInstanceProfileSpecificationRequest{
+					LaunchTemplateData: &ec2.RequestLaunchTemplateData{
+						InstanceType: aws.String("t3.large"),
+						IamInstanceProfile: &ec2.LaunchTemplateIamInstanceProfileSpecificationRequest{
 							Name: aws.String("instance-profile"),
 						},
 						KeyName:          aws.String("default"),
 						UserData:         ptr.To[string](base64.StdEncoding.EncodeToString(userData)),
-						SecurityGroupIds: []string{"nodeSG", "lbSG", "1"},
+						SecurityGroupIds: aws.StringSlice([]string{"nodeSG", "lbSG", "1"}),
 						ImageId:          aws.String("imageID"),
-						InstanceMarketOptions: &ec2types.LaunchTemplateInstanceMarketOptionsRequest{
-							MarketType: ec2types.MarketTypeSpot,
-							SpotOptions: &ec2types.LaunchTemplateSpotMarketOptionsRequest{
+						InstanceMarketOptions: &ec2.LaunchTemplateInstanceMarketOptionsRequest{
+							MarketType: aws.String("spot"),
+							SpotOptions: &ec2.LaunchTemplateSpotMarketOptionsRequest{
 								MaxPrice: aws.String("0.9"),
 							},
 						},
-						TagSpecifications: []ec2types.LaunchTemplateTagSpecificationRequest{
+						TagSpecifications: []*ec2.LaunchTemplateTagSpecificationRequest{
 							{
-								ResourceType: ec2types.ResourceTypeInstance,
-								Tags:         defaultEC2AndDataTags("aws-mp-name", "cluster-name", userDataSecretKey, testBootstrapDataHash),
+								ResourceType: aws.String(ec2.ResourceTypeInstance),
+								Tags:         defaultEC2AndUserDataSecretKeyTags("aws-mp-name", "cluster-name", userDataSecretKey),
 							},
 							{
-								ResourceType: ec2types.ResourceTypeVolume,
+								ResourceType: aws.String(ec2.ResourceTypeVolume),
 								Tags:         defaultEC2Tags("aws-mp-name", "cluster-name"),
 							},
 						},
 					},
 					LaunchTemplateId: aws.String("launch-template-id"),
 				}
-				m.CreateLaunchTemplateVersion(context.TODO(), gomock.AssignableToTypeOf(expectedInput)).Return(nil,
+				m.CreateLaunchTemplateVersionWithContext(context.TODO(), gomock.AssignableToTypeOf(expectedInput)).Return(nil,
 					awserrors.NewFailedDependency("dependency failure")).Do(
-					func(ctx context.Context, arg *ec2.CreateLaunchTemplateVersionInput, requestOptions ...ec2.Options) {
+					func(ctx context.Context, arg *ec2.CreateLaunchTemplateVersionInput, requestOptions ...request.Option) {
 						// formatting added to match tags slice during cmp.Equal()
 						formatTagsInput(arg)
-						if !cmp.Equal(expectedInput, arg, LaunchTemplateVersionIgnoreUnexported) {
+						if !cmp.Equal(expectedInput, arg) {
 							t.Fatalf("mismatch in input expected: %+v, got: %+v", expectedInput, arg)
 						}
 					})
@@ -1700,11 +1238,13 @@ func TestCreateLaunchTemplateVersion(t *testing.T) {
 			cs, err := setupClusterScope(client)
 			g.Expect(err).NotTo(HaveOccurred())
 
-			ms, err := setupMachinePoolScope(client, cs)
-			g.Expect(err).NotTo(HaveOccurred())
-			if updateScope := tc.mpScopeUpdater; updateScope != nil {
-				updateScope(ms)
+			var ms *scope.MachinePoolScope
+			if aws.StringValue(tc.marketType) == ec2.MarketTypeCapacityBlock {
+				ms, err = setupCapacityBlocksMachinePoolScope(client, cs)
+			} else {
+				ms, err = setupMachinePoolScope(client, cs)
 			}
+			g.Expect(err).NotTo(HaveOccurred())
 
 			ms.AWSMachinePool.Spec.AWSLaunchTemplate.AdditionalSecurityGroups = tc.awsResourceReference
 
@@ -1716,10 +1256,10 @@ func TestCreateLaunchTemplateVersion(t *testing.T) {
 				tc.expect(mockEC2Client.EXPECT())
 			}
 			if tc.wantErr {
-				g.Expect(s.CreateLaunchTemplateVersion("launch-template-id", ms, aws.String("imageID"), userDataSecretKey, userData, testBootstrapDataHash)).To(HaveOccurred())
+				g.Expect(s.CreateLaunchTemplateVersion("launch-template-id", ms, aws.String("imageID"), userDataSecretKey, userData)).To(HaveOccurred())
 				return
 			}
-			g.Expect(s.CreateLaunchTemplateVersion("launch-template-id", ms, aws.String("imageID"), userDataSecretKey, userData, testBootstrapDataHash)).NotTo(HaveOccurred())
+			g.Expect(s.CreateLaunchTemplateVersion("launch-template-id", ms, aws.String("imageID"), userDataSecretKey, userData)).NotTo(HaveOccurred())
 		})
 	}
 }
@@ -1732,21 +1272,20 @@ func TestBuildLaunchTemplateTagSpecificationRequest(t *testing.T) {
 		Namespace: "bootstrap-secret-ns",
 		Name:      "bootstrap-secret",
 	}
-	bootstrapDataHash := userdata.ComputeHash([]byte("shell-script"))
 	testCases := []struct {
 		name  string
-		check func(g *WithT, m []ec2types.LaunchTemplateTagSpecificationRequest)
+		check func(g *WithT, m []*ec2.LaunchTemplateTagSpecificationRequest)
 	}{
 		{
 			name: "Should create tag specification request for building Launch template tags",
-			check: func(g *WithT, res []ec2types.LaunchTemplateTagSpecificationRequest) {
-				expected := []ec2types.LaunchTemplateTagSpecificationRequest{
+			check: func(g *WithT, res []*ec2.LaunchTemplateTagSpecificationRequest) {
+				expected := []*ec2.LaunchTemplateTagSpecificationRequest{
 					{
-						ResourceType: ec2types.ResourceTypeInstance,
-						Tags:         defaultEC2AndDataTags("aws-mp-name", "cluster-name", userDataSecretKey, bootstrapDataHash),
+						ResourceType: aws.String(ec2.ResourceTypeInstance),
+						Tags:         defaultEC2AndUserDataSecretKeyTags("aws-mp-name", "cluster-name", userDataSecretKey),
 					},
 					{
-						ResourceType: ec2types.ResourceTypeVolume,
+						ResourceType: aws.String(ec2.ResourceTypeVolume),
 						Tags:         defaultEC2Tags("aws-mp-name", "cluster-name"),
 					},
 				}
@@ -1773,7 +1312,7 @@ func TestBuildLaunchTemplateTagSpecificationRequest(t *testing.T) {
 			g.Expect(err).NotTo(HaveOccurred())
 
 			s := NewService(cs)
-			tc.check(g, s.buildLaunchTemplateTagSpecificationRequest(ms, userDataSecretKey, bootstrapDataHash))
+			tc.check(g, s.buildLaunchTemplateTagSpecificationRequest(ms, userDataSecretKey))
 		})
 	}
 }
@@ -1804,9 +1343,9 @@ func TestDiscoverLaunchTemplateAMI(t *testing.T) {
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DescribeImages(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeImagesInput{})).
+				m.DescribeImagesWithContext(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeImagesInput{})).
 					Return(&ec2.DescribeImagesOutput{
-						Images: []ec2types.Image{
+						Images: []*ec2.Image{
 							{
 								ImageId:      aws.String("ancient"),
 								CreationDate: aws.String("2011-02-08T17:02:31.000Z"),
@@ -1821,17 +1360,17 @@ func TestDiscoverLaunchTemplateAMI(t *testing.T) {
 							},
 						},
 					}, nil)
-				m.DescribeInstanceTypes(context.TODO(), gomock.Eq(&ec2.DescribeInstanceTypesInput{
-					InstanceTypes: []ec2types.InstanceType{
-						ec2types.InstanceTypeM5Large,
+				m.DescribeInstanceTypesWithContext(context.TODO(), gomock.Eq(&ec2.DescribeInstanceTypesInput{
+					InstanceTypes: []*string{
+						aws.String("m5.large"),
 					},
 				})).
 					Return(&ec2.DescribeInstanceTypesOutput{
-						InstanceTypes: []ec2types.InstanceTypeInfo{
+						InstanceTypes: []*ec2.InstanceTypeInfo{
 							{
-								ProcessorInfo: &ec2types.ProcessorInfo{
-									SupportedArchitectures: []ec2types.ArchitectureType{
-										ec2types.ArchitectureTypeX8664,
+								ProcessorInfo: &ec2.ProcessorInfo{
+									SupportedArchitectures: []*string{
+										aws.String("x86_64"),
 									},
 								},
 							},
@@ -1855,9 +1394,9 @@ func TestDiscoverLaunchTemplateAMI(t *testing.T) {
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DescribeImages(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeImagesInput{})).
+				m.DescribeImagesWithContext(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeImagesInput{})).
 					Return(&ec2.DescribeImagesOutput{
-						Images: []ec2types.Image{
+						Images: []*ec2.Image{
 							{
 								ImageId:      aws.String("ancient"),
 								CreationDate: aws.String("2011-02-08T17:02:31.000Z"),
@@ -1872,17 +1411,17 @@ func TestDiscoverLaunchTemplateAMI(t *testing.T) {
 							},
 						},
 					}, nil)
-				m.DescribeInstanceTypes(context.TODO(), gomock.Eq(&ec2.DescribeInstanceTypesInput{
-					InstanceTypes: []ec2types.InstanceType{
-						ec2types.InstanceTypeM5Large,
+				m.DescribeInstanceTypesWithContext(context.TODO(), gomock.Eq(&ec2.DescribeInstanceTypesInput{
+					InstanceTypes: []*string{
+						aws.String("m5.large"),
 					},
 				})).
 					Return(&ec2.DescribeInstanceTypesOutput{
-						InstanceTypes: []ec2types.InstanceTypeInfo{
+						InstanceTypes: []*ec2.InstanceTypeInfo{
 							{
-								ProcessorInfo: &ec2types.ProcessorInfo{
-									SupportedArchitectures: []ec2types.ArchitectureType{
-										ec2types.ArchitectureTypeX8664,
+								ProcessorInfo: &ec2.ProcessorInfo{
+									SupportedArchitectures: []*string{
+										aws.String("x86_64"),
 									},
 								},
 							},
@@ -1906,9 +1445,9 @@ func TestDiscoverLaunchTemplateAMI(t *testing.T) {
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DescribeImages(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeImagesInput{})).
+				m.DescribeImagesWithContext(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeImagesInput{})).
 					Return(&ec2.DescribeImagesOutput{
-						Images: []ec2types.Image{
+						Images: []*ec2.Image{
 							{
 								ImageId:      aws.String("ancient"),
 								CreationDate: aws.String("2011-02-08T17:02:31.000Z"),
@@ -1923,17 +1462,17 @@ func TestDiscoverLaunchTemplateAMI(t *testing.T) {
 							},
 						},
 					}, nil)
-				m.DescribeInstanceTypes(context.TODO(), gomock.Eq(&ec2.DescribeInstanceTypesInput{
-					InstanceTypes: []ec2types.InstanceType{
-						ec2types.InstanceTypeT4gLarge,
+				m.DescribeInstanceTypesWithContext(context.TODO(), gomock.Eq(&ec2.DescribeInstanceTypesInput{
+					InstanceTypes: []*string{
+						aws.String("t4g.large"),
 					},
 				})).
 					Return(&ec2.DescribeInstanceTypesOutput{
-						InstanceTypes: []ec2types.InstanceTypeInfo{
+						InstanceTypes: []*ec2.InstanceTypeInfo{
 							{
-								ProcessorInfo: &ec2types.ProcessorInfo{
-									SupportedArchitectures: []ec2types.ArchitectureType{
-										ec2types.ArchitectureTypeArm64,
+								ProcessorInfo: &ec2.ProcessorInfo{
+									SupportedArchitectures: []*string{
+										aws.String("arm64"),
 									},
 								},
 							},
@@ -1978,19 +1517,19 @@ func TestDiscoverLaunchTemplateAMI(t *testing.T) {
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DescribeImages(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeImagesInput{})).
+				m.DescribeImagesWithContext(context.TODO(), gomock.AssignableToTypeOf(&ec2.DescribeImagesInput{})).
 					Return(nil, awserrors.NewFailedDependency("dependency-failure"))
-				m.DescribeInstanceTypes(context.TODO(), gomock.Eq(&ec2.DescribeInstanceTypesInput{
-					InstanceTypes: []ec2types.InstanceType{
-						ec2types.InstanceTypeM5Large,
+				m.DescribeInstanceTypesWithContext(context.TODO(), gomock.Eq(&ec2.DescribeInstanceTypesInput{
+					InstanceTypes: []*string{
+						aws.String("m5.large"),
 					},
 				})).
 					Return(&ec2.DescribeInstanceTypesOutput{
-						InstanceTypes: []ec2types.InstanceTypeInfo{
+						InstanceTypes: []*ec2.InstanceTypeInfo{
 							{
-								ProcessorInfo: &ec2types.ProcessorInfo{
-									SupportedArchitectures: []ec2types.ArchitectureType{
-										ec2types.ArchitectureTypeX8664,
+								ProcessorInfo: &ec2.ProcessorInfo{
+									SupportedArchitectures: []*string{
+										aws.String("x86_64"),
 									},
 								},
 							},
@@ -2029,7 +1568,7 @@ func TestDiscoverLaunchTemplateAMI(t *testing.T) {
 			s := NewService(cs)
 			s.EC2Client = ec2Mock
 
-			id, err := s.DiscoverLaunchTemplateAMI(context.TODO(), ms)
+			id, err := s.DiscoverLaunchTemplateAMI(ms)
 			tc.check(g, id, err)
 		})
 	}
@@ -2050,13 +1589,13 @@ func TestDiscoverLaunchTemplateAMIForEKS(t *testing.T) {
 		{
 			name: "Should return AMI and use EKS infra cluster image details, if not passed in aws launch template",
 			expectEC2: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DescribeInstanceTypes(context.TODO(), gomock.Any()).
+				m.DescribeInstanceTypesWithContext(context.TODO(), gomock.Any()).
 					Return(&ec2.DescribeInstanceTypesOutput{
-						InstanceTypes: []ec2types.InstanceTypeInfo{
+						InstanceTypes: []*ec2.InstanceTypeInfo{
 							{
-								ProcessorInfo: &ec2types.ProcessorInfo{
-									SupportedArchitectures: []ec2types.ArchitectureType{
-										ec2types.ArchitectureTypeX8664,
+								ProcessorInfo: &ec2.ProcessorInfo{
+									SupportedArchitectures: []*string{
+										aws.String("x86_64"),
 									},
 								},
 							},
@@ -2064,9 +1603,9 @@ func TestDiscoverLaunchTemplateAMIForEKS(t *testing.T) {
 					}, nil)
 			},
 			expectSSM: func(m *mock_ssmiface.MockSSMAPIMockRecorder) {
-				m.GetParameter(context.TODO(), gomock.AssignableToTypeOf(&ssm.GetParameterInput{})).
+				m.GetParameter(gomock.AssignableToTypeOf(&ssm.GetParameterInput{})).
 					Return(&ssm.GetParameterOutput{
-						Parameter: &ssmtypes.Parameter{
+						Parameter: &ssm.Parameter{
 							Value: aws.String("latest"),
 						},
 					}, nil)
@@ -2106,7 +1645,7 @@ func TestDiscoverLaunchTemplateAMIForEKS(t *testing.T) {
 			s.EC2Client = ec2Mock
 			s.SSMClient = ssmMock
 
-			id, err := s.DiscoverLaunchTemplateAMI(context.TODO(), ms)
+			id, err := s.DiscoverLaunchTemplateAMI(ms)
 			tc.check(g, id, err)
 		})
 	}
@@ -2137,10 +1676,10 @@ func TestDeleteLaunchTemplateVersion(t *testing.T) {
 				version: aws.Int64(12),
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DeleteLaunchTemplateVersions(context.TODO(), gomock.Eq(
+				m.DeleteLaunchTemplateVersionsWithContext(context.TODO(), gomock.Eq(
 					&ec2.DeleteLaunchTemplateVersionsInput{
 						LaunchTemplateId: aws.String("id"),
-						Versions:         []string{"12"},
+						Versions:         aws.StringSlice([]string{"12"}),
 					},
 				)).Return(nil, awserrors.NewFailedDependency("dependency-failure"))
 			},
@@ -2153,10 +1692,10 @@ func TestDeleteLaunchTemplateVersion(t *testing.T) {
 				version: aws.Int64(12),
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.DeleteLaunchTemplateVersions(context.TODO(), gomock.Eq(
+				m.DeleteLaunchTemplateVersionsWithContext(context.TODO(), gomock.Eq(
 					&ec2.DeleteLaunchTemplateVersionsInput{
 						LaunchTemplateId: aws.String("id"),
-						Versions:         []string{"12"},
+						Versions:         aws.StringSlice([]string{"12"}),
 					},
 				)).Return(nil, nil)
 			},

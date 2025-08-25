@@ -20,16 +20,15 @@ limitations under the License.
 package shared
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"strings"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/aws/arn"
-	elb "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing"
-	rgapi "github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi"
-	rgapitypes "github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi/types"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/arn"
+	"github.com/aws/aws-sdk-go/aws/client"
+	"github.com/aws/aws-sdk-go/service/elb"
+	rgapi "github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -37,20 +36,24 @@ import (
 )
 
 type WaitForLoadBalancerToExistForServiceInput struct {
-	AWSSession       *aws.Config
+	AWSSession       client.ConfigProvider
 	ServiceName      string
 	ServiceNamespace string
 	ClusterName      string
 	Type             infrav1.LoadBalancerType
 }
 
-func WaitForLoadBalancerToExistForService(ctx context.Context, input WaitForLoadBalancerToExistForServiceInput, intervals ...interface{}) {
+func WaitForLoadBalancerToExistForService(input WaitForLoadBalancerToExistForServiceInput, intervals ...interface{}) {
 	By(fmt.Sprintf("Waiting for AWS load balancer of type %s to exist for service %s/%s", input.Type, input.ServiceNamespace, input.ServiceName))
 
 	Eventually(func() bool {
-		input := GetLoadBalancerARNsInput(input)
-
-		arns, err := GetLoadBalancerARNs(ctx, input)
+		arns, err := GetLoadBalancerARNs(GetLoadBalancerARNsInput{ //nolint: gosimple
+			AWSSession:       input.AWSSession,
+			ServiceName:      input.ServiceName,
+			ServiceNamespace: input.ServiceNamespace,
+			ClusterName:      input.ClusterName,
+			Type:             input.Type,
+		})
 		if err != nil {
 			fmt.Fprintf(GinkgoWriter, "Error getting loadbalancer arns: %v\n", err)
 
@@ -65,14 +68,14 @@ func WaitForLoadBalancerToExistForService(ctx context.Context, input WaitForLoad
 }
 
 type GetLoadBalancerARNsInput struct {
-	AWSSession       *aws.Config
+	AWSSession       client.ConfigProvider
 	ServiceName      string
 	ServiceNamespace string
 	ClusterName      string
 	Type             infrav1.LoadBalancerType
 }
 
-func GetLoadBalancerARNs(ctx context.Context, input GetLoadBalancerARNsInput) ([]string, error) {
+func GetLoadBalancerARNs(input GetLoadBalancerARNsInput) ([]string, error) {
 	By(fmt.Sprintf("Getting AWS load balancer ARNs of type %s for service %s/%s", input.Type, input.ServiceNamespace, input.ServiceName))
 
 	serviceTag := infrav1.ClusterAWSCloudProviderTagKey(input.ClusterName)
@@ -85,7 +88,7 @@ func GetLoadBalancerARNs(ctx context.Context, input GetLoadBalancerARNsInput) ([
 		Tags:       tags,
 	}
 
-	descOutput, err := DescribeResourcesByTags(ctx, *descInput)
+	descOutput, err := DescribeResourcesByTags(*descInput)
 	if err != nil {
 		fmt.Fprintf(GinkgoWriter, "Error querying resources by tags: %v\n", err)
 		return nil, fmt.Errorf("describing resource tags: %w", err)
@@ -123,7 +126,7 @@ func GetLoadBalancerARNs(ctx context.Context, input GetLoadBalancerARNsInput) ([
 }
 
 type DescribeResourcesByTagsInput struct {
-	AWSSession *aws.Config
+	AWSSession client.ConfigProvider
 	Tags       map[string][]string
 }
 
@@ -131,24 +134,24 @@ type DescribeResourcesByTagsOutput struct {
 	ARNs []string
 }
 
-func DescribeResourcesByTags(ctx context.Context, input DescribeResourcesByTagsInput) (*DescribeResourcesByTagsOutput, error) {
+func DescribeResourcesByTags(input DescribeResourcesByTagsInput) (*DescribeResourcesByTagsOutput, error) {
 	if len(input.Tags) == 0 {
 		return nil, errors.New("you must supply tags")
 	}
 
 	awsInput := rgapi.GetResourcesInput{
-		TagFilters: []rgapitypes.TagFilter{},
+		TagFilters: []*rgapi.TagFilter{},
 	}
 
 	for k, v := range input.Tags {
-		awsInput.TagFilters = append(awsInput.TagFilters, rgapitypes.TagFilter{
+		awsInput.TagFilters = append(awsInput.TagFilters, &rgapi.TagFilter{
 			Key:    aws.String(k),
-			Values: v,
+			Values: aws.StringSlice(v),
 		})
 	}
 
-	rgSvc := rgapi.NewFromConfig(*input.AWSSession)
-	awsOutput, err := rgSvc.GetResources(ctx, &awsInput)
+	rgSvc := rgapi.New(input.AWSSession)
+	awsOutput, err := rgSvc.GetResources(&awsInput)
 	if err != nil {
 		return nil, fmt.Errorf("getting resources by tags: %w", err)
 	}
@@ -164,20 +167,20 @@ func DescribeResourcesByTags(ctx context.Context, input DescribeResourcesByTagsI
 }
 
 type CheckClassicElbHealthCheckInput struct {
-	AWSSession       *aws.Config
+	AWSSession       client.ConfigProvider
 	LoadBalancerName string
 	ExpectedTarget   string
 }
 
-func CheckClassicElbHealthCheck(ctx context.Context, input CheckClassicElbHealthCheckInput, intervals ...interface{}) {
+func CheckClassicElbHealthCheck(input CheckClassicElbHealthCheckInput, intervals ...interface{}) {
 	Byf("Checking the health check for the classic load balancer %s", input.LoadBalancerName)
 
-	elbSvc := elb.NewFromConfig(*input.AWSSession)
+	elbSvc := elb.New(input.AWSSession)
 
 	Eventually(func() error {
-		out, err := elbSvc.DescribeLoadBalancers(ctx, &elb.DescribeLoadBalancersInput{
-			LoadBalancerNames: []string{
-				input.LoadBalancerName,
+		out, err := elbSvc.DescribeLoadBalancers(&elb.DescribeLoadBalancersInput{
+			LoadBalancerNames: []*string{
+				aws.String(input.LoadBalancerName),
 			},
 		})
 		if err != nil {

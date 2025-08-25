@@ -17,7 +17,6 @@ limitations under the License.
 package v1beta2
 
 import (
-	"context"
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -33,31 +32,21 @@ import (
 var _ = ctrl.Log.WithName("awsclusterroleidentity-resource")
 
 func (r *AWSClusterRoleIdentity) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	w := new(awsClusterRoleIdentityWebhook)
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
-		WithValidator(w).
-		WithDefaulter(w).
 		Complete()
 }
 
 // +kubebuilder:webhook:verbs=create;update,path=/validate-infrastructure-cluster-x-k8s-io-v1beta2-awsclusterroleidentity,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=awsclusterroleidentities,versions=v1beta2,name=validation.awsclusterroleidentity.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 // +kubebuilder:webhook:verbs=create;update,path=/mutate-infrastructure-cluster-x-k8s-io-v1beta2-awsclusterroleidentity,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=awsclusterroleidentities,versions=v1beta2,name=default.awsclusterroleidentity.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 
-type awsClusterRoleIdentityWebhook struct{}
-
 var (
-	_ webhook.CustomValidator = &awsClusterRoleIdentityWebhook{}
-	_ webhook.CustomDefaulter = &awsClusterRoleIdentityWebhook{}
+	_ webhook.Validator = &AWSClusterRoleIdentity{}
+	_ webhook.Defaulter = &AWSClusterRoleIdentity{}
 )
 
 // ValidateCreate will do any extra validation when creating an AWSClusterRoleIdentity.
-func (*awsClusterRoleIdentityWebhook) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
-	r, ok := obj.(*AWSClusterRoleIdentity)
-	if !ok {
-		return nil, fmt.Errorf("expected an AWSClusterRoleIdentity object but got %T", r)
-	}
-
+func (r *AWSClusterRoleIdentity) ValidateCreate() (admission.Warnings, error) {
 	if r.Spec.SourceIdentityRef == nil {
 		return nil, field.Invalid(field.NewPath("spec", "sourceIdentityRef"),
 			r.Spec.SourceIdentityRef, "field cannot be set to nil")
@@ -75,20 +64,15 @@ func (*awsClusterRoleIdentityWebhook) ValidateCreate(_ context.Context, obj runt
 }
 
 // ValidateDelete allows you to add any extra validation when deleting an AWSClusterRoleIdentity.
-func (*awsClusterRoleIdentityWebhook) ValidateDelete(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (r *AWSClusterRoleIdentity) ValidateDelete() (admission.Warnings, error) {
 	return nil, nil
 }
 
 // ValidateUpdate will do any extra validation when updating an AWSClusterRoleIdentity.
-func (*awsClusterRoleIdentityWebhook) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
-	r, ok := newObj.(*AWSClusterRoleIdentity)
+func (r *AWSClusterRoleIdentity) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
+	oldP, ok := old.(*AWSClusterRoleIdentity)
 	if !ok {
-		return nil, fmt.Errorf("expected an AWSClusterRoleIdentity object but got %T", r)
-	}
-
-	oldP, ok := oldObj.(*AWSClusterRoleIdentity)
-	if !ok {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected an AWSClusterRoleIdentity but got a %T", oldObj))
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected an AWSClusterRoleIdentity but got a %T", old))
 	}
 
 	// If a SourceIdentityRef is set, do not allow removal of it.
@@ -109,11 +93,6 @@ func (*awsClusterRoleIdentityWebhook) ValidateUpdate(_ context.Context, oldObj, 
 }
 
 // Default will set default values for the AWSClusterRoleIdentity.
-func (*awsClusterRoleIdentityWebhook) Default(_ context.Context, obj runtime.Object) error {
-	r, ok := obj.(*AWSClusterRoleIdentity)
-	if !ok {
-		return fmt.Errorf("expected an AWSClusterRoleIdentity object but got %T", r)
-	}
+func (r *AWSClusterRoleIdentity) Default() {
 	SetDefaults_Labels(&r.ObjectMeta)
-	return nil
 }

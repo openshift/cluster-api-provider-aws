@@ -1,11 +1,11 @@
 /*
-Copyright 2025 The Kubernetes Authors.
+Copyright 2021 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-        http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,28 +19,25 @@ package identity
 
 import (
 	"bytes"
-	"context"
 	"crypto/sha256"
 	"encoding/gob"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/credentials"
-	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
-	"github.com/aws/aws-sdk-go-v2/service/sts"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/sts/stsiface"
 	corev1 "k8s.io/api/core/v1"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
-	awsmetrics "sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/metrics"
-	stsservice "sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/sts"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
 )
 
 // AWSPrincipalTypeProvider defines the interface for AWS Principal Type Provider.
 type AWSPrincipalTypeProvider interface {
-	aws.CredentialsProvider
-	// Hash returns a unique hash of the data forming the V2 credentials
+	credentials.Provider
+	// Hash returns a unique hash of the data forming the credentials
 	// for this Principal
 	Hash() (string, error)
 	Name() string
@@ -52,44 +49,34 @@ func NewAWSStaticPrincipalTypeProvider(identity *infrav1.AWSClusterStaticIdentit
 	secretAccessKey := string(secret.Data["SecretAccessKey"])
 	sessionToken := string(secret.Data["SessionToken"])
 
-	credProvider := credentials.NewStaticCredentialsProvider(accessKeyID, secretAccessKey, sessionToken)
-	credCache := aws.NewCredentialsCache(credProvider)
 	return &AWSStaticPrincipalTypeProvider{
 		Principal:       identity,
-		credentials:     credCache,
+		credentials:     credentials.NewStaticCredentials(accessKeyID, secretAccessKey, sessionToken),
 		AccessKeyID:     accessKeyID,
 		SecretAccessKey: secretAccessKey,
 		SessionToken:    sessionToken,
 	}
 }
 
-// GetAssumeRoleCredentialsCache will return the CredentialsCache of a given AWSRolePrincipalTypeProvider.
-func GetAssumeRoleCredentialsCache(ctx context.Context, roleIdentityProvider *AWSRolePrincipalTypeProvider, optFns []func(*config.LoadOptions) error) (*aws.CredentialsCache, error) {
-	cfg, err := config.LoadDefaultConfig(ctx, optFns...)
-	if err != nil {
-		return nil, err
-	}
+// GetAssumeRoleCredentials will return the Credentials of a given AWSRolePrincipalTypeProvider.
+func GetAssumeRoleCredentials(roleIdentityProvider *AWSRolePrincipalTypeProvider, awsConfig *aws.Config) *credentials.Credentials {
+	sess := session.Must(session.NewSession(awsConfig))
 
-	stsOpts := sts.WithAPIOptions(
-		awsmetrics.WithMiddlewares("identity provider", roleIdentityProvider.Principal),
-		awsmetrics.WithCAPAUserAgentMiddleware())
-	stsClient := sts.NewFromConfig(cfg, stsOpts)
-	credsProvider := stscreds.NewAssumeRoleProvider(stsClient, roleIdentityProvider.Principal.Spec.RoleArn, func(o *stscreds.AssumeRoleOptions) {
+	creds := stscreds.NewCredentials(sess, roleIdentityProvider.Principal.Spec.RoleArn, func(p *stscreds.AssumeRoleProvider) {
 		if roleIdentityProvider.Principal.Spec.ExternalID != "" {
-			o.ExternalID = aws.String(roleIdentityProvider.Principal.Spec.ExternalID)
+			p.ExternalID = aws.String(roleIdentityProvider.Principal.Spec.ExternalID)
 		}
-		o.RoleSessionName = roleIdentityProvider.Principal.Spec.SessionName
+		p.RoleSessionName = roleIdentityProvider.Principal.Spec.SessionName
 		if roleIdentityProvider.Principal.Spec.InlinePolicy != "" {
-			o.Policy = aws.String(roleIdentityProvider.Principal.Spec.InlinePolicy)
+			p.Policy = aws.String(roleIdentityProvider.Principal.Spec.InlinePolicy)
 		}
-		o.Duration = time.Duration(roleIdentityProvider.Principal.Spec.DurationSeconds) * time.Second
+		p.Duration = time.Duration(roleIdentityProvider.Principal.Spec.DurationSeconds) * time.Second
 		// For testing
 		if roleIdentityProvider.stsClient != nil {
-			o.Client = roleIdentityProvider.stsClient
+			p.Client = roleIdentityProvider.stsClient
 		}
 	})
-
-	return aws.NewCredentialsCache(credsProvider), nil
+	return creds
 }
 
 // NewAWSRolePrincipalTypeProvider will create a new AWSRolePrincipalTypeProvider from an AWSClusterRoleIdentity.
@@ -107,7 +94,7 @@ func NewAWSRolePrincipalTypeProvider(identity *infrav1.AWSClusterRoleIdentity, s
 // AWSStaticPrincipalTypeProvider defines the specs for a static AWSPrincipalTypeProvider.
 type AWSStaticPrincipalTypeProvider struct {
 	Principal   *infrav1.AWSClusterStaticIdentity
-	credentials *aws.CredentialsCache
+	credentials *credentials.Credentials
 	// these are for tests :/
 	AccessKeyID     string
 	SecretAccessKey string
@@ -126,8 +113,8 @@ func (p *AWSStaticPrincipalTypeProvider) Hash() (string, error) {
 }
 
 // Retrieve returns the credential values for the AWSStaticPrincipalTypeProvider.
-func (p *AWSStaticPrincipalTypeProvider) Retrieve(ctx context.Context) (aws.Credentials, error) {
-	return p.credentials.Retrieve(ctx)
+func (p *AWSStaticPrincipalTypeProvider) Retrieve() (credentials.Value, error) {
+	return p.credentials.Get()
 }
 
 // Name returns the name of the AWSStaticPrincipalTypeProvider.
@@ -135,14 +122,19 @@ func (p *AWSStaticPrincipalTypeProvider) Name() string {
 	return p.Principal.Name
 }
 
+// IsExpired checks the expiration state of the AWSStaticPrincipalTypeProvider.
+func (p *AWSStaticPrincipalTypeProvider) IsExpired() bool {
+	return p.credentials.IsExpired()
+}
+
 // AWSRolePrincipalTypeProvider defines the specs for a AWSPrincipalTypeProvider with a role.
 type AWSRolePrincipalTypeProvider struct {
 	Principal      *infrav1.AWSClusterRoleIdentity
-	credentials    *aws.CredentialsCache
+	credentials    *credentials.Credentials
 	region         string
 	sourceProvider AWSPrincipalTypeProvider
 	log            logger.Wrapper
-	stsClient      stsservice.STSClient
+	stsClient      stsiface.STSAPI
 }
 
 // Hash returns the byte encoded AWSRolePrincipalTypeProvider.
@@ -162,23 +154,25 @@ func (p *AWSRolePrincipalTypeProvider) Name() string {
 }
 
 // Retrieve returns the credential values for the AWSRolePrincipalTypeProvider.
-func (p *AWSRolePrincipalTypeProvider) Retrieve(ctx context.Context) (aws.Credentials, error) {
-	if p.credentials == nil {
-		optFns := []func(*config.LoadOptions) error{config.WithRegion(p.region)}
+func (p *AWSRolePrincipalTypeProvider) Retrieve() (credentials.Value, error) {
+	if p.credentials == nil || p.IsExpired() {
+		awsConfig := aws.NewConfig().WithRegion(p.region)
 		if p.sourceProvider != nil {
-			sourceCreds, err := p.sourceProvider.Retrieve(ctx)
+			sourceCreds, err := p.sourceProvider.Retrieve()
 			if err != nil {
-				return aws.Credentials{}, err
+				return credentials.Value{}, err
 			}
-			optFns = append(optFns, config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(sourceCreds.AccessKeyID, sourceCreds.SecretAccessKey, sourceCreds.SessionToken)))
+			awsConfig = awsConfig.WithCredentials(credentials.NewStaticCredentialsFromCreds(sourceCreds))
 		}
 
-		creds, err := GetAssumeRoleCredentialsCache(ctx, p, optFns)
-		if err != nil {
-			return aws.Credentials{}, err
-		}
+		creds := GetAssumeRoleCredentials(p, awsConfig)
 		// Update credentials
 		p.credentials = creds
 	}
-	return p.credentials.Retrieve(ctx)
+	return p.credentials.Get()
+}
+
+// IsExpired checks the expiration state of the AWSRolePrincipalTypeProvider.
+func (p *AWSRolePrincipalTypeProvider) IsExpired() bool {
+	return p.credentials.IsExpired()
 }

@@ -19,7 +19,7 @@ package v1beta2
 import (
 	"fmt"
 
-	ekstypes "github.com/aws/aws-sdk-go-v2/service/eks/types"
+	"github.com/aws/aws-sdk-go/service/eks"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
@@ -51,16 +51,16 @@ func (s *ControlPlaneLoggingSpec) IsLogEnabled(logName string) bool {
 		return false
 	}
 
-	switch ekstypes.LogType(logName) {
-	case ekstypes.LogTypeApi:
+	switch logName {
+	case eks.LogTypeApi:
 		return s.APIServer
-	case ekstypes.LogTypeAudit:
+	case eks.LogTypeAudit:
 		return s.Audit
-	case ekstypes.LogTypeAuthenticator:
+	case eks.LogTypeAuthenticator:
 		return s.Authenticator
-	case ekstypes.LogTypeControllerManager:
+	case eks.LogTypeControllerManager:
 		return s.ControllerManager
-	case ekstypes.LogTypeScheduler:
+	case eks.LogTypeScheduler:
 		return s.Scheduler
 	default:
 		return false
@@ -134,9 +134,9 @@ type Addon struct {
 	// +optional
 	Configuration string `json:"configuration,omitempty"`
 	// ConflictResolution is used to declare what should happen if there
-	// are parameter conflicts. Defaults to overwrite
+	// are parameter conflicts. Defaults to none
 	// +kubebuilder:default=overwrite
-	// +kubebuilder:validation:Enum=overwrite;none;preserve
+	// +kubebuilder:validation:Enum=overwrite;none
 	ConflictResolution *AddonResolution `json:"conflictResolution,omitempty"`
 	// ServiceAccountRoleArn is the ARN of an IAM role to bind to the addons service account
 	// +optional
@@ -154,10 +154,6 @@ var (
 	// AddonResolutionNone indicates that if there are parameter conflicts then
 	// resolution will not be done and an error will be reported.
 	AddonResolutionNone = AddonResolution("none")
-
-	// AddonResolutionPreserve indicates that if there are parameter conflicts then
-	// resolution will result in preserving the existing value
-	AddonResolutionPreserve = AddonResolution("preserve")
 )
 
 // AddonStatus defines the status for an addon.

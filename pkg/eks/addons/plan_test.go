@@ -21,9 +21,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/eks"
-	ekstypes "github.com/aws/aws-sdk-go-v2/service/eks/types"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/eks"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 
@@ -37,12 +36,11 @@ func TestEKSAddonPlan(t *testing.T) {
 	addon1Name := "addon1"
 	addon1version := "1.0.0"
 	addon1Upgrade := "2.0.0"
-	addonStatusActive := string(ekstypes.AddonStatusActive)
-	addonStatusUpdating := string(ekstypes.AddonStatusUpdating)
-	addonStatusDeleting := string(ekstypes.AddonStatusDeleting)
-	addonStatusCreating := string(ekstypes.AddonStatusCreating)
+	addonStatusActive := string(eks.AddonStatusActive)
+	addonStatusUpdating := string(eks.AddonStatusUpdating)
+	addonStatusDeleting := string(eks.AddonStatusDeleting)
+	addonStatusCreating := string(eks.AddonStatusCreating)
 	created := time.Now()
-	maxActiveUpdateDeleteWait := 30 * time.Minute
 
 	testCases := []struct {
 		name              string
@@ -64,32 +62,32 @@ func TestEKSAddonPlan(t *testing.T) {
 			name: "no installed and 1 desired",
 			expect: func(m *mock_eksiface.MockEKSAPIMockRecorder) {
 				m.
-					CreateAddon(gomock.Eq(context.TODO()), gomock.Eq(&eks.CreateAddonInput{
+					CreateAddon(gomock.Eq(&eks.CreateAddonInput{
 						AddonName:        aws.String(addon1Name),
 						AddonVersion:     aws.String(addon1version),
 						ClusterName:      aws.String(clusterName),
-						ResolveConflicts: ekstypes.ResolveConflictsOverwrite,
-						Tags:             createTags(),
+						ResolveConflicts: aws.String(eks.ResolveConflictsOverwrite),
+						Tags:             convertTags(createTags()),
 					})).
 					Return(&eks.CreateAddonOutput{
-						Addon: &ekstypes.Addon{
+						Addon: &eks.Addon{
 							AddonArn:     aws.String(addonARN),
 							AddonName:    aws.String(addon1Name),
 							AddonVersion: aws.String(addon1version),
 							ClusterName:  aws.String(clusterName),
 							CreatedAt:    &created,
 							ModifiedAt:   &created,
-							Status:       ekstypes.AddonStatusCreating,
-							Tags:         createTags(),
+							Status:       aws.String(addonStatusCreating),
+							Tags:         convertTags(createTags()),
 						},
 					}, nil)
 
 				out := &eks.DescribeAddonOutput{
-					Addon: &ekstypes.Addon{
-						Status: ekstypes.AddonStatusActive,
+					Addon: &eks.Addon{
+						Status: aws.String(eks.AddonStatusActive),
 					},
 				}
-				m.DescribeAddon(gomock.Eq(context.TODO()), gomock.Eq(&eks.DescribeAddonInput{
+				m.DescribeAddon(gomock.Eq(&eks.DescribeAddonInput{
 					AddonName:   aws.String(addon1Name),
 					ClusterName: aws.String(clusterName),
 				})).Return(out, nil)
@@ -104,58 +102,58 @@ func TestEKSAddonPlan(t *testing.T) {
 			name: "no installed and 2 desired",
 			expect: func(m *mock_eksiface.MockEKSAPIMockRecorder) {
 				m.
-					CreateAddon(gomock.Eq(context.TODO()), gomock.Eq(&eks.CreateAddonInput{
+					CreateAddon(gomock.Eq(&eks.CreateAddonInput{
 						AddonName:        aws.String(addon1Name),
 						AddonVersion:     aws.String(addon1version),
 						ClusterName:      aws.String(clusterName),
-						ResolveConflicts: ekstypes.ResolveConflictsOverwrite,
-						Tags:             createTags(),
+						ResolveConflicts: aws.String(eks.ResolveConflictsOverwrite),
+						Tags:             convertTags(createTags()),
 					})).
 					Return(&eks.CreateAddonOutput{
-						Addon: &ekstypes.Addon{
+						Addon: &eks.Addon{
 							AddonArn:     aws.String(addonARN),
 							AddonName:    aws.String(addon1Name),
 							AddonVersion: aws.String(addon1version),
 							ClusterName:  aws.String(clusterName),
 							CreatedAt:    &created,
 							ModifiedAt:   &created,
-							Status:       ekstypes.AddonStatusCreating,
-							Tags:         createTags(),
+							Status:       aws.String(addonStatusCreating),
+							Tags:         convertTags(createTags()),
 						},
 					}, nil)
 
 				out := &eks.DescribeAddonOutput{
-					Addon: &ekstypes.Addon{
-						Status: ekstypes.AddonStatusActive,
+					Addon: &eks.Addon{
+						Status: aws.String(eks.AddonStatusActive),
 					},
 				}
-				m.DescribeAddon(gomock.Eq(context.TODO()), gomock.Eq(&eks.DescribeAddonInput{
+				m.DescribeAddon(gomock.Eq(&eks.DescribeAddonInput{
 					AddonName:   aws.String(addon1Name),
 					ClusterName: aws.String(clusterName),
 				})).Return(out, nil)
 
 				m.
-					CreateAddon(gomock.Eq(context.TODO()), gomock.Eq(&eks.CreateAddonInput{
+					CreateAddon(gomock.Eq(&eks.CreateAddonInput{
 						AddonName:        aws.String("addon2"),
 						AddonVersion:     aws.String(addon1version),
 						ClusterName:      aws.String(clusterName),
-						ResolveConflicts: ekstypes.ResolveConflictsOverwrite,
-						Tags:             createTags(),
+						ResolveConflicts: aws.String(eks.ResolveConflictsOverwrite),
+						Tags:             convertTags(createTags()),
 					})).
 					Return(&eks.CreateAddonOutput{
-						Addon: &ekstypes.Addon{
+						Addon: &eks.Addon{
 							AddonArn:     aws.String(addonARN),
 							AddonName:    aws.String("addon2"),
 							AddonVersion: aws.String(addon1version),
 							ClusterName:  aws.String(clusterName),
 							CreatedAt:    &created,
 							ModifiedAt:   &created,
-							Status:       ekstypes.AddonStatusCreating,
-							Tags:         createTags(),
+							Status:       aws.String(addonStatusCreating),
+							Tags:         convertTags(createTags()),
 						},
 					}, nil)
 
-				m.DescribeAddon(gomock.Eq(context.TODO()), gomock.Eq(&eks.DescribeAddonInput{
+				m.DescribeAddon(gomock.Eq(&eks.DescribeAddonInput{
 					AddonName:   aws.String("addon2"),
 					ClusterName: aws.String(clusterName),
 				})).Return(out, nil)
@@ -185,11 +183,11 @@ func TestEKSAddonPlan(t *testing.T) {
 			name: "1 installed and 1 desired - both same and installed is creating",
 			expect: func(m *mock_eksiface.MockEKSAPIMockRecorder) {
 				out := &eks.DescribeAddonOutput{
-					Addon: &ekstypes.Addon{
-						Status: ekstypes.AddonStatusActive,
+					Addon: &eks.Addon{
+						Status: aws.String(eks.AddonStatusActive),
 					},
 				}
-				m.DescribeAddon(gomock.Eq(context.TODO()), gomock.Eq(&eks.DescribeAddonInput{
+				m.DescribeAddon(gomock.Eq(&eks.DescribeAddonInput{
 					AddonName:   aws.String(addon1Name),
 					ClusterName: aws.String(clusterName),
 				})).Return(out, nil)
@@ -207,27 +205,27 @@ func TestEKSAddonPlan(t *testing.T) {
 			name: "1 installed and 1 desired - version upgrade",
 			expect: func(m *mock_eksiface.MockEKSAPIMockRecorder) {
 				m.
-					UpdateAddon(gomock.Eq(context.TODO()), gomock.Eq(&eks.UpdateAddonInput{
+					UpdateAddon(gomock.Eq(&eks.UpdateAddonInput{
 						AddonName:        aws.String(addon1Name),
 						AddonVersion:     aws.String(addon1Upgrade),
 						ClusterName:      aws.String(clusterName),
-						ResolveConflicts: ekstypes.ResolveConflictsOverwrite,
+						ResolveConflicts: aws.String(eks.ResolveConflictsOverwrite),
 					})).
 					Return(&eks.UpdateAddonOutput{
-						Update: &ekstypes.Update{
+						Update: &eks.Update{
 							CreatedAt: &created,
 							Id:        aws.String("someid"),
-							Status:    ekstypes.UpdateStatus(ekstypes.AddonStatusUpdating),
-							Type:      ekstypes.UpdateTypeVersionUpdate,
+							Status:    aws.String(addonStatusUpdating),
+							Type:      aws.String(eks.UpdateTypeVersionUpdate),
 						},
 					}, nil)
 
 				out := &eks.DescribeAddonOutput{
-					Addon: &ekstypes.Addon{
-						Status: ekstypes.AddonStatusActive,
+					Addon: &eks.Addon{
+						Status: aws.String(eks.AddonStatusActive),
 					},
 				}
-				m.DescribeAddon(gomock.Eq(context.TODO()), gomock.Eq(&eks.DescribeAddonInput{
+				m.DescribeAddon(gomock.Eq(&eks.DescribeAddonInput{
 					AddonName:   aws.String(addon1Name),
 					ClusterName: aws.String(clusterName),
 				})).Return(out, nil)
@@ -245,11 +243,11 @@ func TestEKSAddonPlan(t *testing.T) {
 			name: "1 installed and 1 desired - version upgrade in progress",
 			expect: func(m *mock_eksiface.MockEKSAPIMockRecorder) {
 				out := &eks.DescribeAddonOutput{
-					Addon: &ekstypes.Addon{
-						Status: ekstypes.AddonStatusActive,
+					Addon: &eks.Addon{
+						Status: aws.String(eks.AddonStatusActive),
 					},
 				}
-				m.DescribeAddon(gomock.Eq(context.TODO()), gomock.Eq(&eks.DescribeAddonInput{
+				m.DescribeAddon(gomock.Eq(&eks.DescribeAddonInput{
 					AddonName:   aws.String(addon1Name),
 					ClusterName: aws.String(clusterName),
 				})).Return(out, nil)
@@ -267,9 +265,9 @@ func TestEKSAddonPlan(t *testing.T) {
 			name: "1 installed and 1 desired - tags upgrade",
 			expect: func(m *mock_eksiface.MockEKSAPIMockRecorder) {
 				m.
-					TagResource(gomock.Eq(context.TODO()), gomock.Eq(&eks.TagResourceInput{
+					TagResource(gomock.Eq(&eks.TagResourceInput{
 						ResourceArn: &addonARN,
-						Tags:        createTagsAdditional(),
+						Tags:        convertTags(createTagsAdditional()),
 					})).
 					Return(&eks.TagResourceOutput{}, nil)
 			},
@@ -286,33 +284,33 @@ func TestEKSAddonPlan(t *testing.T) {
 			name: "1 installed and 1 desired - version & tags upgrade",
 			expect: func(m *mock_eksiface.MockEKSAPIMockRecorder) {
 				m.
-					TagResource(gomock.Eq(context.TODO()), gomock.Eq(&eks.TagResourceInput{
+					TagResource(gomock.Eq(&eks.TagResourceInput{
 						ResourceArn: &addonARN,
-						Tags:        createTagsAdditional(),
+						Tags:        convertTags(createTagsAdditional()),
 					})).
 					Return(&eks.TagResourceOutput{}, nil)
 				m.
-					UpdateAddon(gomock.Eq(context.TODO()), gomock.Eq(&eks.UpdateAddonInput{
+					UpdateAddon(gomock.Eq(&eks.UpdateAddonInput{
 						AddonName:        aws.String(addon1Name),
 						AddonVersion:     aws.String(addon1Upgrade),
 						ClusterName:      aws.String(clusterName),
-						ResolveConflicts: ekstypes.ResolveConflictsOverwrite,
+						ResolveConflicts: aws.String(eks.ResolveConflictsOverwrite),
 					})).
 					Return(&eks.UpdateAddonOutput{
-						Update: &ekstypes.Update{
+						Update: &eks.Update{
 							CreatedAt: &created,
 							Id:        aws.String("someid"),
-							Status:    ekstypes.UpdateStatus(ekstypes.AddonStatusUpdating),
-							Type:      ekstypes.UpdateTypeVersionUpdate,
+							Status:    aws.String(addonStatusUpdating),
+							Type:      aws.String(eks.UpdateTypeVersionUpdate),
 						},
 					}, nil)
 
 				out := &eks.DescribeAddonOutput{
-					Addon: &ekstypes.Addon{
-						Status: ekstypes.AddonStatusActive,
+					Addon: &eks.Addon{
+						Status: aws.String(eks.AddonStatusActive),
 					},
 				}
-				m.DescribeAddon(gomock.Eq(context.TODO()), gomock.Eq(&eks.DescribeAddonInput{
+				m.DescribeAddon(gomock.Eq(&eks.DescribeAddonInput{
 					AddonName:   aws.String(addon1Name),
 					ClusterName: aws.String(clusterName),
 				})).Return(out, nil)
@@ -330,26 +328,26 @@ func TestEKSAddonPlan(t *testing.T) {
 			name: "1 installed and 0 desired - delete addon",
 			expect: func(m *mock_eksiface.MockEKSAPIMockRecorder) {
 				m.
-					DeleteAddon(gomock.Eq(context.TODO()), gomock.Eq(&eks.DeleteAddonInput{
+					DeleteAddon(gomock.Eq(&eks.DeleteAddonInput{
 						AddonName:   &addon1Name,
 						ClusterName: &clusterName,
 					})).
 					Return(&eks.DeleteAddonOutput{
-						Addon: &ekstypes.Addon{
+						Addon: &eks.Addon{
 							AddonArn:     aws.String(addonARN),
 							AddonName:    aws.String(addon1Name),
 							AddonVersion: aws.String(addon1version),
 							ClusterName:  aws.String(clusterName),
 							CreatedAt:    &created,
 							ModifiedAt:   &created,
-							Status:       ekstypes.AddonStatusDeleting,
-							Tags:         createTags(),
+							Status:       aws.String(addonStatusDeleting),
+							Tags:         convertTags(createTags()),
 						},
 					}, nil)
-				m.WaitUntilAddonDeleted(gomock.Eq(context.TODO()), gomock.Eq(&eks.DescribeAddonInput{
+				m.WaitUntilAddonDeleted(gomock.Eq(&eks.DescribeAddonInput{
 					AddonName:   aws.String(addon1Name),
 					ClusterName: aws.String(clusterName),
-				}), maxActiveUpdateDeleteWait).Return(nil)
+				})).Return(nil)
 			},
 			installedAddons: []*EKSAddon{
 				createInstalledAddon(addon1Name, addon1version, addonARN, addonStatusActive),
@@ -360,10 +358,10 @@ func TestEKSAddonPlan(t *testing.T) {
 		{
 			name: "1 installed and 0 desired - addon has status of deleting",
 			expect: func(m *mock_eksiface.MockEKSAPIMockRecorder) {
-				m.WaitUntilAddonDeleted(gomock.Eq(context.TODO()), gomock.Eq(&eks.DescribeAddonInput{
+				m.WaitUntilAddonDeleted(gomock.Eq(&eks.DescribeAddonInput{
 					AddonName:   aws.String(addon1Name),
 					ClusterName: aws.String(clusterName),
-				}), maxActiveUpdateDeleteWait).Return(nil)
+				})).Return(nil)
 			},
 			installedAddons: []*EKSAddon{
 				createInstalledAddon(addon1Name, addon1version, addonARN, addonStatusDeleting),
@@ -385,7 +383,7 @@ func TestEKSAddonPlan(t *testing.T) {
 
 			ctx := context.TODO()
 
-			planner := NewPlan(clusterName, tc.desiredAddons, tc.installedAddons, eksMock, maxActiveUpdateDeleteWait)
+			planner := NewPlan(clusterName, tc.desiredAddons, tc.installedAddons, eksMock)
 			procedures, err := planner.Create(ctx)
 			if tc.expectCreateError {
 				g.Expect(err).To(HaveOccurred())
@@ -427,7 +425,7 @@ func createDesiredAddon(name, version string) *EKSAddon {
 		Name:            &name,
 		Version:         &version,
 		Tags:            tags,
-		ResolveConflict: aws.String(string(ekstypes.ResolveConflictsOverwrite)),
+		ResolveConflict: aws.String(eks.ResolveConflictsOverwrite),
 	}
 }
 
@@ -438,7 +436,7 @@ func createDesiredAddonExtraTag(name, version string) *EKSAddon {
 		Name:            &name,
 		Version:         &version,
 		Tags:            tags,
-		ResolveConflict: aws.String(string(ekstypes.ResolveConflictsOverwrite)),
+		ResolveConflict: aws.String(eks.ResolveConflictsOverwrite),
 	}
 }
 

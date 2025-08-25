@@ -20,9 +20,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/eks"
-	ekstypes "github.com/aws/aws-sdk-go-v2/service/eks/types"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/eks"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	"k8s.io/klog/v2"
@@ -57,10 +56,10 @@ func TestEKSAddonPlan(t *testing.T) {
 		{
 			name: "no installed and 1 desired",
 			expect: func(m *mock_eksiface.MockEKSAPIMockRecorder) {
-				m.AssociateIdentityProviderConfig(gomock.Eq(context.TODO()), gomock.Eq(&eks.AssociateIdentityProviderConfigInput{
+				m.AssociateIdentityProviderConfigWithContext(gomock.Eq(context.TODO()), gomock.Eq(&eks.AssociateIdentityProviderConfigInput{
 					ClusterName: aws.String(clusterName),
 					Oidc:        createDesiredIdentityProviderRequest(aws.String(idnetityProviderName)),
-					Tags:        createTags(),
+					Tags:        aws.StringMap(createTags()),
 				}))
 			},
 			desiredIdentityProvider: createDesiredIdentityProvider(idnetityProviderName, createTags()),
@@ -69,7 +68,7 @@ func TestEKSAddonPlan(t *testing.T) {
 		},
 		{
 			name:                    "1 installed and 1 desired - both same and installed active",
-			currentIdentityProvider: createCurrentIdentityProvider(idnetityProviderName, identityProviderARN, string(ekstypes.ConfigStatusActive), createTags()),
+			currentIdentityProvider: createCurrentIdentityProvider(idnetityProviderName, identityProviderARN, eks.ConfigStatusActive, createTags()),
 			desiredIdentityProvider: createDesiredIdentityProvider(idnetityProviderName, createTags()),
 			expect: func(m *mock_eksiface.MockEKSAPIMockRecorder) {
 
@@ -79,25 +78,25 @@ func TestEKSAddonPlan(t *testing.T) {
 		},
 		{
 			name:                    "1 installed and 1 desired - both same and installed is creating",
-			currentIdentityProvider: createCurrentIdentityProvider(idnetityProviderName, identityProviderARN, string(ekstypes.ConfigStatusCreating), createTags()),
+			currentIdentityProvider: createCurrentIdentityProvider(idnetityProviderName, identityProviderARN, eks.ConfigStatusCreating, createTags()),
 			desiredIdentityProvider: createDesiredIdentityProvider(idnetityProviderName, createTags()),
 			expect: func(m *mock_eksiface.MockEKSAPIMockRecorder) {
-				m.DescribeIdentityProviderConfig(gomock.Eq(context.TODO()),
+				m.DescribeIdentityProviderConfigWithContext(gomock.Eq(context.TODO()),
 					gomock.Eq(&eks.DescribeIdentityProviderConfigInput{
 						ClusterName: aws.String(clusterName),
-						IdentityProviderConfig: &ekstypes.IdentityProviderConfig{
+						IdentityProviderConfig: &eks.IdentityProviderConfig{
 							Name: aws.String("IdentityProviderConfigName"),
 							Type: oidcType,
 						},
 					})).
 					Return(&eks.DescribeIdentityProviderConfigOutput{
-						IdentityProviderConfig: &ekstypes.IdentityProviderConfigResponse{
-							Oidc: &ekstypes.OidcIdentityProviderConfig{
+						IdentityProviderConfig: &eks.IdentityProviderConfigResponse{
+							Oidc: &eks.OidcIdentityProviderConfig{
 								ClusterName:                aws.String(clusterName),
 								IdentityProviderConfigArn:  aws.String(identityProviderARN),
 								IdentityProviderConfigName: aws.String("IdentityProviderConfigName"),
-								Status:                     ekstypes.ConfigStatusActive,
-								Tags:                       createTags(),
+								Status:                     aws.String(eks.ConfigStatusActive),
+								Tags:                       aws.StringMap(createTags()),
 							},
 						},
 					}, nil)
@@ -108,7 +107,7 @@ func TestEKSAddonPlan(t *testing.T) {
 
 		{
 			name:                    "1 installed and 1 desired - both same and installed is active",
-			currentIdentityProvider: createCurrentIdentityProvider(idnetityProviderName, identityProviderARN, string(ekstypes.ConfigStatusActive), createTags()),
+			currentIdentityProvider: createCurrentIdentityProvider(idnetityProviderName, identityProviderARN, eks.ConfigStatusActive, createTags()),
 			desiredIdentityProvider: createDesiredIdentityProvider(idnetityProviderName, createTags()),
 			expect: func(m *mock_eksiface.MockEKSAPIMockRecorder) {
 
@@ -118,12 +117,12 @@ func TestEKSAddonPlan(t *testing.T) {
 		},
 		{
 			name:                    "1 installed and 1 desired - both same and installed is active, and tags added",
-			currentIdentityProvider: createCurrentIdentityProvider(idnetityProviderName, identityProviderARN, string(ekstypes.ConfigStatusActive), createTags()),
+			currentIdentityProvider: createCurrentIdentityProvider(idnetityProviderName, identityProviderARN, eks.ConfigStatusActive, createTags()),
 			desiredIdentityProvider: createDesiredIdentityProvider(idnetityProviderName, changeTags(createTags())),
 			expect: func(m *mock_eksiface.MockEKSAPIMockRecorder) {
-				m.TagResource(gomock.Eq(context.TODO()), gomock.Eq(&eks.TagResourceInput{
+				m.TagResource(gomock.Eq(&eks.TagResourceInput{
 					ResourceArn: aws.String(identityProviderARN),
-					Tags:        changeTags(createTags()),
+					Tags:        aws.StringMap(changeTags(createTags())),
 				}))
 			},
 			expectCreateError: false,
@@ -131,12 +130,12 @@ func TestEKSAddonPlan(t *testing.T) {
 		},
 		{
 			name:                    "1 installed and 1 desired - both same and installed is active, and tags removed",
-			currentIdentityProvider: createCurrentIdentityProvider(idnetityProviderName, identityProviderARN, string(ekstypes.ConfigStatusActive), createTags()),
+			currentIdentityProvider: createCurrentIdentityProvider(idnetityProviderName, identityProviderARN, eks.ConfigStatusActive, createTags()),
 			desiredIdentityProvider: createDesiredIdentityProvider(idnetityProviderName, nil),
 			expect: func(m *mock_eksiface.MockEKSAPIMockRecorder) {
-				m.UntagResource(gomock.Eq(context.TODO()), gomock.Eq(&eks.UntagResourceInput{
+				m.UntagResource(gomock.Eq(&eks.UntagResourceInput{
 					ResourceArn: aws.String(identityProviderARN),
-					TagKeys:     []string{"key1"},
+					TagKeys:     []*string{aws.String("key1")},
 				}))
 			},
 			expectCreateError: false,
@@ -145,12 +144,12 @@ func TestEKSAddonPlan(t *testing.T) {
 
 		{
 			name:                    "1 installed and 0 desired - installed provider is removed",
-			currentIdentityProvider: createCurrentIdentityProvider(idnetityProviderName, identityProviderARN, string(ekstypes.ConfigStatusActive), createTags()),
+			currentIdentityProvider: createCurrentIdentityProvider(idnetityProviderName, identityProviderARN, eks.ConfigStatusActive, createTags()),
 			expect: func(m *mock_eksiface.MockEKSAPIMockRecorder) {
-				m.DisassociateIdentityProviderConfig(gomock.Eq(context.TODO()),
+				m.DisassociateIdentityProviderConfigWithContext(gomock.Eq(context.TODO()),
 					gomock.Eq(&eks.DisassociateIdentityProviderConfigInput{
 						ClusterName: aws.String(clusterName),
-						IdentityProviderConfig: &ekstypes.IdentityProviderConfig{
+						IdentityProviderConfig: &eks.IdentityProviderConfig{
 							Name: aws.String("IdentityProviderConfigName"),
 							Type: oidcType,
 						},
@@ -162,13 +161,13 @@ func TestEKSAddonPlan(t *testing.T) {
 
 		{
 			name:                    "1 installed and desired client id changed - installed provider is removed",
-			currentIdentityProvider: createCurrentIdentityProvider(idnetityProviderName, identityProviderARN, string(ekstypes.ConfigStatusActive), createTags()),
+			currentIdentityProvider: createCurrentIdentityProvider(idnetityProviderName, identityProviderARN, eks.ConfigStatusActive, createTags()),
 			desiredIdentityProvider: createDesiredIdentityProviderWithDifferentClientID(idnetityProviderName, createTags()),
 			expect: func(m *mock_eksiface.MockEKSAPIMockRecorder) {
-				m.DisassociateIdentityProviderConfig(gomock.Eq(context.TODO()),
+				m.DisassociateIdentityProviderConfigWithContext(gomock.Eq(context.TODO()),
 					gomock.Eq(&eks.DisassociateIdentityProviderConfigInput{
 						ClusterName: aws.String(clusterName),
-						IdentityProviderConfig: &ekstypes.IdentityProviderConfig{
+						IdentityProviderConfig: &eks.IdentityProviderConfig{
 							Name: aws.String("IdentityProviderConfigName"),
 							Type: oidcType,
 						},
@@ -223,7 +222,6 @@ func createDesiredIdentityProvider(name string, tags infrav1.Tags) *OidcIdentity
 		ClientID:                   "clientId",
 		IdentityProviderConfigName: name,
 		IssuerURL:                  "http://IssuerURL.com",
-		RequiredClaims:             make(map[string]string),
 		Tags:                       tags,
 	}
 }
@@ -241,12 +239,12 @@ func changeTags(original infrav1.Tags) infrav1.Tags {
 	return original
 }
 
-func createDesiredIdentityProviderRequest(name *string) *ekstypes.OidcIdentityProviderConfigRequest {
-	return &ekstypes.OidcIdentityProviderConfigRequest{
+func createDesiredIdentityProviderRequest(name *string) *eks.OidcIdentityProviderConfigRequest {
+	return &eks.OidcIdentityProviderConfigRequest{
 		ClientId:                   aws.String("clientId"),
 		IdentityProviderConfigName: name,
 		IssuerUrl:                  aws.String("http://IssuerURL.com"),
-		RequiredClaims:             make(map[string]string),
+		RequiredClaims:             make(map[string]*string),
 		GroupsClaim:                aws.String(""),
 		GroupsPrefix:               aws.String(""),
 		UsernameClaim:              aws.String(""),
