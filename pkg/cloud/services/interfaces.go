@@ -20,7 +20,6 @@ package services
 import (
 	"context"
 
-	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	apimachinerytypes "k8s.io/apimachinery/pkg/types"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
@@ -51,10 +50,6 @@ type ASGInterface interface {
 	SuspendProcesses(name string, processes []string) error
 	ResumeProcesses(name string, processes []string) error
 	SubnetIDs(scope *scope.MachinePoolScope) ([]string, error)
-	DescribeLifecycleHooks(asgName string) ([]*expinfrav1.AWSLifecycleHook, error)
-	CreateLifecycleHook(ctx context.Context, asgName string, hook *expinfrav1.AWSLifecycleHook) error
-	UpdateLifecycleHook(ctx context.Context, asgName string, hook *expinfrav1.AWSLifecycleHook) error
-	DeleteLifecycleHook(ctx context.Context, asgName string, hook *expinfrav1.AWSLifecycleHook) error
 }
 
 // EC2Interface encapsulates the methods exposed to the machine
@@ -62,7 +57,7 @@ type ASGInterface interface {
 type EC2Interface interface {
 	InstanceIfExists(id *string) (*infrav1.Instance, error)
 	TerminateInstance(id string) error
-	CreateInstance(ctx context.Context, scope *scope.MachineScope, userData []byte, userDataFormat string) (*infrav1.Instance, error)
+	CreateInstance(scope *scope.MachineScope, userData []byte, userDataFormat string) (*infrav1.Instance, error)
 	GetRunningInstanceByTags(scope *scope.MachineScope) (*infrav1.Instance, error)
 
 	GetAdditionalSecurityGroupsIDs(securityGroup []infrav1.AWSResourceReference) ([]string, error)
@@ -75,13 +70,13 @@ type EC2Interface interface {
 	TerminateInstanceAndWait(instanceID string) error
 	DetachSecurityGroupsFromNetworkInterface(groups []string, interfaceID string) error
 
-	DiscoverLaunchTemplateAMI(ctx context.Context, scope scope.LaunchTemplateScope) (*string, error)
-	GetLaunchTemplate(id string) (lt *expinfrav1.AWSLaunchTemplate, userDataHash string, userDataSecretKey *apimachinerytypes.NamespacedName, bootstrapDataHash *string, err error)
+	DiscoverLaunchTemplateAMI(scope scope.LaunchTemplateScope) (*string, error)
+	GetLaunchTemplate(id string) (lt *expinfrav1.AWSLaunchTemplate, userDataHash string, userDataSecretKey *apimachinerytypes.NamespacedName, err error)
 	GetLaunchTemplateID(id string) (string, error)
 	GetLaunchTemplateLatestVersion(id string) (string, error)
-	CreateLaunchTemplate(scope scope.LaunchTemplateScope, imageID *string, userDataSecretKey apimachinerytypes.NamespacedName, userData []byte, bootstrapDataHash string) (string, error)
-	CreateLaunchTemplateVersion(id string, scope scope.LaunchTemplateScope, imageID *string, userDataSecretKey apimachinerytypes.NamespacedName, userData []byte, bootstrapDataHash string) error
-	PruneLaunchTemplateVersions(id string) (*ec2types.LaunchTemplateVersion, error)
+	CreateLaunchTemplate(scope scope.LaunchTemplateScope, imageID *string, userDataSecretKey apimachinerytypes.NamespacedName, userData []byte) (string, error)
+	CreateLaunchTemplateVersion(id string, scope scope.LaunchTemplateScope, imageID *string, userDataSecretKey apimachinerytypes.NamespacedName, userData []byte) error
+	PruneLaunchTemplateVersions(id string) error
 	DeleteLaunchTemplate(id string) error
 	LaunchTemplateNeedsUpdate(scope scope.LaunchTemplateScope, incoming *expinfrav1.AWSLaunchTemplate, existing *expinfrav1.AWSLaunchTemplate) (bool, error)
 	DeleteBastion() error
@@ -97,7 +92,7 @@ type EC2Interface interface {
 // separate from EC2Interface so that we can mock AWS requests separately. For example, by not mocking the
 // ReconcileLaunchTemplate function, but mocking EC2Interface, we can test which EC2 API operations would have been called.
 type MachinePoolReconcileInterface interface {
-	ReconcileLaunchTemplate(ctx context.Context, ignitionScope scope.IgnitionScope, scope scope.LaunchTemplateScope, s3Scope scope.S3Scope, ec2svc EC2Interface, objectStoreSvc ObjectStoreInterface, canUpdateLaunchTemplate func() (bool, error), runPostLaunchTemplateUpdateOperation func() error) error
+	ReconcileLaunchTemplate(scope scope.LaunchTemplateScope, ec2svc EC2Interface, canUpdateLaunchTemplate func() (bool, error), runPostLaunchTemplateUpdateOperation func() error) error
 	ReconcileTags(scope scope.LaunchTemplateScope, resourceServicesToUpdate []scope.ResourceServiceToUpdate) error
 }
 
@@ -106,20 +101,20 @@ type MachinePoolReconcileInterface interface {
 type SecretInterface interface {
 	Delete(m *scope.MachineScope) error
 	Create(m *scope.MachineScope, data []byte) (string, int32, error)
-	UserData(secretPrefix string, chunks int32, region string) ([]byte, error)
+	UserData(secretPrefix string, chunks int32, region string, endpoints []scope.ServiceEndpoint) ([]byte, error)
 }
 
 // ELBInterface encapsulates the methods exposed to the cluster and machine
 // controller.
 type ELBInterface interface {
-	DeleteLoadbalancers(ctx context.Context) error
-	ReconcileLoadbalancers(ctx context.Context) error
-	IsInstanceRegisteredWithAPIServerELB(ctx context.Context, i *infrav1.Instance) (bool, error)
-	IsInstanceRegisteredWithAPIServerLB(ctx context.Context, i *infrav1.Instance, lb *infrav1.AWSLoadBalancerSpec) ([]string, bool, error)
-	DeregisterInstanceFromAPIServerELB(ctx context.Context, i *infrav1.Instance) error
-	DeregisterInstanceFromAPIServerLB(ctx context.Context, targetGroupArn string, i *infrav1.Instance) error
-	RegisterInstanceWithAPIServerELB(ctx context.Context, i *infrav1.Instance) error
-	RegisterInstanceWithAPIServerLB(ctx context.Context, i *infrav1.Instance, lb *infrav1.AWSLoadBalancerSpec) error
+	DeleteLoadbalancers() error
+	ReconcileLoadbalancers() error
+	IsInstanceRegisteredWithAPIServerELB(i *infrav1.Instance) (bool, error)
+	IsInstanceRegisteredWithAPIServerLB(i *infrav1.Instance, lb *infrav1.AWSLoadBalancerSpec) ([]string, bool, error)
+	DeregisterInstanceFromAPIServerELB(i *infrav1.Instance) error
+	DeregisterInstanceFromAPIServerLB(targetGroupArn string, i *infrav1.Instance) error
+	RegisterInstanceWithAPIServerELB(i *infrav1.Instance) error
+	RegisterInstanceWithAPIServerLB(i *infrav1.Instance, lb *infrav1.AWSLoadBalancerSpec) error
 }
 
 // NetworkInterface encapsulates the methods exposed to the cluster
@@ -138,12 +133,10 @@ type SecurityGroupInterface interface {
 
 // ObjectStoreInterface encapsulates the methods exposed to the machine actuator.
 type ObjectStoreInterface interface {
-	DeleteBucket(ctx context.Context) error
-	ReconcileBucket(ctx context.Context) error
-	Delete(ctx context.Context, m *scope.MachineScope) error
-	Create(ctx context.Context, m *scope.MachineScope, data []byte) (objectURL string, err error)
-	CreateForMachinePool(ctx context.Context, scope scope.LaunchTemplateScope, data []byte) (objectURL string, err error)
-	DeleteForMachinePool(ctx context.Context, scope scope.LaunchTemplateScope, bootstrapDataHash string) error
+	DeleteBucket() error
+	ReconcileBucket() error
+	Delete(m *scope.MachineScope) error
+	Create(m *scope.MachineScope, data []byte) (objectURL string, err error)
 }
 
 // AWSNodeInterface installs the CNI for EKS clusters.

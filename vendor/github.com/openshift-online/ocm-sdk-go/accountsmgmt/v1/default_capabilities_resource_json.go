@@ -57,7 +57,7 @@ func readDefaultCapabilitiesListResponse(response *DefaultCapabilitiesListRespon
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadDefaultCapabilityList(iterator)
+			items := readDefaultCapabilityList(iterator)
 			response.items = &DefaultCapabilityList{
 				items: items,
 			}

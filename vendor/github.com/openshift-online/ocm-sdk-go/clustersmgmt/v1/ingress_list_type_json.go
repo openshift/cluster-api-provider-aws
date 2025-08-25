@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalIngressList(list []*Ingress, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteIngressList(list, stream)
+	writeIngressList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalIngressList(list []*Ingress, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteIngressList writes a list of value of the 'ingress' type to
+// writeIngressList writes a list of value of the 'ingress' type to
 // the given stream.
-func WriteIngressList(list []*Ingress, stream *jsoniter.Stream) {
+func writeIngressList(list []*Ingress, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteIngress(value, stream)
+		writeIngress(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalIngressList(source interface{}) (items []*Ingress, err error) {
 	if err != nil {
 		return
 	}
-	items = ReadIngressList(iterator)
+	items = readIngressList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadIngressList reads list of values of the ”ingress' type from
+// readIngressList reads list of values of the ”ingress' type from
 // the given iterator.
-func ReadIngressList(iterator *jsoniter.Iterator) []*Ingress {
+func readIngressList(iterator *jsoniter.Iterator) []*Ingress {
 	list := []*Ingress{}
 	for iterator.ReadArray() {
-		item := ReadIngress(iterator)
+		item := readIngress(iterator)
 		list = append(list, item)
 	}
 	return list

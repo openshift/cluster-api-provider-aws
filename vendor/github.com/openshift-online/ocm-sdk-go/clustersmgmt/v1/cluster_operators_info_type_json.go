@@ -29,7 +29,7 @@ import (
 // MarshalClusterOperatorsInfo writes a value of the 'cluster_operators_info' type to the given writer.
 func MarshalClusterOperatorsInfo(object *ClusterOperatorsInfo, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteClusterOperatorsInfo(object, stream)
+	writeClusterOperatorsInfo(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalClusterOperatorsInfo(object *ClusterOperatorsInfo, writer io.Writer)
 	return stream.Error
 }
 
-// WriteClusterOperatorsInfo writes a value of the 'cluster_operators_info' type to the given stream.
-func WriteClusterOperatorsInfo(object *ClusterOperatorsInfo, stream *jsoniter.Stream) {
+// writeClusterOperatorsInfo writes a value of the 'cluster_operators_info' type to the given stream.
+func writeClusterOperatorsInfo(object *ClusterOperatorsInfo, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -48,7 +48,7 @@ func WriteClusterOperatorsInfo(object *ClusterOperatorsInfo, stream *jsoniter.St
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("operators")
-		WriteClusterOperatorInfoList(object.operators, stream)
+		writeClusterOperatorInfoList(object.operators, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -60,13 +60,13 @@ func UnmarshalClusterOperatorsInfo(source interface{}) (object *ClusterOperators
 	if err != nil {
 		return
 	}
-	object = ReadClusterOperatorsInfo(iterator)
+	object = readClusterOperatorsInfo(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadClusterOperatorsInfo reads a value of the 'cluster_operators_info' type from the given iterator.
-func ReadClusterOperatorsInfo(iterator *jsoniter.Iterator) *ClusterOperatorsInfo {
+// readClusterOperatorsInfo reads a value of the 'cluster_operators_info' type from the given iterator.
+func readClusterOperatorsInfo(iterator *jsoniter.Iterator) *ClusterOperatorsInfo {
 	object := &ClusterOperatorsInfo{}
 	for {
 		field := iterator.ReadObject()
@@ -75,7 +75,7 @@ func ReadClusterOperatorsInfo(iterator *jsoniter.Iterator) *ClusterOperatorsInfo
 		}
 		switch field {
 		case "operators":
-			value := ReadClusterOperatorInfoList(iterator)
+			value := readClusterOperatorInfoList(iterator)
 			object.operators = value
 			object.bitmap_ |= 1
 		default:

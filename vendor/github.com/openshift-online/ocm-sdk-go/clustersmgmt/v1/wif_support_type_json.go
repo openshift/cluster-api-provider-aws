@@ -29,7 +29,7 @@ import (
 // MarshalWifSupport writes a value of the 'wif_support' type to the given writer.
 func MarshalWifSupport(object *WifSupport, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteWifSupport(object, stream)
+	writeWifSupport(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalWifSupport(object *WifSupport, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteWifSupport writes a value of the 'wif_support' type to the given stream.
-func WriteWifSupport(object *WifSupport, stream *jsoniter.Stream) {
+// writeWifSupport writes a value of the 'wif_support' type to the given stream.
+func writeWifSupport(object *WifSupport, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -57,7 +57,7 @@ func WriteWifSupport(object *WifSupport, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("roles")
-		WriteWifRoleList(object.roles, stream)
+		writeWifRoleList(object.roles, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -69,13 +69,13 @@ func UnmarshalWifSupport(source interface{}) (object *WifSupport, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadWifSupport(iterator)
+	object = readWifSupport(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadWifSupport reads a value of the 'wif_support' type from the given iterator.
-func ReadWifSupport(iterator *jsoniter.Iterator) *WifSupport {
+// readWifSupport reads a value of the 'wif_support' type from the given iterator.
+func readWifSupport(iterator *jsoniter.Iterator) *WifSupport {
 	object := &WifSupport{}
 	for {
 		field := iterator.ReadObject()
@@ -88,7 +88,7 @@ func ReadWifSupport(iterator *jsoniter.Iterator) *WifSupport {
 			object.principal = value
 			object.bitmap_ |= 1
 		case "roles":
-			value := ReadWifRoleList(iterator)
+			value := readWifRoleList(iterator)
 			object.roles = value
 			object.bitmap_ |= 2
 		default:

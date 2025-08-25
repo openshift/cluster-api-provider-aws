@@ -29,7 +29,7 @@ import (
 // MarshalVersionInquiryResponse writes a value of the 'version_inquiry_response' type to the given writer.
 func MarshalVersionInquiryResponse(object *VersionInquiryResponse, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteVersionInquiryResponse(object, stream)
+	writeVersionInquiryResponse(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalVersionInquiryResponse(object *VersionInquiryResponse, writer io.Wri
 	return stream.Error
 }
 
-// WriteVersionInquiryResponse writes a value of the 'version_inquiry_response' type to the given stream.
-func WriteVersionInquiryResponse(object *VersionInquiryResponse, stream *jsoniter.Stream) {
+// writeVersionInquiryResponse writes a value of the 'version_inquiry_response' type to the given stream.
+func writeVersionInquiryResponse(object *VersionInquiryResponse, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -60,13 +60,13 @@ func UnmarshalVersionInquiryResponse(source interface{}) (object *VersionInquiry
 	if err != nil {
 		return
 	}
-	object = ReadVersionInquiryResponse(iterator)
+	object = readVersionInquiryResponse(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadVersionInquiryResponse reads a value of the 'version_inquiry_response' type from the given iterator.
-func ReadVersionInquiryResponse(iterator *jsoniter.Iterator) *VersionInquiryResponse {
+// readVersionInquiryResponse reads a value of the 'version_inquiry_response' type from the given iterator.
+func readVersionInquiryResponse(iterator *jsoniter.Iterator) *VersionInquiryResponse {
 	object := &VersionInquiryResponse{}
 	for {
 		field := iterator.ReadObject()

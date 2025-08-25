@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalFeatureToggleList(list []*FeatureToggle, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteFeatureToggleList(list, stream)
+	writeFeatureToggleList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalFeatureToggleList(list []*FeatureToggle, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteFeatureToggleList writes a list of value of the 'feature_toggle' type to
+// writeFeatureToggleList writes a list of value of the 'feature_toggle' type to
 // the given stream.
-func WriteFeatureToggleList(list []*FeatureToggle, stream *jsoniter.Stream) {
+func writeFeatureToggleList(list []*FeatureToggle, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteFeatureToggle(value, stream)
+		writeFeatureToggle(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalFeatureToggleList(source interface{}) (items []*FeatureToggle, err
 	if err != nil {
 		return
 	}
-	items = ReadFeatureToggleList(iterator)
+	items = readFeatureToggleList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadFeatureToggleList reads list of values of the ”feature_toggle' type from
+// readFeatureToggleList reads list of values of the ”feature_toggle' type from
 // the given iterator.
-func ReadFeatureToggleList(iterator *jsoniter.Iterator) []*FeatureToggle {
+func readFeatureToggleList(iterator *jsoniter.Iterator) []*FeatureToggle {
 	list := []*FeatureToggle{}
 	for iterator.ReadArray() {
-		item := ReadFeatureToggle(iterator)
+		item := readFeatureToggle(iterator)
 		list = append(list, item)
 	}
 	return list

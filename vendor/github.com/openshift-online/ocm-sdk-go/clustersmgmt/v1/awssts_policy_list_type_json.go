@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAWSSTSPolicyList(list []*AWSSTSPolicy, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAWSSTSPolicyList(list, stream)
+	writeAWSSTSPolicyList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAWSSTSPolicyList(list []*AWSSTSPolicy, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteAWSSTSPolicyList writes a list of value of the 'AWSSTS_policy' type to
+// writeAWSSTSPolicyList writes a list of value of the 'AWSSTS_policy' type to
 // the given stream.
-func WriteAWSSTSPolicyList(list []*AWSSTSPolicy, stream *jsoniter.Stream) {
+func writeAWSSTSPolicyList(list []*AWSSTSPolicy, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteAWSSTSPolicy(value, stream)
+		writeAWSSTSPolicy(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAWSSTSPolicyList(source interface{}) (items []*AWSSTSPolicy, err e
 	if err != nil {
 		return
 	}
-	items = ReadAWSSTSPolicyList(iterator)
+	items = readAWSSTSPolicyList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAWSSTSPolicyList reads list of values of the ”AWSSTS_policy' type from
+// readAWSSTSPolicyList reads list of values of the ”AWSSTS_policy' type from
 // the given iterator.
-func ReadAWSSTSPolicyList(iterator *jsoniter.Iterator) []*AWSSTSPolicy {
+func readAWSSTSPolicyList(iterator *jsoniter.Iterator) []*AWSSTSPolicy {
 	list := []*AWSSTSPolicy{}
 	for iterator.ReadArray() {
-		item := ReadAWSSTSPolicy(iterator)
+		item := readAWSSTSPolicy(iterator)
 		list = append(list, item)
 	}
 	return list

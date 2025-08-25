@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalVersionList(list []*Version, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteVersionList(list, stream)
+	writeVersionList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalVersionList(list []*Version, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteVersionList writes a list of value of the 'version' type to
+// writeVersionList writes a list of value of the 'version' type to
 // the given stream.
-func WriteVersionList(list []*Version, stream *jsoniter.Stream) {
+func writeVersionList(list []*Version, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteVersion(value, stream)
+		writeVersion(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalVersionList(source interface{}) (items []*Version, err error) {
 	if err != nil {
 		return
 	}
-	items = ReadVersionList(iterator)
+	items = readVersionList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadVersionList reads list of values of the ”version' type from
+// readVersionList reads list of values of the ”version' type from
 // the given iterator.
-func ReadVersionList(iterator *jsoniter.Iterator) []*Version {
+func readVersionList(iterator *jsoniter.Iterator) []*Version {
 	list := []*Version{}
 	for iterator.ReadArray() {
-		item := ReadVersion(iterator)
+		item := readVersion(iterator)
 		list = append(list, item)
 	}
 	return list

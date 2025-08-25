@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalNodePoolUpgradePolicyList(list []*NodePoolUpgradePolicy, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteNodePoolUpgradePolicyList(list, stream)
+	writeNodePoolUpgradePolicyList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalNodePoolUpgradePolicyList(list []*NodePoolUpgradePolicy, writer io.W
 	return stream.Error
 }
 
-// WriteNodePoolUpgradePolicyList writes a list of value of the 'node_pool_upgrade_policy' type to
+// writeNodePoolUpgradePolicyList writes a list of value of the 'node_pool_upgrade_policy' type to
 // the given stream.
-func WriteNodePoolUpgradePolicyList(list []*NodePoolUpgradePolicy, stream *jsoniter.Stream) {
+func writeNodePoolUpgradePolicyList(list []*NodePoolUpgradePolicy, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteNodePoolUpgradePolicy(value, stream)
+		writeNodePoolUpgradePolicy(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalNodePoolUpgradePolicyList(source interface{}) (items []*NodePoolUp
 	if err != nil {
 		return
 	}
-	items = ReadNodePoolUpgradePolicyList(iterator)
+	items = readNodePoolUpgradePolicyList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadNodePoolUpgradePolicyList reads list of values of the ”node_pool_upgrade_policy' type from
+// readNodePoolUpgradePolicyList reads list of values of the ”node_pool_upgrade_policy' type from
 // the given iterator.
-func ReadNodePoolUpgradePolicyList(iterator *jsoniter.Iterator) []*NodePoolUpgradePolicy {
+func readNodePoolUpgradePolicyList(iterator *jsoniter.Iterator) []*NodePoolUpgradePolicy {
 	list := []*NodePoolUpgradePolicy{}
 	for iterator.ReadArray() {
-		item := ReadNodePoolUpgradePolicy(iterator)
+		item := readNodePoolUpgradePolicy(iterator)
 		list = append(list, item)
 	}
 	return list

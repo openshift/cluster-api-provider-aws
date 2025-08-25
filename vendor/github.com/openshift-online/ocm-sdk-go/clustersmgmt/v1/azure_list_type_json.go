@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAzureList(list []*Azure, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAzureList(list, stream)
+	writeAzureList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAzureList(list []*Azure, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteAzureList writes a list of value of the 'azure' type to
+// writeAzureList writes a list of value of the 'azure' type to
 // the given stream.
-func WriteAzureList(list []*Azure, stream *jsoniter.Stream) {
+func writeAzureList(list []*Azure, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteAzure(value, stream)
+		writeAzure(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAzureList(source interface{}) (items []*Azure, err error) {
 	if err != nil {
 		return
 	}
-	items = ReadAzureList(iterator)
+	items = readAzureList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAzureList reads list of values of the ”azure' type from
+// readAzureList reads list of values of the ”azure' type from
 // the given iterator.
-func ReadAzureList(iterator *jsoniter.Iterator) []*Azure {
+func readAzureList(iterator *jsoniter.Iterator) []*Azure {
 	list := []*Azure{}
 	for iterator.ReadArray() {
-		item := ReadAzure(iterator)
+		item := readAzure(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -30,7 +30,7 @@ import (
 // MarshalPeerDependency writes a value of the 'peer_dependency' type to the given writer.
 func MarshalPeerDependency(object *PeerDependency, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WritePeerDependency(object, stream)
+	writePeerDependency(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalPeerDependency(object *PeerDependency, writer io.Writer) error {
 	return stream.Error
 }
 
-// WritePeerDependency writes a value of the 'peer_dependency' type to the given stream.
-func WritePeerDependency(object *PeerDependency, stream *jsoniter.Stream) {
+// writePeerDependency writes a value of the 'peer_dependency' type to the given stream.
+func writePeerDependency(object *PeerDependency, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -99,7 +99,7 @@ func WritePeerDependency(object *PeerDependency, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("owners")
-		WriteOwnerList(object.owners, stream)
+		writeOwnerList(object.owners, stream)
 		count++
 	}
 	present_ = object.bitmap_&128 != 0 && object.services != nil
@@ -108,7 +108,7 @@ func WritePeerDependency(object *PeerDependency, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("services")
-		WriteServiceList(object.services, stream)
+		writeServiceList(object.services, stream)
 		count++
 	}
 	present_ = object.bitmap_&256 != 0
@@ -129,13 +129,13 @@ func UnmarshalPeerDependency(source interface{}) (object *PeerDependency, err er
 	if err != nil {
 		return
 	}
-	object = ReadPeerDependency(iterator)
+	object = readPeerDependency(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadPeerDependency reads a value of the 'peer_dependency' type from the given iterator.
-func ReadPeerDependency(iterator *jsoniter.Iterator) *PeerDependency {
+// readPeerDependency reads a value of the 'peer_dependency' type from the given iterator.
+func readPeerDependency(iterator *jsoniter.Iterator) *PeerDependency {
 	object := &PeerDependency{}
 	for {
 		field := iterator.ReadObject()
@@ -172,11 +172,11 @@ func ReadPeerDependency(iterator *jsoniter.Iterator) *PeerDependency {
 			object.name = value
 			object.bitmap_ |= 32
 		case "owners":
-			value := ReadOwnerList(iterator)
+			value := readOwnerList(iterator)
 			object.owners = value
 			object.bitmap_ |= 64
 		case "services":
-			value := ReadServiceList(iterator)
+			value := readServiceList(iterator)
 			object.services = value
 			object.bitmap_ |= 128
 		case "updated_at":

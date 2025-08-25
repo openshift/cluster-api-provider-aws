@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAddonVersionList(list []*AddonVersion, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAddonVersionList(list, stream)
+	writeAddonVersionList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAddonVersionList(list []*AddonVersion, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteAddonVersionList writes a list of value of the 'addon_version' type to
+// writeAddonVersionList writes a list of value of the 'addon_version' type to
 // the given stream.
-func WriteAddonVersionList(list []*AddonVersion, stream *jsoniter.Stream) {
+func writeAddonVersionList(list []*AddonVersion, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteAddonVersion(value, stream)
+		writeAddonVersion(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAddonVersionList(source interface{}) (items []*AddonVersion, err e
 	if err != nil {
 		return
 	}
-	items = ReadAddonVersionList(iterator)
+	items = readAddonVersionList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAddonVersionList reads list of values of the ”addon_version' type from
+// readAddonVersionList reads list of values of the ”addon_version' type from
 // the given iterator.
-func ReadAddonVersionList(iterator *jsoniter.Iterator) []*AddonVersion {
+func readAddonVersionList(iterator *jsoniter.Iterator) []*AddonVersion {
 	list := []*AddonVersion{}
 	for iterator.ReadArray() {
-		item := ReadAddonVersion(iterator)
+		item := readAddonVersion(iterator)
 		list = append(list, item)
 	}
 	return list

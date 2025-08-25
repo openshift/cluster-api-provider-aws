@@ -29,7 +29,7 @@ import (
 // MarshalAWSFlavour writes a value of the 'AWS_flavour' type to the given writer.
 func MarshalAWSFlavour(object *AWSFlavour, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAWSFlavour(object, stream)
+	writeAWSFlavour(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAWSFlavour(object *AWSFlavour, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteAWSFlavour writes a value of the 'AWS_flavour' type to the given stream.
-func WriteAWSFlavour(object *AWSFlavour, stream *jsoniter.Stream) {
+// writeAWSFlavour writes a value of the 'AWS_flavour' type to the given stream.
+func writeAWSFlavour(object *AWSFlavour, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -66,7 +66,7 @@ func WriteAWSFlavour(object *AWSFlavour, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("infra_volume")
-		WriteAWSVolume(object.infraVolume, stream)
+		writeAWSVolume(object.infraVolume, stream)
 		count++
 	}
 	present_ = object.bitmap_&8 != 0
@@ -84,7 +84,7 @@ func WriteAWSFlavour(object *AWSFlavour, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("master_volume")
-		WriteAWSVolume(object.masterVolume, stream)
+		writeAWSVolume(object.masterVolume, stream)
 		count++
 	}
 	present_ = object.bitmap_&32 != 0 && object.workerVolume != nil
@@ -93,7 +93,7 @@ func WriteAWSFlavour(object *AWSFlavour, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("worker_volume")
-		WriteAWSVolume(object.workerVolume, stream)
+		writeAWSVolume(object.workerVolume, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -105,13 +105,13 @@ func UnmarshalAWSFlavour(source interface{}) (object *AWSFlavour, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadAWSFlavour(iterator)
+	object = readAWSFlavour(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAWSFlavour reads a value of the 'AWS_flavour' type from the given iterator.
-func ReadAWSFlavour(iterator *jsoniter.Iterator) *AWSFlavour {
+// readAWSFlavour reads a value of the 'AWS_flavour' type from the given iterator.
+func readAWSFlavour(iterator *jsoniter.Iterator) *AWSFlavour {
 	object := &AWSFlavour{}
 	for {
 		field := iterator.ReadObject()
@@ -128,7 +128,7 @@ func ReadAWSFlavour(iterator *jsoniter.Iterator) *AWSFlavour {
 			object.infraInstanceType = value
 			object.bitmap_ |= 2
 		case "infra_volume":
-			value := ReadAWSVolume(iterator)
+			value := readAWSVolume(iterator)
 			object.infraVolume = value
 			object.bitmap_ |= 4
 		case "master_instance_type":
@@ -136,11 +136,11 @@ func ReadAWSFlavour(iterator *jsoniter.Iterator) *AWSFlavour {
 			object.masterInstanceType = value
 			object.bitmap_ |= 8
 		case "master_volume":
-			value := ReadAWSVolume(iterator)
+			value := readAWSVolume(iterator)
 			object.masterVolume = value
 			object.bitmap_ |= 16
 		case "worker_volume":
-			value := ReadAWSVolume(iterator)
+			value := readAWSVolume(iterator)
 			object.workerVolume = value
 			object.bitmap_ |= 32
 		default:

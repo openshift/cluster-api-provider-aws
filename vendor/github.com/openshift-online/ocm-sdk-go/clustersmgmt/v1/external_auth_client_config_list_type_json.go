@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalExternalAuthClientConfigList(list []*ExternalAuthClientConfig, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteExternalAuthClientConfigList(list, stream)
+	writeExternalAuthClientConfigList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalExternalAuthClientConfigList(list []*ExternalAuthClientConfig, write
 	return stream.Error
 }
 
-// WriteExternalAuthClientConfigList writes a list of value of the 'external_auth_client_config' type to
+// writeExternalAuthClientConfigList writes a list of value of the 'external_auth_client_config' type to
 // the given stream.
-func WriteExternalAuthClientConfigList(list []*ExternalAuthClientConfig, stream *jsoniter.Stream) {
+func writeExternalAuthClientConfigList(list []*ExternalAuthClientConfig, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteExternalAuthClientConfig(value, stream)
+		writeExternalAuthClientConfig(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalExternalAuthClientConfigList(source interface{}) (items []*Externa
 	if err != nil {
 		return
 	}
-	items = ReadExternalAuthClientConfigList(iterator)
+	items = readExternalAuthClientConfigList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadExternalAuthClientConfigList reads list of values of the ”external_auth_client_config' type from
+// readExternalAuthClientConfigList reads list of values of the ”external_auth_client_config' type from
 // the given iterator.
-func ReadExternalAuthClientConfigList(iterator *jsoniter.Iterator) []*ExternalAuthClientConfig {
+func readExternalAuthClientConfigList(iterator *jsoniter.Iterator) []*ExternalAuthClientConfig {
 	list := []*ExternalAuthClientConfig{}
 	for iterator.ReadArray() {
-		item := ReadExternalAuthClientConfig(iterator)
+		item := readExternalAuthClientConfig(iterator)
 		list = append(list, item)
 	}
 	return list

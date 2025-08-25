@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalRootVolumeList(list []*RootVolume, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteRootVolumeList(list, stream)
+	writeRootVolumeList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalRootVolumeList(list []*RootVolume, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteRootVolumeList writes a list of value of the 'root_volume' type to
+// writeRootVolumeList writes a list of value of the 'root_volume' type to
 // the given stream.
-func WriteRootVolumeList(list []*RootVolume, stream *jsoniter.Stream) {
+func writeRootVolumeList(list []*RootVolume, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteRootVolume(value, stream)
+		writeRootVolume(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalRootVolumeList(source interface{}) (items []*RootVolume, err error
 	if err != nil {
 		return
 	}
-	items = ReadRootVolumeList(iterator)
+	items = readRootVolumeList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadRootVolumeList reads list of values of the ”root_volume' type from
+// readRootVolumeList reads list of values of the ”root_volume' type from
 // the given iterator.
-func ReadRootVolumeList(iterator *jsoniter.Iterator) []*RootVolume {
+func readRootVolumeList(iterator *jsoniter.Iterator) []*RootVolume {
 	list := []*RootVolume{}
 	for iterator.ReadArray() {
-		item := ReadRootVolume(iterator)
+		item := readRootVolume(iterator)
 		list = append(list, item)
 	}
 	return list

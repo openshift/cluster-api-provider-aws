@@ -36,7 +36,7 @@ func (cli *Client) ImagePull(ctx context.Context, refStr string, options image.P
 
 	resp, err := cli.tryImageCreate(ctx, query, options.RegistryAuth)
 	if errdefs.IsUnauthorized(err) && options.PrivilegeFunc != nil {
-		newAuthHeader, privilegeErr := options.PrivilegeFunc(ctx)
+		newAuthHeader, privilegeErr := options.PrivilegeFunc()
 		if privilegeErr != nil {
 			return nil, privilegeErr
 		}
@@ -45,7 +45,7 @@ func (cli *Client) ImagePull(ctx context.Context, refStr string, options image.P
 	if err != nil {
 		return nil, err
 	}
-	return resp.Body, nil
+	return resp.body, nil
 }
 
 // getAPITagFromNamedRef returns a tag from the specified reference.

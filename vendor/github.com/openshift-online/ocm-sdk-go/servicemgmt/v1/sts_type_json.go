@@ -29,7 +29,7 @@ import (
 // MarshalSTS writes a value of the 'STS' type to the given writer.
 func MarshalSTS(object *STS, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteSTS(object, stream)
+	writeSTS(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalSTS(object *STS, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteSTS writes a value of the 'STS' type to the given stream.
-func WriteSTS(object *STS, stream *jsoniter.Stream) {
+// writeSTS writes a value of the 'STS' type to the given stream.
+func writeSTS(object *STS, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -57,7 +57,7 @@ func WriteSTS(object *STS, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("instance_iam_roles")
-		WriteInstanceIAMRoles(object.instanceIAMRoles, stream)
+		writeInstanceIAMRoles(object.instanceIAMRoles, stream)
 		count++
 	}
 	present_ = object.bitmap_&4 != 0 && object.operatorIAMRoles != nil
@@ -66,7 +66,7 @@ func WriteSTS(object *STS, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("operator_iam_roles")
-		WriteOperatorIAMRoleList(object.operatorIAMRoles, stream)
+		writeOperatorIAMRoleList(object.operatorIAMRoles, stream)
 		count++
 	}
 	present_ = object.bitmap_&8 != 0
@@ -105,13 +105,13 @@ func UnmarshalSTS(source interface{}) (object *STS, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadSTS(iterator)
+	object = readSTS(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadSTS reads a value of the 'STS' type from the given iterator.
-func ReadSTS(iterator *jsoniter.Iterator) *STS {
+// readSTS reads a value of the 'STS' type from the given iterator.
+func readSTS(iterator *jsoniter.Iterator) *STS {
 	object := &STS{}
 	for {
 		field := iterator.ReadObject()
@@ -124,11 +124,11 @@ func ReadSTS(iterator *jsoniter.Iterator) *STS {
 			object.oidcEndpointURL = value
 			object.bitmap_ |= 1
 		case "instance_iam_roles":
-			value := ReadInstanceIAMRoles(iterator)
+			value := readInstanceIAMRoles(iterator)
 			object.instanceIAMRoles = value
 			object.bitmap_ |= 2
 		case "operator_iam_roles":
-			value := ReadOperatorIAMRoleList(iterator)
+			value := readOperatorIAMRoleList(iterator)
 			object.operatorIAMRoles = value
 			object.bitmap_ |= 4
 		case "operator_role_prefix":

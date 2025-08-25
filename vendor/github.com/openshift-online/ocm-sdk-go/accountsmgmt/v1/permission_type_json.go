@@ -29,7 +29,7 @@ import (
 // MarshalPermission writes a value of the 'permission' type to the given writer.
 func MarshalPermission(object *Permission, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WritePermission(object, stream)
+	writePermission(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalPermission(object *Permission, writer io.Writer) error {
 	return stream.Error
 }
 
-// WritePermission writes a value of the 'permission' type to the given stream.
-func WritePermission(object *Permission, stream *jsoniter.Stream) {
+// writePermission writes a value of the 'permission' type to the given stream.
+func writePermission(object *Permission, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -92,13 +92,13 @@ func UnmarshalPermission(source interface{}) (object *Permission, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadPermission(iterator)
+	object = readPermission(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadPermission reads a value of the 'permission' type from the given iterator.
-func ReadPermission(iterator *jsoniter.Iterator) *Permission {
+// readPermission reads a value of the 'permission' type from the given iterator.
+func readPermission(iterator *jsoniter.Iterator) *Permission {
 	object := &Permission{}
 	for {
 		field := iterator.ReadObject()

@@ -29,7 +29,7 @@ import (
 // MarshalWifGcp writes a value of the 'wif_gcp' type to the given writer.
 func MarshalWifGcp(object *WifGcp, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteWifGcp(object, stream)
+	writeWifGcp(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalWifGcp(object *WifGcp, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteWifGcp writes a value of the 'wif_gcp' type to the given stream.
-func WriteWifGcp(object *WifGcp, stream *jsoniter.Stream) {
+// writeWifGcp writes a value of the 'wif_gcp' type to the given stream.
+func writeWifGcp(object *WifGcp, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -84,7 +84,7 @@ func WriteWifGcp(object *WifGcp, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("service_accounts")
-		WriteWifServiceAccountList(object.serviceAccounts, stream)
+		writeWifServiceAccountList(object.serviceAccounts, stream)
 		count++
 	}
 	present_ = object.bitmap_&32 != 0 && object.support != nil
@@ -93,7 +93,7 @@ func WriteWifGcp(object *WifGcp, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("support")
-		WriteWifSupport(object.support, stream)
+		writeWifSupport(object.support, stream)
 		count++
 	}
 	present_ = object.bitmap_&64 != 0 && object.workloadIdentityPool != nil
@@ -102,7 +102,7 @@ func WriteWifGcp(object *WifGcp, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("workload_identity_pool")
-		WriteWifPool(object.workloadIdentityPool, stream)
+		writeWifPool(object.workloadIdentityPool, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -114,13 +114,13 @@ func UnmarshalWifGcp(source interface{}) (object *WifGcp, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadWifGcp(iterator)
+	object = readWifGcp(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadWifGcp reads a value of the 'wif_gcp' type from the given iterator.
-func ReadWifGcp(iterator *jsoniter.Iterator) *WifGcp {
+// readWifGcp reads a value of the 'wif_gcp' type from the given iterator.
+func readWifGcp(iterator *jsoniter.Iterator) *WifGcp {
 	object := &WifGcp{}
 	for {
 		field := iterator.ReadObject()
@@ -145,15 +145,15 @@ func ReadWifGcp(iterator *jsoniter.Iterator) *WifGcp {
 			object.rolePrefix = value
 			object.bitmap_ |= 8
 		case "service_accounts":
-			value := ReadWifServiceAccountList(iterator)
+			value := readWifServiceAccountList(iterator)
 			object.serviceAccounts = value
 			object.bitmap_ |= 16
 		case "support":
-			value := ReadWifSupport(iterator)
+			value := readWifSupport(iterator)
 			object.support = value
 			object.bitmap_ |= 32
 		case "workload_identity_pool":
-			value := ReadWifPool(iterator)
+			value := readWifPool(iterator)
 			object.workloadIdentityPool = value
 			object.bitmap_ |= 64
 		default:

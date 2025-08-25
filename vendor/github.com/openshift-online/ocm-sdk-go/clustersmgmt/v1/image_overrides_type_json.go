@@ -29,7 +29,7 @@ import (
 // MarshalImageOverrides writes a value of the 'image_overrides' type to the given writer.
 func MarshalImageOverrides(object *ImageOverrides, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteImageOverrides(object, stream)
+	writeImageOverrides(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalImageOverrides(object *ImageOverrides, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteImageOverrides writes a value of the 'image_overrides' type to the given stream.
-func WriteImageOverrides(object *ImageOverrides, stream *jsoniter.Stream) {
+// writeImageOverrides writes a value of the 'image_overrides' type to the given stream.
+func writeImageOverrides(object *ImageOverrides, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -71,7 +71,7 @@ func WriteImageOverrides(object *ImageOverrides, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("aws")
-		WriteAMIOverrideList(object.aws, stream)
+		writeAMIOverrideList(object.aws, stream)
 		count++
 	}
 	present_ = object.bitmap_&16 != 0 && object.gcp != nil
@@ -80,7 +80,7 @@ func WriteImageOverrides(object *ImageOverrides, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("gcp")
-		WriteGCPImageOverrideList(object.gcp, stream)
+		writeGCPImageOverrideList(object.gcp, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -92,13 +92,13 @@ func UnmarshalImageOverrides(source interface{}) (object *ImageOverrides, err er
 	if err != nil {
 		return
 	}
-	object = ReadImageOverrides(iterator)
+	object = readImageOverrides(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadImageOverrides reads a value of the 'image_overrides' type from the given iterator.
-func ReadImageOverrides(iterator *jsoniter.Iterator) *ImageOverrides {
+// readImageOverrides reads a value of the 'image_overrides' type from the given iterator.
+func readImageOverrides(iterator *jsoniter.Iterator) *ImageOverrides {
 	object := &ImageOverrides{}
 	for {
 		field := iterator.ReadObject()
@@ -118,11 +118,11 @@ func ReadImageOverrides(iterator *jsoniter.Iterator) *ImageOverrides {
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
 		case "aws":
-			value := ReadAMIOverrideList(iterator)
+			value := readAMIOverrideList(iterator)
 			object.aws = value
 			object.bitmap_ |= 8
 		case "gcp":
-			value := ReadGCPImageOverrideList(iterator)
+			value := readGCPImageOverrideList(iterator)
 			object.gcp = value
 			object.bitmap_ |= 16
 		default:

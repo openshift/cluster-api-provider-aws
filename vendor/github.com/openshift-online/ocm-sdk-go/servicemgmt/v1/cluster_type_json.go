@@ -30,7 +30,7 @@ import (
 // MarshalCluster writes a value of the 'cluster' type to the given writer.
 func MarshalCluster(object *Cluster, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteCluster(object, stream)
+	writeCluster(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalCluster(object *Cluster, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteCluster writes a value of the 'cluster' type to the given stream.
-func WriteCluster(object *Cluster, stream *jsoniter.Stream) {
+// writeCluster writes a value of the 'cluster' type to the given stream.
+func writeCluster(object *Cluster, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -49,7 +49,7 @@ func WriteCluster(object *Cluster, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("api")
-		WriteClusterAPI(object.api, stream)
+		writeClusterAPI(object.api, stream)
 		count++
 	}
 	present_ = object.bitmap_&2 != 0 && object.aws != nil
@@ -58,7 +58,7 @@ func WriteCluster(object *Cluster, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("aws")
-		WriteAWS(object.aws, stream)
+		writeAWS(object.aws, stream)
 		count++
 	}
 	present_ = object.bitmap_&4 != 0
@@ -112,7 +112,7 @@ func WriteCluster(object *Cluster, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("network")
-		WriteNetwork(object.network, stream)
+		writeNetwork(object.network, stream)
 		count++
 	}
 	present_ = object.bitmap_&256 != 0 && object.nodes != nil
@@ -121,7 +121,7 @@ func WriteCluster(object *Cluster, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("nodes")
-		WriteClusterNodes(object.nodes, stream)
+		writeClusterNodes(object.nodes, stream)
 		count++
 	}
 	present_ = object.bitmap_&512 != 0 && object.properties != nil
@@ -159,7 +159,7 @@ func WriteCluster(object *Cluster, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("region")
-		WriteCloudRegion(object.region, stream)
+		writeCloudRegion(object.region, stream)
 		count++
 	}
 	present_ = object.bitmap_&2048 != 0
@@ -180,13 +180,13 @@ func UnmarshalCluster(source interface{}) (object *Cluster, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadCluster(iterator)
+	object = readCluster(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadCluster reads a value of the 'cluster' type from the given iterator.
-func ReadCluster(iterator *jsoniter.Iterator) *Cluster {
+// readCluster reads a value of the 'cluster' type from the given iterator.
+func readCluster(iterator *jsoniter.Iterator) *Cluster {
 	object := &Cluster{}
 	for {
 		field := iterator.ReadObject()
@@ -195,11 +195,11 @@ func ReadCluster(iterator *jsoniter.Iterator) *Cluster {
 		}
 		switch field {
 		case "api":
-			value := ReadClusterAPI(iterator)
+			value := readClusterAPI(iterator)
 			object.api = value
 			object.bitmap_ |= 1
 		case "aws":
-			value := ReadAWS(iterator)
+			value := readAWS(iterator)
 			object.aws = value
 			object.bitmap_ |= 2
 		case "display_name":
@@ -223,11 +223,11 @@ func ReadCluster(iterator *jsoniter.Iterator) *Cluster {
 			object.name = value
 			object.bitmap_ |= 64
 		case "network":
-			value := ReadNetwork(iterator)
+			value := readNetwork(iterator)
 			object.network = value
 			object.bitmap_ |= 128
 		case "nodes":
-			value := ReadClusterNodes(iterator)
+			value := readClusterNodes(iterator)
 			object.nodes = value
 			object.bitmap_ |= 256
 		case "properties":
@@ -243,7 +243,7 @@ func ReadCluster(iterator *jsoniter.Iterator) *Cluster {
 			object.properties = value
 			object.bitmap_ |= 512
 		case "region":
-			value := ReadCloudRegion(iterator)
+			value := readCloudRegion(iterator)
 			object.region = value
 			object.bitmap_ |= 1024
 		case "state":

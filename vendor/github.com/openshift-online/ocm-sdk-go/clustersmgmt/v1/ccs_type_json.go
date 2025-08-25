@@ -29,7 +29,7 @@ import (
 // MarshalCCS writes a value of the 'CCS' type to the given writer.
 func MarshalCCS(object *CCS, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteCCS(object, stream)
+	writeCCS(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalCCS(object *CCS, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteCCS writes a value of the 'CCS' type to the given stream.
-func WriteCCS(object *CCS, stream *jsoniter.Stream) {
+// writeCCS writes a value of the 'CCS' type to the given stream.
+func writeCCS(object *CCS, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -92,13 +92,13 @@ func UnmarshalCCS(source interface{}) (object *CCS, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadCCS(iterator)
+	object = readCCS(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadCCS reads a value of the 'CCS' type from the given iterator.
-func ReadCCS(iterator *jsoniter.Iterator) *CCS {
+// readCCS reads a value of the 'CCS' type from the given iterator.
+func readCCS(iterator *jsoniter.Iterator) *CCS {
 	object := &CCS{}
 	for {
 		field := iterator.ReadObject()

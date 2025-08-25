@@ -29,7 +29,7 @@ import (
 // MarshalGroup writes a value of the 'group' type to the given writer.
 func MarshalGroup(object *Group, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteGroup(object, stream)
+	writeGroup(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalGroup(object *Group, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteGroup writes a value of the 'group' type to the given stream.
-func WriteGroup(object *Group, stream *jsoniter.Stream) {
+// writeGroup writes a value of the 'group' type to the given stream.
+func writeGroup(object *Group, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -73,7 +73,7 @@ func WriteGroup(object *Group, stream *jsoniter.Stream) {
 		stream.WriteObjectField("users")
 		stream.WriteObjectStart()
 		stream.WriteObjectField("items")
-		WriteUserList(object.users.Items(), stream)
+		writeUserList(object.users.items, stream)
 		stream.WriteObjectEnd()
 	}
 	stream.WriteObjectEnd()
@@ -86,13 +86,13 @@ func UnmarshalGroup(source interface{}) (object *Group, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadGroup(iterator)
+	object = readGroup(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadGroup reads a value of the 'group' type from the given iterator.
-func ReadGroup(iterator *jsoniter.Iterator) *Group {
+// readGroup reads a value of the 'group' type from the given iterator.
+func readGroup(iterator *jsoniter.Iterator) *Group {
 	object := &Group{}
 	for {
 		field := iterator.ReadObject()
@@ -121,11 +121,11 @@ func ReadGroup(iterator *jsoniter.Iterator) *Group {
 				switch field {
 				case "kind":
 					text := iterator.ReadString()
-					value.SetLink(text == UserListLinkKind)
+					value.link = text == UserListLinkKind
 				case "href":
-					value.SetHREF(iterator.ReadString())
+					value.href = iterator.ReadString()
 				case "items":
-					value.SetItems(ReadUserList(iterator))
+					value.items = readUserList(iterator)
 				default:
 					iterator.ReadAny()
 				}

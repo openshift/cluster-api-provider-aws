@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalClusterDeploymentList(list []*ClusterDeployment, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteClusterDeploymentList(list, stream)
+	writeClusterDeploymentList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalClusterDeploymentList(list []*ClusterDeployment, writer io.Writer) e
 	return stream.Error
 }
 
-// WriteClusterDeploymentList writes a list of value of the 'cluster_deployment' type to
+// writeClusterDeploymentList writes a list of value of the 'cluster_deployment' type to
 // the given stream.
-func WriteClusterDeploymentList(list []*ClusterDeployment, stream *jsoniter.Stream) {
+func writeClusterDeploymentList(list []*ClusterDeployment, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteClusterDeployment(value, stream)
+		writeClusterDeployment(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalClusterDeploymentList(source interface{}) (items []*ClusterDeploym
 	if err != nil {
 		return
 	}
-	items = ReadClusterDeploymentList(iterator)
+	items = readClusterDeploymentList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadClusterDeploymentList reads list of values of the ”cluster_deployment' type from
+// readClusterDeploymentList reads list of values of the ”cluster_deployment' type from
 // the given iterator.
-func ReadClusterDeploymentList(iterator *jsoniter.Iterator) []*ClusterDeployment {
+func readClusterDeploymentList(iterator *jsoniter.Iterator) []*ClusterDeployment {
 	list := []*ClusterDeployment{}
 	for iterator.ReadArray() {
-		item := ReadClusterDeployment(iterator)
+		item := readClusterDeployment(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -39,9 +39,7 @@ type DescribeTrunkInterfaceAssociationsInput struct {
 	DryRun *bool
 
 	// One or more filters.
-	//
 	//   - gre-key - The ID of a trunk interface association.
-	//
 	//   - interface-protocol - The interface protocol. Valid values are VLAN and GRE .
 	Filters []types.Filter
 
@@ -113,9 +111,6 @@ func (c *Client) addOperationDescribeTrunkInterfaceAssociationsMiddlewares(stack
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -126,15 +121,6 @@ func (c *Client) addOperationDescribeTrunkInterfaceAssociationsMiddlewares(stack
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeTrunkInterfaceAssociations(options.Region), middleware.Before); err != nil {
@@ -155,20 +141,16 @@ func (c *Client) addOperationDescribeTrunkInterfaceAssociationsMiddlewares(stack
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
-		return err
-	}
 	return nil
 }
+
+// DescribeTrunkInterfaceAssociationsAPIClient is a client that implements the
+// DescribeTrunkInterfaceAssociations operation.
+type DescribeTrunkInterfaceAssociationsAPIClient interface {
+	DescribeTrunkInterfaceAssociations(context.Context, *DescribeTrunkInterfaceAssociationsInput, ...func(*Options)) (*DescribeTrunkInterfaceAssociationsOutput, error)
+}
+
+var _ DescribeTrunkInterfaceAssociationsAPIClient = (*Client)(nil)
 
 // DescribeTrunkInterfaceAssociationsPaginatorOptions is the paginator options for
 // DescribeTrunkInterfaceAssociations
@@ -237,9 +219,6 @@ func (p *DescribeTrunkInterfaceAssociationsPaginator) NextPage(ctx context.Conte
 	}
 	params.MaxResults = limit
 
-	optFns = append([]func(*Options){
-		addIsPaginatorUserAgent,
-	}, optFns...)
 	result, err := p.client.DescribeTrunkInterfaceAssociations(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -258,14 +237,6 @@ func (p *DescribeTrunkInterfaceAssociationsPaginator) NextPage(ctx context.Conte
 
 	return result, nil
 }
-
-// DescribeTrunkInterfaceAssociationsAPIClient is a client that implements the
-// DescribeTrunkInterfaceAssociations operation.
-type DescribeTrunkInterfaceAssociationsAPIClient interface {
-	DescribeTrunkInterfaceAssociations(context.Context, *DescribeTrunkInterfaceAssociationsInput, ...func(*Options)) (*DescribeTrunkInterfaceAssociationsOutput, error)
-}
-
-var _ DescribeTrunkInterfaceAssociationsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeTrunkInterfaceAssociations(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

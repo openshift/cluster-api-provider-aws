@@ -30,7 +30,7 @@ import (
 // MarshalRegistryAllowlist writes a value of the 'registry_allowlist' type to the given writer.
 func MarshalRegistryAllowlist(object *RegistryAllowlist, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteRegistryAllowlist(object, stream)
+	writeRegistryAllowlist(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalRegistryAllowlist(object *RegistryAllowlist, writer io.Writer) error
 	return stream.Error
 }
 
-// WriteRegistryAllowlist writes a value of the 'registry_allowlist' type to the given stream.
-func WriteRegistryAllowlist(object *RegistryAllowlist, stream *jsoniter.Stream) {
+// writeRegistryAllowlist writes a value of the 'registry_allowlist' type to the given stream.
+func writeRegistryAllowlist(object *RegistryAllowlist, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -72,7 +72,7 @@ func WriteRegistryAllowlist(object *RegistryAllowlist, stream *jsoniter.Stream) 
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("cloud_provider")
-		WriteCloudProvider(object.cloudProvider, stream)
+		writeCloudProvider(object.cloudProvider, stream)
 		count++
 	}
 	present_ = object.bitmap_&16 != 0
@@ -90,7 +90,7 @@ func WriteRegistryAllowlist(object *RegistryAllowlist, stream *jsoniter.Stream) 
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("registries")
-		WriteStringList(object.registries, stream)
+		writeStringList(object.registries, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -102,13 +102,13 @@ func UnmarshalRegistryAllowlist(source interface{}) (object *RegistryAllowlist, 
 	if err != nil {
 		return
 	}
-	object = ReadRegistryAllowlist(iterator)
+	object = readRegistryAllowlist(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadRegistryAllowlist reads a value of the 'registry_allowlist' type from the given iterator.
-func ReadRegistryAllowlist(iterator *jsoniter.Iterator) *RegistryAllowlist {
+// readRegistryAllowlist reads a value of the 'registry_allowlist' type from the given iterator.
+func readRegistryAllowlist(iterator *jsoniter.Iterator) *RegistryAllowlist {
 	object := &RegistryAllowlist{}
 	for {
 		field := iterator.ReadObject()
@@ -128,7 +128,7 @@ func ReadRegistryAllowlist(iterator *jsoniter.Iterator) *RegistryAllowlist {
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
 		case "cloud_provider":
-			value := ReadCloudProvider(iterator)
+			value := readCloudProvider(iterator)
 			object.cloudProvider = value
 			object.bitmap_ |= 8
 		case "creation_timestamp":
@@ -140,7 +140,7 @@ func ReadRegistryAllowlist(iterator *jsoniter.Iterator) *RegistryAllowlist {
 			object.creationTimestamp = value
 			object.bitmap_ |= 16
 		case "registries":
-			value := ReadStringList(iterator)
+			value := readStringList(iterator)
 			object.registries = value
 			object.bitmap_ |= 32
 		default:

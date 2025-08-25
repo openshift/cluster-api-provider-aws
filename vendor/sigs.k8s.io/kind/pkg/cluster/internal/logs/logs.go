@@ -24,7 +24,7 @@ import (
 	"path"
 	"path/filepath"
 
-	"al.essio.dev/pkg/shellescape"
+	"github.com/alessio/shellescape"
 
 	"sigs.k8s.io/kind/pkg/cluster/nodes"
 	"sigs.k8s.io/kind/pkg/errors"

@@ -29,7 +29,7 @@ import (
 // MarshalInstanceIAMRoles writes a value of the 'instance_IAM_roles' type to the given writer.
 func MarshalInstanceIAMRoles(object *InstanceIAMRoles, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteInstanceIAMRoles(object, stream)
+	writeInstanceIAMRoles(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalInstanceIAMRoles(object *InstanceIAMRoles, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteInstanceIAMRoles writes a value of the 'instance_IAM_roles' type to the given stream.
-func WriteInstanceIAMRoles(object *InstanceIAMRoles, stream *jsoniter.Stream) {
+// writeInstanceIAMRoles writes a value of the 'instance_IAM_roles' type to the given stream.
+func writeInstanceIAMRoles(object *InstanceIAMRoles, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -69,13 +69,13 @@ func UnmarshalInstanceIAMRoles(source interface{}) (object *InstanceIAMRoles, er
 	if err != nil {
 		return
 	}
-	object = ReadInstanceIAMRoles(iterator)
+	object = readInstanceIAMRoles(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadInstanceIAMRoles reads a value of the 'instance_IAM_roles' type from the given iterator.
-func ReadInstanceIAMRoles(iterator *jsoniter.Iterator) *InstanceIAMRoles {
+// readInstanceIAMRoles reads a value of the 'instance_IAM_roles' type from the given iterator.
+func readInstanceIAMRoles(iterator *jsoniter.Iterator) *InstanceIAMRoles {
 	object := &InstanceIAMRoles{}
 	for {
 		field := iterator.ReadObject()

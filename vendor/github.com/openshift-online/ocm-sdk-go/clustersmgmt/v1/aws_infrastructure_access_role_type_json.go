@@ -29,7 +29,7 @@ import (
 // MarshalAWSInfrastructureAccessRole writes a value of the 'AWS_infrastructure_access_role' type to the given writer.
 func MarshalAWSInfrastructureAccessRole(object *AWSInfrastructureAccessRole, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAWSInfrastructureAccessRole(object, stream)
+	writeAWSInfrastructureAccessRole(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAWSInfrastructureAccessRole(object *AWSInfrastructureAccessRole, wri
 	return stream.Error
 }
 
-// WriteAWSInfrastructureAccessRole writes a value of the 'AWS_infrastructure_access_role' type to the given stream.
-func WriteAWSInfrastructureAccessRole(object *AWSInfrastructureAccessRole, stream *jsoniter.Stream) {
+// writeAWSInfrastructureAccessRole writes a value of the 'AWS_infrastructure_access_role' type to the given stream.
+func writeAWSInfrastructureAccessRole(object *AWSInfrastructureAccessRole, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -101,13 +101,13 @@ func UnmarshalAWSInfrastructureAccessRole(source interface{}) (object *AWSInfras
 	if err != nil {
 		return
 	}
-	object = ReadAWSInfrastructureAccessRole(iterator)
+	object = readAWSInfrastructureAccessRole(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAWSInfrastructureAccessRole reads a value of the 'AWS_infrastructure_access_role' type from the given iterator.
-func ReadAWSInfrastructureAccessRole(iterator *jsoniter.Iterator) *AWSInfrastructureAccessRole {
+// readAWSInfrastructureAccessRole reads a value of the 'AWS_infrastructure_access_role' type from the given iterator.
+func readAWSInfrastructureAccessRole(iterator *jsoniter.Iterator) *AWSInfrastructureAccessRole {
 	object := &AWSInfrastructureAccessRole{}
 	for {
 		field := iterator.ReadObject()

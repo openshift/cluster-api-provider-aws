@@ -49,7 +49,7 @@ func readSTSCredentialRequestsInquiryListResponse(response *STSCredentialRequest
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadSTSCredentialRequestList(iterator)
+			items := readSTSCredentialRequestList(iterator)
 			response.items = &STSCredentialRequestList{
 				items: items,
 			}

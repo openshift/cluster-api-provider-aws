@@ -13,11 +13,9 @@ import (
 
 // Deprovisions your Autonomous System Number (ASN) from your Amazon Web Services
 // account. This action can only be called after any BYOIP CIDR associations are
-// removed from your Amazon Web Services account with [DisassociateIpamByoasn]. For more information, see [Tutorial: Bring your ASN to IPAM]
+// removed from your Amazon Web Services account with DisassociateIpamByoasn (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DisassociateIpamByoasn.html)
+// . For more information, see Tutorial: Bring your ASN to IPAM (https://docs.aws.amazon.com/vpc/latest/ipam/tutorials-byoasn.html)
 // in the Amazon VPC IPAM guide.
-//
-// [DisassociateIpamByoasn]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DisassociateIpamByoasn.html
-// [Tutorial: Bring your ASN to IPAM]: https://docs.aws.amazon.com/vpc/latest/ipam/tutorials-byoasn.html
 func (c *Client) DeprovisionIpamByoasn(ctx context.Context, params *DeprovisionIpamByoasnInput, optFns ...func(*Options)) (*DeprovisionIpamByoasnOutput, error) {
 	if params == nil {
 		params = &DeprovisionIpamByoasnInput{}
@@ -108,9 +106,6 @@ func (c *Client) addOperationDeprovisionIpamByoasnMiddlewares(stack *middleware.
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -121,15 +116,6 @@ func (c *Client) addOperationDeprovisionIpamByoasnMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeprovisionIpamByoasnValidationMiddleware(stack); err != nil {
@@ -151,18 +137,6 @@ func (c *Client) addOperationDeprovisionIpamByoasnMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

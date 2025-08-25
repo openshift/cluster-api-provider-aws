@@ -49,7 +49,7 @@ func readProductTechnologyPreviewsListResponse(response *ProductTechnologyPrevie
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadProductTechnologyPreviewList(iterator)
+			items := readProductTechnologyPreviewList(iterator)
 			response.items = &ProductTechnologyPreviewList{
 				items: items,
 			}

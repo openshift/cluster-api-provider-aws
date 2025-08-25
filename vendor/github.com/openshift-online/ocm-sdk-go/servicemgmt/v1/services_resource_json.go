@@ -57,7 +57,7 @@ func readServicesListResponse(response *ServicesListResponse, reader io.Reader) 
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadManagedServiceList(iterator)
+			items := readManagedServiceList(iterator)
 			response.items = &ManagedServiceList{
 				items: items,
 			}

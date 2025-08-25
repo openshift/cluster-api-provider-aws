@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalNodesInfoList(list []*NodesInfo, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteNodesInfoList(list, stream)
+	writeNodesInfoList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalNodesInfoList(list []*NodesInfo, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteNodesInfoList writes a list of value of the 'nodes_info' type to
+// writeNodesInfoList writes a list of value of the 'nodes_info' type to
 // the given stream.
-func WriteNodesInfoList(list []*NodesInfo, stream *jsoniter.Stream) {
+func writeNodesInfoList(list []*NodesInfo, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteNodesInfo(value, stream)
+		writeNodesInfo(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalNodesInfoList(source interface{}) (items []*NodesInfo, err error) 
 	if err != nil {
 		return
 	}
-	items = ReadNodesInfoList(iterator)
+	items = readNodesInfoList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadNodesInfoList reads list of values of the ”nodes_info' type from
+// readNodesInfoList reads list of values of the ”nodes_info' type from
 // the given iterator.
-func ReadNodesInfoList(iterator *jsoniter.Iterator) []*NodesInfo {
+func readNodesInfoList(iterator *jsoniter.Iterator) []*NodesInfo {
 	list := []*NodesInfo{}
 	for iterator.ReadArray() {
-		item := ReadNodesInfo(iterator)
+		item := readNodesInfo(iterator)
 		list = append(list, item)
 	}
 	return list

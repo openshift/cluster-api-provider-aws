@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAddOnInstallModeList(list []AddOnInstallMode, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAddOnInstallModeList(list, stream)
+	writeAddOnInstallModeList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,9 +38,9 @@ func MarshalAddOnInstallModeList(list []AddOnInstallMode, writer io.Writer) erro
 	return stream.Error
 }
 
-// WriteAddOnInstallModeList writes a list of value of the 'add_on_install_mode' type to
+// writeAddOnInstallModeList writes a list of value of the 'add_on_install_mode' type to
 // the given stream.
-func WriteAddOnInstallModeList(list []AddOnInstallMode, stream *jsoniter.Stream) {
+func writeAddOnInstallModeList(list []AddOnInstallMode, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -58,14 +58,14 @@ func UnmarshalAddOnInstallModeList(source interface{}) (items []AddOnInstallMode
 	if err != nil {
 		return
 	}
-	items = ReadAddOnInstallModeList(iterator)
+	items = readAddOnInstallModeList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAddOnInstallModeList reads list of values of the ”add_on_install_mode' type from
+// readAddOnInstallModeList reads list of values of the ”add_on_install_mode' type from
 // the given iterator.
-func ReadAddOnInstallModeList(iterator *jsoniter.Iterator) []AddOnInstallMode {
+func readAddOnInstallModeList(iterator *jsoniter.Iterator) []AddOnInstallMode {
 	list := []AddOnInstallMode{}
 	for iterator.ReadArray() {
 		text := iterator.ReadString()

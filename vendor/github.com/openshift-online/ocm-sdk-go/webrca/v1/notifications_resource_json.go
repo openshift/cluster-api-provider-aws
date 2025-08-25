@@ -49,7 +49,7 @@ func readNotificationsListResponse(response *NotificationsListResponse, reader i
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadNotificationList(iterator)
+			items := readNotificationList(iterator)
 			response.items = &NotificationList{
 				items: items,
 			}

@@ -12,10 +12,9 @@ import (
 )
 
 // Describes your Autonomous System Numbers (ASNs), their provisioning statuses,
-// and the BYOIP CIDRs with which they are associated. For more information, see [Tutorial: Bring your ASN to IPAM]
+// and the BYOIP CIDRs with which they are associated. For more information, see
+// Tutorial: Bring your ASN to IPAM (https://docs.aws.amazon.com/vpc/latest/ipam/tutorials-byoasn.html)
 // in the Amazon VPC IPAM guide.
-//
-// [Tutorial: Bring your ASN to IPAM]: https://docs.aws.amazon.com/vpc/latest/ipam/tutorials-byoasn.html
 func (c *Client) DescribeIpamByoasn(ctx context.Context, params *DescribeIpamByoasnInput, optFns ...func(*Options)) (*DescribeIpamByoasnOutput, error) {
 	if params == nil {
 		params = &DescribeIpamByoasnInput{}
@@ -107,9 +106,6 @@ func (c *Client) addOperationDescribeIpamByoasnMiddlewares(stack *middleware.Sta
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -120,15 +116,6 @@ func (c *Client) addOperationDescribeIpamByoasnMiddlewares(stack *middleware.Sta
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeIpamByoasn(options.Region), middleware.Before); err != nil {
@@ -147,18 +134,6 @@ func (c *Client) addOperationDescribeIpamByoasnMiddlewares(stack *middleware.Sta
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

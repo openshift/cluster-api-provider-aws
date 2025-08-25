@@ -29,7 +29,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -39,7 +38,6 @@ import (
 
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/feature"
-	topologynames "sigs.k8s.io/cluster-api/internal/topology/names"
 	"sigs.k8s.io/cluster-api/util/labels/format"
 	"sigs.k8s.io/cluster-api/util/version"
 )
@@ -51,7 +49,7 @@ func (webhook *MachineSet) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(&clusterv1.MachineSet{}).
-		WithDefaulter(webhook, admission.DefaulterRemoveUnknownOrOmitableFields).
+		WithDefaulter(webhook).
 		WithValidator(webhook).
 		Complete()
 }
@@ -221,9 +219,6 @@ func (webhook *MachineSet) validate(oldMS, newMS *clusterv1.MachineSet) error {
 		}
 	}
 
-	if newMS.Spec.MachineNamingStrategy != nil {
-		allErrs = append(allErrs, validateMSMachineNamingStrategy(newMS.Spec.MachineNamingStrategy, specPath.Child("machineNamingStrategy"))...)
-	}
 	// Validate the metadata of the template.
 	allErrs = append(allErrs, newMS.Spec.Template.ObjectMeta.Validate(specPath.Child("template", "metadata"))...)
 
@@ -232,41 +227,6 @@ func (webhook *MachineSet) validate(oldMS, newMS *clusterv1.MachineSet) error {
 	}
 
 	return apierrors.NewInvalid(clusterv1.GroupVersion.WithKind("MachineSet").GroupKind(), newMS.Name, allErrs)
-}
-
-func validateMSMachineNamingStrategy(machineNamingStrategy *clusterv1.MachineNamingStrategy, pathPrefix *field.Path) field.ErrorList {
-	var allErrs field.ErrorList
-
-	if machineNamingStrategy.Template != "" {
-		if !strings.Contains(machineNamingStrategy.Template, "{{ .random }}") {
-			allErrs = append(allErrs,
-				field.Invalid(
-					pathPrefix.Child("template"),
-					machineNamingStrategy.Template,
-					"invalid template, {{ .random }} is missing",
-				))
-		}
-		name, err := topologynames.MachineSetMachineNameGenerator(machineNamingStrategy.Template, "cluster", "machineset").GenerateName()
-		if err != nil {
-			allErrs = append(allErrs,
-				field.Invalid(
-					pathPrefix.Child("template"),
-					machineNamingStrategy.Template,
-					fmt.Sprintf("invalid template: %v", err),
-				))
-		} else {
-			for _, err := range validation.IsDNS1123Subdomain(name) {
-				allErrs = append(allErrs,
-					field.Invalid(
-						pathPrefix.Child("template"),
-						machineNamingStrategy.Template,
-						fmt.Sprintf("invalid template, generated names would not be valid Kubernetes object names: %v", err),
-					))
-			}
-		}
-	}
-
-	return allErrs
 }
 
 func validateSkippedMachineSetPreflightChecks(o client.Object) *field.Error {
@@ -283,7 +243,6 @@ func validateSkippedMachineSetPreflightChecks(o client.Object) *field.Error {
 		clusterv1.MachineSetPreflightCheckKubeadmVersionSkew,
 		clusterv1.MachineSetPreflightCheckKubernetesVersionSkew,
 		clusterv1.MachineSetPreflightCheckControlPlaneIsStable,
-		clusterv1.MachineSetPreflightCheckControlPlaneVersionSkew,
 	)
 
 	skippedList := strings.Split(skip, ",")

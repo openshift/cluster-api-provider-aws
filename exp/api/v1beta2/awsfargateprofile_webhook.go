@@ -17,7 +17,6 @@ limitations under the License.
 package v1beta2
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/google/go-cmp/cmp"
@@ -40,29 +39,19 @@ const (
 
 // SetupWebhookWithManager will setup the webhooks for the AWSFargateProfile.
 func (r *AWSFargateProfile) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	w := new(awsFargateProfileWebhook)
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
-		WithValidator(w).
-		WithDefaulter(w).
 		Complete()
 }
 
 // +kubebuilder:webhook:verbs=create;update,path=/mutate-infrastructure-cluster-x-k8s-io-v1beta2-awsfargateprofile,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=awsfargateprofiles,versions=v1beta2,name=default.awsfargateprofile.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 // +kubebuilder:webhook:verbs=create;update,path=/validate-infrastructure-cluster-x-k8s-io-v1beta2-awsfargateprofile,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=awsfargateprofiles,versions=v1beta2,name=validation.awsfargateprofile.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 
-type awsFargateProfileWebhook struct{}
-
-var _ webhook.CustomDefaulter = &awsFargateProfileWebhook{}
-var _ webhook.CustomValidator = &awsFargateProfileWebhook{}
+var _ webhook.Defaulter = &AWSFargateProfile{}
+var _ webhook.Validator = &AWSFargateProfile{}
 
 // Default will set default values for the AWSFargateProfile.
-func (*awsFargateProfileWebhook) Default(_ context.Context, obj runtime.Object) error {
-	r, ok := obj.(*AWSFargateProfile)
-	if !ok {
-		return fmt.Errorf("expected an AWSFargateProfile object but got %T", r)
-	}
-
+func (r *AWSFargateProfile) Default() {
 	if r.Labels == nil {
 		r.Labels = make(map[string]string)
 	}
@@ -72,21 +61,15 @@ func (*awsFargateProfileWebhook) Default(_ context.Context, obj runtime.Object) 
 		name, err := eks.GenerateEKSName(r.Name, r.Namespace, maxProfileNameLength)
 		if err != nil {
 			mmpLog.Error(err, "failed to create EKS nodegroup name")
-			return nil
+			return
 		}
 
 		r.Spec.ProfileName = name
 	}
-	return nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (*awsFargateProfileWebhook) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
-	r, ok := newObj.(*AWSFargateProfile)
-	if !ok {
-		return nil, fmt.Errorf("expected an AWSFargateProfile object but got %T", r)
-	}
-
+func (r *AWSFargateProfile) ValidateUpdate(oldObj runtime.Object) (admission.Warnings, error) {
 	gv := r.GroupVersionKind().GroupKind()
 	old, ok := oldObj.(*AWSFargateProfile)
 	if !ok {
@@ -150,14 +133,11 @@ func (*awsFargateProfileWebhook) ValidateUpdate(_ context.Context, oldObj, newOb
 }
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (*awsFargateProfileWebhook) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
-	r, ok := obj.(*AWSFargateProfile)
-	if !ok {
-		return nil, fmt.Errorf("expected an AWSFargateProfile object but got %T", r)
-	}
-
+func (r *AWSFargateProfile) ValidateCreate() (admission.Warnings, error) {
 	var allErrs field.ErrorList
+
 	allErrs = append(allErrs, r.Spec.AdditionalTags.Validate()...)
+
 	if len(allErrs) == 0 {
 		return nil, nil
 	}
@@ -169,6 +149,6 @@ func (*awsFargateProfileWebhook) ValidateCreate(_ context.Context, obj runtime.O
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (*awsFargateProfileWebhook) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
+func (r *AWSFargateProfile) ValidateDelete() (admission.Warnings, error) {
 	return nil, nil
 }

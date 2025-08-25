@@ -29,7 +29,7 @@ import (
 // MarshalAlertsInfo writes a value of the 'alerts_info' type to the given writer.
 func MarshalAlertsInfo(object *AlertsInfo, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAlertsInfo(object, stream)
+	writeAlertsInfo(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAlertsInfo(object *AlertsInfo, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteAlertsInfo writes a value of the 'alerts_info' type to the given stream.
-func WriteAlertsInfo(object *AlertsInfo, stream *jsoniter.Stream) {
+// writeAlertsInfo writes a value of the 'alerts_info' type to the given stream.
+func writeAlertsInfo(object *AlertsInfo, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -48,7 +48,7 @@ func WriteAlertsInfo(object *AlertsInfo, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("alerts")
-		WriteAlertInfoList(object.alerts, stream)
+		writeAlertInfoList(object.alerts, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -60,13 +60,13 @@ func UnmarshalAlertsInfo(source interface{}) (object *AlertsInfo, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadAlertsInfo(iterator)
+	object = readAlertsInfo(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAlertsInfo reads a value of the 'alerts_info' type from the given iterator.
-func ReadAlertsInfo(iterator *jsoniter.Iterator) *AlertsInfo {
+// readAlertsInfo reads a value of the 'alerts_info' type from the given iterator.
+func readAlertsInfo(iterator *jsoniter.Iterator) *AlertsInfo {
 	object := &AlertsInfo{}
 	for {
 		field := iterator.ReadObject()
@@ -75,7 +75,7 @@ func ReadAlertsInfo(iterator *jsoniter.Iterator) *AlertsInfo {
 		}
 		switch field {
 		case "alerts":
-			value := ReadAlertInfoList(iterator)
+			value := readAlertInfoList(iterator)
 			object.alerts = value
 			object.bitmap_ |= 1
 		default:

@@ -121,9 +121,6 @@ func (c *Client) addOperationDescribeNetworkInsightsAccessScopeAnalysesMiddlewar
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -134,15 +131,6 @@ func (c *Client) addOperationDescribeNetworkInsightsAccessScopeAnalysesMiddlewar
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeNetworkInsightsAccessScopeAnalyses(options.Region), middleware.Before); err != nil {
@@ -163,20 +151,16 @@ func (c *Client) addOperationDescribeNetworkInsightsAccessScopeAnalysesMiddlewar
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
-		return err
-	}
 	return nil
 }
+
+// DescribeNetworkInsightsAccessScopeAnalysesAPIClient is a client that implements
+// the DescribeNetworkInsightsAccessScopeAnalyses operation.
+type DescribeNetworkInsightsAccessScopeAnalysesAPIClient interface {
+	DescribeNetworkInsightsAccessScopeAnalyses(context.Context, *DescribeNetworkInsightsAccessScopeAnalysesInput, ...func(*Options)) (*DescribeNetworkInsightsAccessScopeAnalysesOutput, error)
+}
+
+var _ DescribeNetworkInsightsAccessScopeAnalysesAPIClient = (*Client)(nil)
 
 // DescribeNetworkInsightsAccessScopeAnalysesPaginatorOptions is the paginator
 // options for DescribeNetworkInsightsAccessScopeAnalyses
@@ -245,9 +229,6 @@ func (p *DescribeNetworkInsightsAccessScopeAnalysesPaginator) NextPage(ctx conte
 	}
 	params.MaxResults = limit
 
-	optFns = append([]func(*Options){
-		addIsPaginatorUserAgent,
-	}, optFns...)
 	result, err := p.client.DescribeNetworkInsightsAccessScopeAnalyses(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -266,14 +247,6 @@ func (p *DescribeNetworkInsightsAccessScopeAnalysesPaginator) NextPage(ctx conte
 
 	return result, nil
 }
-
-// DescribeNetworkInsightsAccessScopeAnalysesAPIClient is a client that implements
-// the DescribeNetworkInsightsAccessScopeAnalyses operation.
-type DescribeNetworkInsightsAccessScopeAnalysesAPIClient interface {
-	DescribeNetworkInsightsAccessScopeAnalyses(context.Context, *DescribeNetworkInsightsAccessScopeAnalysesInput, ...func(*Options)) (*DescribeNetworkInsightsAccessScopeAnalysesOutput, error)
-}
-
-var _ DescribeNetworkInsightsAccessScopeAnalysesAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeNetworkInsightsAccessScopeAnalyses(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

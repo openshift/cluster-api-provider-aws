@@ -30,7 +30,7 @@ import (
 // MarshalProductMinimalVersion writes a value of the 'product_minimal_version' type to the given writer.
 func MarshalProductMinimalVersion(object *ProductMinimalVersion, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteProductMinimalVersion(object, stream)
+	writeProductMinimalVersion(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalProductMinimalVersion(object *ProductMinimalVersion, writer io.Write
 	return stream.Error
 }
 
-// WriteProductMinimalVersion writes a value of the 'product_minimal_version' type to the given stream.
-func WriteProductMinimalVersion(object *ProductMinimalVersion, stream *jsoniter.Stream) {
+// writeProductMinimalVersion writes a value of the 'product_minimal_version' type to the given stream.
+func writeProductMinimalVersion(object *ProductMinimalVersion, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -93,13 +93,13 @@ func UnmarshalProductMinimalVersion(source interface{}) (object *ProductMinimalV
 	if err != nil {
 		return
 	}
-	object = ReadProductMinimalVersion(iterator)
+	object = readProductMinimalVersion(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadProductMinimalVersion reads a value of the 'product_minimal_version' type from the given iterator.
-func ReadProductMinimalVersion(iterator *jsoniter.Iterator) *ProductMinimalVersion {
+// readProductMinimalVersion reads a value of the 'product_minimal_version' type from the given iterator.
+func readProductMinimalVersion(iterator *jsoniter.Iterator) *ProductMinimalVersion {
 	object := &ProductMinimalVersion{}
 	for {
 		field := iterator.ReadObject()

@@ -29,7 +29,7 @@ import (
 // MarshalGitlabIdentityProvider writes a value of the 'gitlab_identity_provider' type to the given writer.
 func MarshalGitlabIdentityProvider(object *GitlabIdentityProvider, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteGitlabIdentityProvider(object, stream)
+	writeGitlabIdentityProvider(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalGitlabIdentityProvider(object *GitlabIdentityProvider, writer io.Wri
 	return stream.Error
 }
 
-// WriteGitlabIdentityProvider writes a value of the 'gitlab_identity_provider' type to the given stream.
-func WriteGitlabIdentityProvider(object *GitlabIdentityProvider, stream *jsoniter.Stream) {
+// writeGitlabIdentityProvider writes a value of the 'gitlab_identity_provider' type to the given stream.
+func writeGitlabIdentityProvider(object *GitlabIdentityProvider, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -87,13 +87,13 @@ func UnmarshalGitlabIdentityProvider(source interface{}) (object *GitlabIdentity
 	if err != nil {
 		return
 	}
-	object = ReadGitlabIdentityProvider(iterator)
+	object = readGitlabIdentityProvider(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadGitlabIdentityProvider reads a value of the 'gitlab_identity_provider' type from the given iterator.
-func ReadGitlabIdentityProvider(iterator *jsoniter.Iterator) *GitlabIdentityProvider {
+// readGitlabIdentityProvider reads a value of the 'gitlab_identity_provider' type from the given iterator.
+func readGitlabIdentityProvider(iterator *jsoniter.Iterator) *GitlabIdentityProvider {
 	object := &GitlabIdentityProvider{}
 	for {
 		field := iterator.ReadObject()

@@ -29,7 +29,7 @@ import (
 // MarshalSyncset writes a value of the 'syncset' type to the given writer.
 func MarshalSyncset(object *Syncset, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteSyncset(object, stream)
+	writeSyncset(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalSyncset(object *Syncset, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteSyncset writes a value of the 'syncset' type to the given stream.
-func WriteSyncset(object *Syncset, stream *jsoniter.Stream) {
+// writeSyncset writes a value of the 'syncset' type to the given stream.
+func writeSyncset(object *Syncset, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -71,7 +71,7 @@ func WriteSyncset(object *Syncset, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("resources")
-		WriteInterfaceList(object.resources, stream)
+		writeInterfaceList(object.resources, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -83,13 +83,13 @@ func UnmarshalSyncset(source interface{}) (object *Syncset, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadSyncset(iterator)
+	object = readSyncset(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadSyncset reads a value of the 'syncset' type from the given iterator.
-func ReadSyncset(iterator *jsoniter.Iterator) *Syncset {
+// readSyncset reads a value of the 'syncset' type from the given iterator.
+func readSyncset(iterator *jsoniter.Iterator) *Syncset {
 	object := &Syncset{}
 	for {
 		field := iterator.ReadObject()
@@ -109,7 +109,7 @@ func ReadSyncset(iterator *jsoniter.Iterator) *Syncset {
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
 		case "resources":
-			value := ReadInterfaceList(iterator)
+			value := readInterfaceList(iterator)
 			object.resources = value
 			object.bitmap_ |= 8
 		default:

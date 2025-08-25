@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalClusterAutoscalerList(list []*ClusterAutoscaler, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteClusterAutoscalerList(list, stream)
+	writeClusterAutoscalerList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalClusterAutoscalerList(list []*ClusterAutoscaler, writer io.Writer) e
 	return stream.Error
 }
 
-// WriteClusterAutoscalerList writes a list of value of the 'cluster_autoscaler' type to
+// writeClusterAutoscalerList writes a list of value of the 'cluster_autoscaler' type to
 // the given stream.
-func WriteClusterAutoscalerList(list []*ClusterAutoscaler, stream *jsoniter.Stream) {
+func writeClusterAutoscalerList(list []*ClusterAutoscaler, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteClusterAutoscaler(value, stream)
+		writeClusterAutoscaler(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalClusterAutoscalerList(source interface{}) (items []*ClusterAutosca
 	if err != nil {
 		return
 	}
-	items = ReadClusterAutoscalerList(iterator)
+	items = readClusterAutoscalerList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadClusterAutoscalerList reads list of values of the ”cluster_autoscaler' type from
+// readClusterAutoscalerList reads list of values of the ”cluster_autoscaler' type from
 // the given iterator.
-func ReadClusterAutoscalerList(iterator *jsoniter.Iterator) []*ClusterAutoscaler {
+func readClusterAutoscalerList(iterator *jsoniter.Iterator) []*ClusterAutoscaler {
 	list := []*ClusterAutoscaler{}
 	for iterator.ReadArray() {
-		item := ReadClusterAutoscaler(iterator)
+		item := readClusterAutoscaler(iterator)
 		list = append(list, item)
 	}
 	return list

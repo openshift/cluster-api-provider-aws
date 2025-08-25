@@ -57,7 +57,7 @@ func readSyncsetsListResponse(response *SyncsetsListResponse, reader io.Reader) 
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadSyncsetList(iterator)
+			items := readSyncsetList(iterator)
 			response.items = &SyncsetList{
 				items: items,
 			}

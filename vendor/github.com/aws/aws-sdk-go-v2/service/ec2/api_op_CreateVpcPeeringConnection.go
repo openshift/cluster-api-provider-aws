@@ -15,19 +15,13 @@ import (
 // own and an accepter VPC with which to create the connection. The accepter VPC
 // can belong to another Amazon Web Services account and can be in a different
 // Region to the requester VPC. The requester VPC and accepter VPC cannot have
-// overlapping CIDR blocks.
-//
-// Limitations and rules apply to a VPC peering connection. For more information,
-// see the [VPC peering limitations]in the VPC Peering Guide.
-//
-// The owner of the accepter VPC must accept the peering request to activate the
-// peering connection. The VPC peering connection request expires after 7 days,
-// after which it cannot be accepted or rejected.
-//
-// If you create a VPC peering connection request between VPCs with overlapping
-// CIDR blocks, the VPC peering connection has a status of failed .
-//
-// [VPC peering limitations]: https://docs.aws.amazon.com/vpc/latest/peering/vpc-peering-basics.html#vpc-peering-limitations
+// overlapping CIDR blocks. Limitations and rules apply to a VPC peering
+// connection. For more information, see the limitations (https://docs.aws.amazon.com/vpc/latest/peering/vpc-peering-basics.html#vpc-peering-limitations)
+// section in the VPC Peering Guide. The owner of the accepter VPC must accept the
+// peering request to activate the peering connection. The VPC peering connection
+// request expires after 7 days, after which it cannot be accepted or rejected. If
+// you create a VPC peering connection request between VPCs with overlapping CIDR
+// blocks, the VPC peering connection has a status of failed .
 func (c *Client) CreateVpcPeeringConnection(ctx context.Context, params *CreateVpcPeeringConnectionInput, optFns ...func(*Options)) (*CreateVpcPeeringConnectionOutput, error) {
 	if params == nil {
 		params = &CreateVpcPeeringConnectionInput{}
@@ -56,15 +50,13 @@ type CreateVpcPeeringConnectionInput struct {
 	// UnauthorizedOperation .
 	DryRun *bool
 
-	// The Amazon Web Services account ID of the owner of the accepter VPC.
-	//
-	// Default: Your Amazon Web Services account ID
+	// The Amazon Web Services account ID of the owner of the accepter VPC. Default:
+	// Your Amazon Web Services account ID
 	PeerOwnerId *string
 
 	// The Region code for the accepter VPC, if the accepter VPC is located in a
-	// Region other than the Region in which you make the request.
-	//
-	// Default: The Region in which you make the request.
+	// Region other than the Region in which you make the request. Default: The Region
+	// in which you make the request.
 	PeerRegion *string
 
 	// The ID of the VPC with which you are creating the VPC peering connection. You
@@ -131,9 +123,6 @@ func (c *Client) addOperationCreateVpcPeeringConnectionMiddlewares(stack *middle
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -144,15 +133,6 @@ func (c *Client) addOperationCreateVpcPeeringConnectionMiddlewares(stack *middle
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpCreateVpcPeeringConnectionValidationMiddleware(stack); err != nil {
@@ -174,18 +154,6 @@ func (c *Client) addOperationCreateVpcPeeringConnectionMiddlewares(stack *middle
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

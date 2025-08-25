@@ -30,7 +30,7 @@ import (
 // MarshalClusterResource writes a value of the 'cluster_resource' type to the given writer.
 func MarshalClusterResource(object *ClusterResource, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteClusterResource(object, stream)
+	writeClusterResource(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalClusterResource(object *ClusterResource, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteClusterResource writes a value of the 'cluster_resource' type to the given stream.
-func WriteClusterResource(object *ClusterResource, stream *jsoniter.Stream) {
+// writeClusterResource writes a value of the 'cluster_resource' type to the given stream.
+func writeClusterResource(object *ClusterResource, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -49,7 +49,7 @@ func WriteClusterResource(object *ClusterResource, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("total")
-		WriteValueUnit(object.total, stream)
+		writeValueUnit(object.total, stream)
 		count++
 	}
 	present_ = object.bitmap_&2 != 0
@@ -67,7 +67,7 @@ func WriteClusterResource(object *ClusterResource, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("used")
-		WriteValueUnit(object.used, stream)
+		writeValueUnit(object.used, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -79,13 +79,13 @@ func UnmarshalClusterResource(source interface{}) (object *ClusterResource, err 
 	if err != nil {
 		return
 	}
-	object = ReadClusterResource(iterator)
+	object = readClusterResource(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadClusterResource reads a value of the 'cluster_resource' type from the given iterator.
-func ReadClusterResource(iterator *jsoniter.Iterator) *ClusterResource {
+// readClusterResource reads a value of the 'cluster_resource' type from the given iterator.
+func readClusterResource(iterator *jsoniter.Iterator) *ClusterResource {
 	object := &ClusterResource{}
 	for {
 		field := iterator.ReadObject()
@@ -94,7 +94,7 @@ func ReadClusterResource(iterator *jsoniter.Iterator) *ClusterResource {
 		}
 		switch field {
 		case "total":
-			value := ReadValueUnit(iterator)
+			value := readValueUnit(iterator)
 			object.total = value
 			object.bitmap_ |= 1
 		case "updated_timestamp":
@@ -106,7 +106,7 @@ func ReadClusterResource(iterator *jsoniter.Iterator) *ClusterResource {
 			object.updatedTimestamp = value
 			object.bitmap_ |= 2
 		case "used":
-			value := ReadValueUnit(iterator)
+			value := readValueUnit(iterator)
 			object.used = value
 			object.bitmap_ |= 4
 		default:

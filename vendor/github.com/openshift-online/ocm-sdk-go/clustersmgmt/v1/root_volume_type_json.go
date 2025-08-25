@@ -29,7 +29,7 @@ import (
 // MarshalRootVolume writes a value of the 'root_volume' type to the given writer.
 func MarshalRootVolume(object *RootVolume, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteRootVolume(object, stream)
+	writeRootVolume(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalRootVolume(object *RootVolume, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteRootVolume writes a value of the 'root_volume' type to the given stream.
-func WriteRootVolume(object *RootVolume, stream *jsoniter.Stream) {
+// writeRootVolume writes a value of the 'root_volume' type to the given stream.
+func writeRootVolume(object *RootVolume, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -48,7 +48,7 @@ func WriteRootVolume(object *RootVolume, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("aws")
-		WriteAWSVolume(object.aws, stream)
+		writeAWSVolume(object.aws, stream)
 		count++
 	}
 	present_ = object.bitmap_&2 != 0 && object.gcp != nil
@@ -57,7 +57,7 @@ func WriteRootVolume(object *RootVolume, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("gcp")
-		WriteGCPVolume(object.gcp, stream)
+		writeGCPVolume(object.gcp, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -69,13 +69,13 @@ func UnmarshalRootVolume(source interface{}) (object *RootVolume, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadRootVolume(iterator)
+	object = readRootVolume(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadRootVolume reads a value of the 'root_volume' type from the given iterator.
-func ReadRootVolume(iterator *jsoniter.Iterator) *RootVolume {
+// readRootVolume reads a value of the 'root_volume' type from the given iterator.
+func readRootVolume(iterator *jsoniter.Iterator) *RootVolume {
 	object := &RootVolume{}
 	for {
 		field := iterator.ReadObject()
@@ -84,11 +84,11 @@ func ReadRootVolume(iterator *jsoniter.Iterator) *RootVolume {
 		}
 		switch field {
 		case "aws":
-			value := ReadAWSVolume(iterator)
+			value := readAWSVolume(iterator)
 			object.aws = value
 			object.bitmap_ |= 1
 		case "gcp":
-			value := ReadGCPVolume(iterator)
+			value := readGCPVolume(iterator)
 			object.gcp = value
 			object.bitmap_ |= 2
 		default:

@@ -29,7 +29,7 @@ import (
 // MarshalAddOnSubOperator writes a value of the 'add_on_sub_operator' type to the given writer.
 func MarshalAddOnSubOperator(object *AddOnSubOperator, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAddOnSubOperator(object, stream)
+	writeAddOnSubOperator(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAddOnSubOperator(object *AddOnSubOperator, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteAddOnSubOperator writes a value of the 'add_on_sub_operator' type to the given stream.
-func WriteAddOnSubOperator(object *AddOnSubOperator, stream *jsoniter.Stream) {
+// writeAddOnSubOperator writes a value of the 'add_on_sub_operator' type to the given stream.
+func writeAddOnSubOperator(object *AddOnSubOperator, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -78,13 +78,13 @@ func UnmarshalAddOnSubOperator(source interface{}) (object *AddOnSubOperator, er
 	if err != nil {
 		return
 	}
-	object = ReadAddOnSubOperator(iterator)
+	object = readAddOnSubOperator(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAddOnSubOperator reads a value of the 'add_on_sub_operator' type from the given iterator.
-func ReadAddOnSubOperator(iterator *jsoniter.Iterator) *AddOnSubOperator {
+// readAddOnSubOperator reads a value of the 'add_on_sub_operator' type from the given iterator.
+func readAddOnSubOperator(iterator *jsoniter.Iterator) *AddOnSubOperator {
 	object := &AddOnSubOperator{}
 	for {
 		field := iterator.ReadObject()

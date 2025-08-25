@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalCapabilityList(list []*Capability, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteCapabilityList(list, stream)
+	writeCapabilityList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalCapabilityList(list []*Capability, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteCapabilityList writes a list of value of the 'capability' type to
+// writeCapabilityList writes a list of value of the 'capability' type to
 // the given stream.
-func WriteCapabilityList(list []*Capability, stream *jsoniter.Stream) {
+func writeCapabilityList(list []*Capability, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteCapability(value, stream)
+		writeCapability(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalCapabilityList(source interface{}) (items []*Capability, err error
 	if err != nil {
 		return
 	}
-	items = ReadCapabilityList(iterator)
+	items = readCapabilityList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadCapabilityList reads list of values of the ”capability' type from
+// readCapabilityList reads list of values of the ”capability' type from
 // the given iterator.
-func ReadCapabilityList(iterator *jsoniter.Iterator) []*Capability {
+func readCapabilityList(iterator *jsoniter.Iterator) []*Capability {
 	list := []*Capability{}
 	for iterator.ReadArray() {
-		item := ReadCapability(iterator)
+		item := readCapability(iterator)
 		list = append(list, item)
 	}
 	return list

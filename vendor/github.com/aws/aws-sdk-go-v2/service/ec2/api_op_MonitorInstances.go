@@ -12,12 +12,10 @@ import (
 )
 
 // Enables detailed monitoring for a running instance. Otherwise, basic monitoring
-// is enabled. For more information, see [Monitor your instances using CloudWatch]in the Amazon EC2 User Guide.
-//
-// To disable detailed monitoring, see [UnmonitorInstances].
-//
-// [Monitor your instances using CloudWatch]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-cloudwatch.html
-// [UnmonitorInstances]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_UnmonitorInstances.html
+// is enabled. For more information, see Monitor your instances using CloudWatch (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-cloudwatch.html)
+// in the Amazon EC2 User Guide. To disable detailed monitoring, see
+// UnmonitorInstances (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_UnmonitorInstances.html)
+// .
 func (c *Client) MonitorInstances(ctx context.Context, params *MonitorInstancesInput, optFns ...func(*Options)) (*MonitorInstancesOutput, error) {
 	if params == nil {
 		params = &MonitorInstancesInput{}
@@ -40,7 +38,7 @@ type MonitorInstancesInput struct {
 	// This member is required.
 	InstanceIds []string
 
-	// Checks whether you have the required permissions for the operation, without
+	// Checks whether you have the required permissions for the action, without
 	// actually making the request, and provides an error response. If you have the
 	// required permissions, the error response is DryRunOperation . Otherwise, it is
 	// UnauthorizedOperation .
@@ -103,9 +101,6 @@ func (c *Client) addOperationMonitorInstancesMiddlewares(stack *middleware.Stack
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -116,15 +111,6 @@ func (c *Client) addOperationMonitorInstancesMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpMonitorInstancesValidationMiddleware(stack); err != nil {
@@ -146,18 +132,6 @@ func (c *Client) addOperationMonitorInstancesMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

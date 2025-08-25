@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalMachineTypeCategoryList(list []MachineTypeCategory, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteMachineTypeCategoryList(list, stream)
+	writeMachineTypeCategoryList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,9 +38,9 @@ func MarshalMachineTypeCategoryList(list []MachineTypeCategory, writer io.Writer
 	return stream.Error
 }
 
-// WriteMachineTypeCategoryList writes a list of value of the 'machine_type_category' type to
+// writeMachineTypeCategoryList writes a list of value of the 'machine_type_category' type to
 // the given stream.
-func WriteMachineTypeCategoryList(list []MachineTypeCategory, stream *jsoniter.Stream) {
+func writeMachineTypeCategoryList(list []MachineTypeCategory, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -58,14 +58,14 @@ func UnmarshalMachineTypeCategoryList(source interface{}) (items []MachineTypeCa
 	if err != nil {
 		return
 	}
-	items = ReadMachineTypeCategoryList(iterator)
+	items = readMachineTypeCategoryList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadMachineTypeCategoryList reads list of values of the ”machine_type_category' type from
+// readMachineTypeCategoryList reads list of values of the ”machine_type_category' type from
 // the given iterator.
-func ReadMachineTypeCategoryList(iterator *jsoniter.Iterator) []MachineTypeCategory {
+func readMachineTypeCategoryList(iterator *jsoniter.Iterator) []MachineTypeCategory {
 	list := []MachineTypeCategory{}
 	for iterator.ReadArray() {
 		text := iterator.ReadString()

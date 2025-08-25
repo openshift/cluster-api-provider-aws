@@ -29,7 +29,7 @@ import (
 // MarshalPrivateLinkConfiguration writes a value of the 'private_link_configuration' type to the given writer.
 func MarshalPrivateLinkConfiguration(object *PrivateLinkConfiguration, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WritePrivateLinkConfiguration(object, stream)
+	writePrivateLinkConfiguration(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalPrivateLinkConfiguration(object *PrivateLinkConfiguration, writer io
 	return stream.Error
 }
 
-// WritePrivateLinkConfiguration writes a value of the 'private_link_configuration' type to the given stream.
-func WritePrivateLinkConfiguration(object *PrivateLinkConfiguration, stream *jsoniter.Stream) {
+// writePrivateLinkConfiguration writes a value of the 'private_link_configuration' type to the given stream.
+func writePrivateLinkConfiguration(object *PrivateLinkConfiguration, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -48,7 +48,7 @@ func WritePrivateLinkConfiguration(object *PrivateLinkConfiguration, stream *jso
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("principals")
-		WritePrivateLinkPrincipals(object.principals, stream)
+		writePrivateLinkPrincipals(object.principals, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -60,13 +60,13 @@ func UnmarshalPrivateLinkConfiguration(source interface{}) (object *PrivateLinkC
 	if err != nil {
 		return
 	}
-	object = ReadPrivateLinkConfiguration(iterator)
+	object = readPrivateLinkConfiguration(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadPrivateLinkConfiguration reads a value of the 'private_link_configuration' type from the given iterator.
-func ReadPrivateLinkConfiguration(iterator *jsoniter.Iterator) *PrivateLinkConfiguration {
+// readPrivateLinkConfiguration reads a value of the 'private_link_configuration' type from the given iterator.
+func readPrivateLinkConfiguration(iterator *jsoniter.Iterator) *PrivateLinkConfiguration {
 	object := &PrivateLinkConfiguration{}
 	for {
 		field := iterator.ReadObject()
@@ -75,7 +75,7 @@ func ReadPrivateLinkConfiguration(iterator *jsoniter.Iterator) *PrivateLinkConfi
 		}
 		switch field {
 		case "principals":
-			value := ReadPrivateLinkPrincipals(iterator)
+			value := readPrivateLinkPrincipals(iterator)
 			object.principals = value
 			object.bitmap_ |= 1
 		default:

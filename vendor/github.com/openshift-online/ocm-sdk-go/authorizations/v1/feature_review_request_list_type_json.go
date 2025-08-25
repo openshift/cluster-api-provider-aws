@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalFeatureReviewRequestList(list []*FeatureReviewRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteFeatureReviewRequestList(list, stream)
+	writeFeatureReviewRequestList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalFeatureReviewRequestList(list []*FeatureReviewRequest, writer io.Wri
 	return stream.Error
 }
 
-// WriteFeatureReviewRequestList writes a list of value of the 'feature_review_request' type to
+// writeFeatureReviewRequestList writes a list of value of the 'feature_review_request' type to
 // the given stream.
-func WriteFeatureReviewRequestList(list []*FeatureReviewRequest, stream *jsoniter.Stream) {
+func writeFeatureReviewRequestList(list []*FeatureReviewRequest, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteFeatureReviewRequest(value, stream)
+		writeFeatureReviewRequest(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalFeatureReviewRequestList(source interface{}) (items []*FeatureRevi
 	if err != nil {
 		return
 	}
-	items = ReadFeatureReviewRequestList(iterator)
+	items = readFeatureReviewRequestList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadFeatureReviewRequestList reads list of values of the ”feature_review_request' type from
+// readFeatureReviewRequestList reads list of values of the ”feature_review_request' type from
 // the given iterator.
-func ReadFeatureReviewRequestList(iterator *jsoniter.Iterator) []*FeatureReviewRequest {
+func readFeatureReviewRequestList(iterator *jsoniter.Iterator) []*FeatureReviewRequest {
 	list := []*FeatureReviewRequest{}
 	for iterator.ReadArray() {
-		item := ReadFeatureReviewRequest(iterator)
+		item := readFeatureReviewRequest(iterator)
 		list = append(list, item)
 	}
 	return list

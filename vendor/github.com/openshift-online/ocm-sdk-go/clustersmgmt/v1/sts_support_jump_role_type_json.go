@@ -29,7 +29,7 @@ import (
 // MarshalStsSupportJumpRole writes a value of the 'sts_support_jump_role' type to the given writer.
 func MarshalStsSupportJumpRole(object *StsSupportJumpRole, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteStsSupportJumpRole(object, stream)
+	writeStsSupportJumpRole(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalStsSupportJumpRole(object *StsSupportJumpRole, writer io.Writer) err
 	return stream.Error
 }
 
-// WriteStsSupportJumpRole writes a value of the 'sts_support_jump_role' type to the given stream.
-func WriteStsSupportJumpRole(object *StsSupportJumpRole, stream *jsoniter.Stream) {
+// writeStsSupportJumpRole writes a value of the 'sts_support_jump_role' type to the given stream.
+func writeStsSupportJumpRole(object *StsSupportJumpRole, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -60,13 +60,13 @@ func UnmarshalStsSupportJumpRole(source interface{}) (object *StsSupportJumpRole
 	if err != nil {
 		return
 	}
-	object = ReadStsSupportJumpRole(iterator)
+	object = readStsSupportJumpRole(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadStsSupportJumpRole reads a value of the 'sts_support_jump_role' type from the given iterator.
-func ReadStsSupportJumpRole(iterator *jsoniter.Iterator) *StsSupportJumpRole {
+// readStsSupportJumpRole reads a value of the 'sts_support_jump_role' type from the given iterator.
+func readStsSupportJumpRole(iterator *jsoniter.Iterator) *StsSupportJumpRole {
 	object := &StsSupportJumpRole{}
 	for {
 		field := iterator.ReadObject()

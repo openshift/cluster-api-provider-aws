@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalPeerDependencyList(list []*PeerDependency, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WritePeerDependencyList(list, stream)
+	writePeerDependencyList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalPeerDependencyList(list []*PeerDependency, writer io.Writer) error {
 	return stream.Error
 }
 
-// WritePeerDependencyList writes a list of value of the 'peer_dependency' type to
+// writePeerDependencyList writes a list of value of the 'peer_dependency' type to
 // the given stream.
-func WritePeerDependencyList(list []*PeerDependency, stream *jsoniter.Stream) {
+func writePeerDependencyList(list []*PeerDependency, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WritePeerDependency(value, stream)
+		writePeerDependency(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalPeerDependencyList(source interface{}) (items []*PeerDependency, e
 	if err != nil {
 		return
 	}
-	items = ReadPeerDependencyList(iterator)
+	items = readPeerDependencyList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadPeerDependencyList reads list of values of the ”peer_dependency' type from
+// readPeerDependencyList reads list of values of the ”peer_dependency' type from
 // the given iterator.
-func ReadPeerDependencyList(iterator *jsoniter.Iterator) []*PeerDependency {
+func readPeerDependencyList(iterator *jsoniter.Iterator) []*PeerDependency {
 	list := []*PeerDependency{}
 	for iterator.ReadArray() {
-		item := ReadPeerDependency(iterator)
+		item := readPeerDependency(iterator)
 		list = append(list, item)
 	}
 	return list

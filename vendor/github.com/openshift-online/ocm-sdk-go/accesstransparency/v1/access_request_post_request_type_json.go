@@ -29,7 +29,7 @@ import (
 // MarshalAccessRequestPostRequest writes a value of the 'access_request_post_request' type to the given writer.
 func MarshalAccessRequestPostRequest(object *AccessRequestPostRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAccessRequestPostRequest(object, stream)
+	writeAccessRequestPostRequest(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAccessRequestPostRequest(object *AccessRequestPostRequest, writer io
 	return stream.Error
 }
 
-// WriteAccessRequestPostRequest writes a value of the 'access_request_post_request' type to the given stream.
-func WriteAccessRequestPostRequest(object *AccessRequestPostRequest, stream *jsoniter.Stream) {
+// writeAccessRequestPostRequest writes a value of the 'access_request_post_request' type to the given stream.
+func writeAccessRequestPostRequest(object *AccessRequestPostRequest, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -114,13 +114,13 @@ func UnmarshalAccessRequestPostRequest(source interface{}) (object *AccessReques
 	if err != nil {
 		return
 	}
-	object = ReadAccessRequestPostRequest(iterator)
+	object = readAccessRequestPostRequest(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAccessRequestPostRequest reads a value of the 'access_request_post_request' type from the given iterator.
-func ReadAccessRequestPostRequest(iterator *jsoniter.Iterator) *AccessRequestPostRequest {
+// readAccessRequestPostRequest reads a value of the 'access_request_post_request' type from the given iterator.
+func readAccessRequestPostRequest(iterator *jsoniter.Iterator) *AccessRequestPostRequest {
 	object := &AccessRequestPostRequest{}
 	for {
 		field := iterator.ReadObject()

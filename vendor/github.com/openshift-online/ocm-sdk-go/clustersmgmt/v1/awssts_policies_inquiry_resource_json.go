@@ -49,7 +49,7 @@ func readAWSSTSPoliciesInquiryListResponse(response *AWSSTSPoliciesInquiryListRe
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadAWSSTSPolicyList(iterator)
+			items := readAWSSTSPolicyList(iterator)
 			response.items = &AWSSTSPolicyList{
 				items: items,
 			}

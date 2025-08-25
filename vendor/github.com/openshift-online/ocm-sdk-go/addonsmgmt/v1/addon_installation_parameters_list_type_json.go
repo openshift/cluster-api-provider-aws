@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAddonInstallationParametersList(list []*AddonInstallationParameters, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAddonInstallationParametersList(list, stream)
+	writeAddonInstallationParametersList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAddonInstallationParametersList(list []*AddonInstallationParameters,
 	return stream.Error
 }
 
-// WriteAddonInstallationParametersList writes a list of value of the 'addon_installation_parameters' type to
+// writeAddonInstallationParametersList writes a list of value of the 'addon_installation_parameters' type to
 // the given stream.
-func WriteAddonInstallationParametersList(list []*AddonInstallationParameters, stream *jsoniter.Stream) {
+func writeAddonInstallationParametersList(list []*AddonInstallationParameters, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteAddonInstallationParameters(value, stream)
+		writeAddonInstallationParameters(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAddonInstallationParametersList(source interface{}) (items []*Addo
 	if err != nil {
 		return
 	}
-	items = ReadAddonInstallationParametersList(iterator)
+	items = readAddonInstallationParametersList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAddonInstallationParametersList reads list of values of the ”addon_installation_parameters' type from
+// readAddonInstallationParametersList reads list of values of the ”addon_installation_parameters' type from
 // the given iterator.
-func ReadAddonInstallationParametersList(iterator *jsoniter.Iterator) []*AddonInstallationParameters {
+func readAddonInstallationParametersList(iterator *jsoniter.Iterator) []*AddonInstallationParameters {
 	list := []*AddonInstallationParameters{}
 	for iterator.ReadArray() {
-		item := ReadAddonInstallationParameters(iterator)
+		item := readAddonInstallationParameters(iterator)
 		list = append(list, item)
 	}
 	return list

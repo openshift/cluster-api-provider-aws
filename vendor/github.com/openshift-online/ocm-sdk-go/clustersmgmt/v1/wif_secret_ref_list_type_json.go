@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalWifSecretRefList(list []*WifSecretRef, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteWifSecretRefList(list, stream)
+	writeWifSecretRefList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalWifSecretRefList(list []*WifSecretRef, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteWifSecretRefList writes a list of value of the 'wif_secret_ref' type to
+// writeWifSecretRefList writes a list of value of the 'wif_secret_ref' type to
 // the given stream.
-func WriteWifSecretRefList(list []*WifSecretRef, stream *jsoniter.Stream) {
+func writeWifSecretRefList(list []*WifSecretRef, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteWifSecretRef(value, stream)
+		writeWifSecretRef(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalWifSecretRefList(source interface{}) (items []*WifSecretRef, err e
 	if err != nil {
 		return
 	}
-	items = ReadWifSecretRefList(iterator)
+	items = readWifSecretRefList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadWifSecretRefList reads list of values of the ”wif_secret_ref' type from
+// readWifSecretRefList reads list of values of the ”wif_secret_ref' type from
 // the given iterator.
-func ReadWifSecretRefList(iterator *jsoniter.Iterator) []*WifSecretRef {
+func readWifSecretRefList(iterator *jsoniter.Iterator) []*WifSecretRef {
 	list := []*WifSecretRef{}
 	for iterator.ReadArray() {
-		item := ReadWifSecretRef(iterator)
+		item := readWifSecretRef(iterator)
 		list = append(list, item)
 	}
 	return list

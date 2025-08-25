@@ -29,7 +29,7 @@ import (
 // MarshalGCP writes a value of the 'GCP' type to the given writer.
 func MarshalGCP(object *GCP, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteGCP(object, stream)
+	writeGCP(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalGCP(object *GCP, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteGCP writes a value of the 'GCP' type to the given stream.
-func WriteGCP(object *GCP, stream *jsoniter.Stream) {
+// writeGCP writes a value of the 'GCP' type to the given stream.
+func writeGCP(object *GCP, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -66,7 +66,7 @@ func WriteGCP(object *GCP, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("authentication")
-		WriteGcpAuthentication(object.authentication, stream)
+		writeGcpAuthentication(object.authentication, stream)
 		count++
 	}
 	present_ = object.bitmap_&8 != 0
@@ -120,7 +120,7 @@ func WriteGCP(object *GCP, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("private_service_connect")
-		WriteGcpPrivateServiceConnect(object.privateServiceConnect, stream)
+		writeGcpPrivateServiceConnect(object.privateServiceConnect, stream)
 		count++
 	}
 	present_ = object.bitmap_&512 != 0
@@ -138,7 +138,7 @@ func WriteGCP(object *GCP, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("security")
-		WriteGcpSecurity(object.security, stream)
+		writeGcpSecurity(object.security, stream)
 		count++
 	}
 	present_ = object.bitmap_&2048 != 0
@@ -168,13 +168,13 @@ func UnmarshalGCP(source interface{}) (object *GCP, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadGCP(iterator)
+	object = readGCP(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadGCP reads a value of the 'GCP' type from the given iterator.
-func ReadGCP(iterator *jsoniter.Iterator) *GCP {
+// readGCP reads a value of the 'GCP' type from the given iterator.
+func readGCP(iterator *jsoniter.Iterator) *GCP {
 	object := &GCP{}
 	for {
 		field := iterator.ReadObject()
@@ -191,7 +191,7 @@ func ReadGCP(iterator *jsoniter.Iterator) *GCP {
 			object.authProviderX509CertURL = value
 			object.bitmap_ |= 2
 		case "authentication":
-			value := ReadGcpAuthentication(iterator)
+			value := readGcpAuthentication(iterator)
 			object.authentication = value
 			object.bitmap_ |= 4
 		case "client_id":
@@ -215,7 +215,7 @@ func ReadGCP(iterator *jsoniter.Iterator) *GCP {
 			object.privateKeyID = value
 			object.bitmap_ |= 128
 		case "private_service_connect":
-			value := ReadGcpPrivateServiceConnect(iterator)
+			value := readGcpPrivateServiceConnect(iterator)
 			object.privateServiceConnect = value
 			object.bitmap_ |= 256
 		case "project_id":
@@ -223,7 +223,7 @@ func ReadGCP(iterator *jsoniter.Iterator) *GCP {
 			object.projectID = value
 			object.bitmap_ |= 512
 		case "security":
-			value := ReadGcpSecurity(iterator)
+			value := readGcpSecurity(iterator)
 			object.security = value
 			object.bitmap_ |= 1024
 		case "token_uri":

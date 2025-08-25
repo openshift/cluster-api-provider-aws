@@ -10,13 +10,11 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Disassociates a subnet or gateway from a route table.
-//
-// After you perform this action, the subnet no longer uses the routes in the
-// route table. Instead, it uses the routes in the VPC's main route table. For more
-// information about route tables, see [Route tables]in the Amazon VPC User Guide.
-//
-// [Route tables]: https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Route_Tables.html
+// Disassociates a subnet or gateway from a route table. After you perform this
+// action, the subnet no longer uses the routes in the route table. Instead, it
+// uses the routes in the VPC's main route table. For more information about route
+// tables, see Route tables (https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Route_Tables.html)
+// in the Amazon VPC User Guide.
 func (c *Client) DisassociateRouteTable(ctx context.Context, params *DisassociateRouteTableInput, optFns ...func(*Options)) (*DisassociateRouteTableOutput, error) {
 	if params == nil {
 		params = &DisassociateRouteTableInput{}
@@ -99,9 +97,6 @@ func (c *Client) addOperationDisassociateRouteTableMiddlewares(stack *middleware
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -112,15 +107,6 @@ func (c *Client) addOperationDisassociateRouteTableMiddlewares(stack *middleware
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDisassociateRouteTableValidationMiddleware(stack); err != nil {
@@ -142,18 +128,6 @@ func (c *Client) addOperationDisassociateRouteTableMiddlewares(stack *middleware
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

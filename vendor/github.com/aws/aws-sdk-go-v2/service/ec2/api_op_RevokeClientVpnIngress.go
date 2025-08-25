@@ -50,10 +50,7 @@ type RevokeClientVpnIngressInput struct {
 	// UnauthorizedOperation .
 	DryRun *bool
 
-	// Indicates whether access should be revoked for all groups for a single
-	// TargetNetworkCidr that earlier authorized ingress for all groups using
-	// AuthorizeAllGroups . This does not impact other authorization rules that allowed
-	// ingress to the same TargetNetworkCidr with a specific AccessGroupId .
+	// Indicates whether access should be revoked for all clients.
 	RevokeAllGroups *bool
 
 	noSmithyDocumentSerde
@@ -113,9 +110,6 @@ func (c *Client) addOperationRevokeClientVpnIngressMiddlewares(stack *middleware
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -126,15 +120,6 @@ func (c *Client) addOperationRevokeClientVpnIngressMiddlewares(stack *middleware
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpRevokeClientVpnIngressValidationMiddleware(stack); err != nil {
@@ -156,18 +141,6 @@ func (c *Client) addOperationRevokeClientVpnIngressMiddlewares(stack *middleware
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

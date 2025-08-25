@@ -29,7 +29,7 @@ import (
 // MarshalSelfTermsReviewRequest writes a value of the 'self_terms_review_request' type to the given writer.
 func MarshalSelfTermsReviewRequest(object *SelfTermsReviewRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteSelfTermsReviewRequest(object, stream)
+	writeSelfTermsReviewRequest(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalSelfTermsReviewRequest(object *SelfTermsReviewRequest, writer io.Wri
 	return stream.Error
 }
 
-// WriteSelfTermsReviewRequest writes a value of the 'self_terms_review_request' type to the given stream.
-func WriteSelfTermsReviewRequest(object *SelfTermsReviewRequest, stream *jsoniter.Stream) {
+// writeSelfTermsReviewRequest writes a value of the 'self_terms_review_request' type to the given stream.
+func writeSelfTermsReviewRequest(object *SelfTermsReviewRequest, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -69,13 +69,13 @@ func UnmarshalSelfTermsReviewRequest(source interface{}) (object *SelfTermsRevie
 	if err != nil {
 		return
 	}
-	object = ReadSelfTermsReviewRequest(iterator)
+	object = readSelfTermsReviewRequest(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadSelfTermsReviewRequest reads a value of the 'self_terms_review_request' type from the given iterator.
-func ReadSelfTermsReviewRequest(iterator *jsoniter.Iterator) *SelfTermsReviewRequest {
+// readSelfTermsReviewRequest reads a value of the 'self_terms_review_request' type from the given iterator.
+func readSelfTermsReviewRequest(iterator *jsoniter.Iterator) *SelfTermsReviewRequest {
 	object := &SelfTermsReviewRequest{}
 	for {
 		field := iterator.ReadObject()

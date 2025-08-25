@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalNotificationDetailsRequestList(list []*NotificationDetailsRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteNotificationDetailsRequestList(list, stream)
+	writeNotificationDetailsRequestList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalNotificationDetailsRequestList(list []*NotificationDetailsRequest, w
 	return stream.Error
 }
 
-// WriteNotificationDetailsRequestList writes a list of value of the 'notification_details_request' type to
+// writeNotificationDetailsRequestList writes a list of value of the 'notification_details_request' type to
 // the given stream.
-func WriteNotificationDetailsRequestList(list []*NotificationDetailsRequest, stream *jsoniter.Stream) {
+func writeNotificationDetailsRequestList(list []*NotificationDetailsRequest, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteNotificationDetailsRequest(value, stream)
+		writeNotificationDetailsRequest(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalNotificationDetailsRequestList(source interface{}) (items []*Notif
 	if err != nil {
 		return
 	}
-	items = ReadNotificationDetailsRequestList(iterator)
+	items = readNotificationDetailsRequestList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadNotificationDetailsRequestList reads list of values of the ”notification_details_request' type from
+// readNotificationDetailsRequestList reads list of values of the ”notification_details_request' type from
 // the given iterator.
-func ReadNotificationDetailsRequestList(iterator *jsoniter.Iterator) []*NotificationDetailsRequest {
+func readNotificationDetailsRequestList(iterator *jsoniter.Iterator) []*NotificationDetailsRequest {
 	list := []*NotificationDetailsRequest{}
 	for iterator.ReadArray() {
-		item := ReadNotificationDetailsRequest(iterator)
+		item := readNotificationDetailsRequest(iterator)
 		list = append(list, item)
 	}
 	return list

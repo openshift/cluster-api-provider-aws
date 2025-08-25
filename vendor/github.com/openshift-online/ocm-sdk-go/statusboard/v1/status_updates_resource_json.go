@@ -57,7 +57,7 @@ func readStatusUpdatesListResponse(response *StatusUpdatesListResponse, reader i
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadStatusList(iterator)
+			items := readStatusList(iterator)
 			response.items = &StatusList{
 				items: items,
 			}

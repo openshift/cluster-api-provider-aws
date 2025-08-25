@@ -49,7 +49,7 @@ func readKeyRingsInquirySearchResponse(response *KeyRingsInquirySearchResponse, 
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadKeyRingList(iterator)
+			items := readKeyRingList(iterator)
 			response.items = &KeyRingList{
 				items: items,
 			}

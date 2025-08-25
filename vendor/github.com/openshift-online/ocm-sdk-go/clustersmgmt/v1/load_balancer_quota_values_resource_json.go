@@ -49,7 +49,7 @@ func readLoadBalancerQuotaValuesListResponse(response *LoadBalancerQuotaValuesLi
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadIntegerList(iterator)
+			items := readIntegerList(iterator)
 			response.items = items
 		default:
 			iterator.ReadAny()

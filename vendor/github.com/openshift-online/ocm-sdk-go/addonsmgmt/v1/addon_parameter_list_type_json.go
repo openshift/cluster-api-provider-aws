@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAddonParameterList(list []*AddonParameter, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAddonParameterList(list, stream)
+	writeAddonParameterList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAddonParameterList(list []*AddonParameter, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteAddonParameterList writes a list of value of the 'addon_parameter' type to
+// writeAddonParameterList writes a list of value of the 'addon_parameter' type to
 // the given stream.
-func WriteAddonParameterList(list []*AddonParameter, stream *jsoniter.Stream) {
+func writeAddonParameterList(list []*AddonParameter, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteAddonParameter(value, stream)
+		writeAddonParameter(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAddonParameterList(source interface{}) (items []*AddonParameter, e
 	if err != nil {
 		return
 	}
-	items = ReadAddonParameterList(iterator)
+	items = readAddonParameterList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAddonParameterList reads list of values of the ”addon_parameter' type from
+// readAddonParameterList reads list of values of the ”addon_parameter' type from
 // the given iterator.
-func ReadAddonParameterList(iterator *jsoniter.Iterator) []*AddonParameter {
+func readAddonParameterList(iterator *jsoniter.Iterator) []*AddonParameter {
 	list := []*AddonParameter{}
 	for iterator.ReadArray() {
-		item := ReadAddonParameter(iterator)
+		item := readAddonParameter(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalCloudProviderList(list []*CloudProvider, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteCloudProviderList(list, stream)
+	writeCloudProviderList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalCloudProviderList(list []*CloudProvider, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteCloudProviderList writes a list of value of the 'cloud_provider' type to
+// writeCloudProviderList writes a list of value of the 'cloud_provider' type to
 // the given stream.
-func WriteCloudProviderList(list []*CloudProvider, stream *jsoniter.Stream) {
+func writeCloudProviderList(list []*CloudProvider, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteCloudProvider(value, stream)
+		writeCloudProvider(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalCloudProviderList(source interface{}) (items []*CloudProvider, err
 	if err != nil {
 		return
 	}
-	items = ReadCloudProviderList(iterator)
+	items = readCloudProviderList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadCloudProviderList reads list of values of the ”cloud_provider' type from
+// readCloudProviderList reads list of values of the ”cloud_provider' type from
 // the given iterator.
-func ReadCloudProviderList(iterator *jsoniter.Iterator) []*CloudProvider {
+func readCloudProviderList(iterator *jsoniter.Iterator) []*CloudProvider {
 	list := []*CloudProvider{}
 	for iterator.ReadArray() {
-		item := ReadCloudProvider(iterator)
+		item := readCloudProvider(iterator)
 		list = append(list, item)
 	}
 	return list

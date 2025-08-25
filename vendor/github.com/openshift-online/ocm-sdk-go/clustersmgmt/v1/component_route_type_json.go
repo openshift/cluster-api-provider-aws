@@ -29,7 +29,7 @@ import (
 // MarshalComponentRoute writes a value of the 'component_route' type to the given writer.
 func MarshalComponentRoute(object *ComponentRoute, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteComponentRoute(object, stream)
+	writeComponentRoute(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalComponentRoute(object *ComponentRoute, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteComponentRoute writes a value of the 'component_route' type to the given stream.
-func WriteComponentRoute(object *ComponentRoute, stream *jsoniter.Stream) {
+// writeComponentRoute writes a value of the 'component_route' type to the given stream.
+func writeComponentRoute(object *ComponentRoute, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -92,13 +92,13 @@ func UnmarshalComponentRoute(source interface{}) (object *ComponentRoute, err er
 	if err != nil {
 		return
 	}
-	object = ReadComponentRoute(iterator)
+	object = readComponentRoute(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadComponentRoute reads a value of the 'component_route' type from the given iterator.
-func ReadComponentRoute(iterator *jsoniter.Iterator) *ComponentRoute {
+// readComponentRoute reads a value of the 'component_route' type from the given iterator.
+func readComponentRoute(iterator *jsoniter.Iterator) *ComponentRoute {
 	object := &ComponentRoute{}
 	for {
 		field := iterator.ReadObject()

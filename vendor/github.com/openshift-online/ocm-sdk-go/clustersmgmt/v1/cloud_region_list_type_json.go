@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalCloudRegionList(list []*CloudRegion, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteCloudRegionList(list, stream)
+	writeCloudRegionList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalCloudRegionList(list []*CloudRegion, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteCloudRegionList writes a list of value of the 'cloud_region' type to
+// writeCloudRegionList writes a list of value of the 'cloud_region' type to
 // the given stream.
-func WriteCloudRegionList(list []*CloudRegion, stream *jsoniter.Stream) {
+func writeCloudRegionList(list []*CloudRegion, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteCloudRegion(value, stream)
+		writeCloudRegion(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalCloudRegionList(source interface{}) (items []*CloudRegion, err err
 	if err != nil {
 		return
 	}
-	items = ReadCloudRegionList(iterator)
+	items = readCloudRegionList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadCloudRegionList reads list of values of the ”cloud_region' type from
+// readCloudRegionList reads list of values of the ”cloud_region' type from
 // the given iterator.
-func ReadCloudRegionList(iterator *jsoniter.Iterator) []*CloudRegion {
+func readCloudRegionList(iterator *jsoniter.Iterator) []*CloudRegion {
 	list := []*CloudRegion{}
 	for iterator.ReadArray() {
-		item := ReadCloudRegion(iterator)
+		item := readCloudRegion(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalNodePoolManagementUpgradeList(list []*NodePoolManagementUpgrade, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteNodePoolManagementUpgradeList(list, stream)
+	writeNodePoolManagementUpgradeList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalNodePoolManagementUpgradeList(list []*NodePoolManagementUpgrade, wri
 	return stream.Error
 }
 
-// WriteNodePoolManagementUpgradeList writes a list of value of the 'node_pool_management_upgrade' type to
+// writeNodePoolManagementUpgradeList writes a list of value of the 'node_pool_management_upgrade' type to
 // the given stream.
-func WriteNodePoolManagementUpgradeList(list []*NodePoolManagementUpgrade, stream *jsoniter.Stream) {
+func writeNodePoolManagementUpgradeList(list []*NodePoolManagementUpgrade, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteNodePoolManagementUpgrade(value, stream)
+		writeNodePoolManagementUpgrade(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalNodePoolManagementUpgradeList(source interface{}) (items []*NodePo
 	if err != nil {
 		return
 	}
-	items = ReadNodePoolManagementUpgradeList(iterator)
+	items = readNodePoolManagementUpgradeList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadNodePoolManagementUpgradeList reads list of values of the ”node_pool_management_upgrade' type from
+// readNodePoolManagementUpgradeList reads list of values of the ”node_pool_management_upgrade' type from
 // the given iterator.
-func ReadNodePoolManagementUpgradeList(iterator *jsoniter.Iterator) []*NodePoolManagementUpgrade {
+func readNodePoolManagementUpgradeList(iterator *jsoniter.Iterator) []*NodePoolManagementUpgrade {
 	list := []*NodePoolManagementUpgrade{}
 	for iterator.ReadArray() {
-		item := ReadNodePoolManagementUpgrade(iterator)
+		item := readNodePoolManagementUpgrade(iterator)
 		list = append(list, item)
 	}
 	return list

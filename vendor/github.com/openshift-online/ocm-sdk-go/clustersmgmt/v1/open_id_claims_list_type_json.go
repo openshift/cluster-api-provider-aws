@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalOpenIDClaimsList(list []*OpenIDClaims, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteOpenIDClaimsList(list, stream)
+	writeOpenIDClaimsList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalOpenIDClaimsList(list []*OpenIDClaims, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteOpenIDClaimsList writes a list of value of the 'open_ID_claims' type to
+// writeOpenIDClaimsList writes a list of value of the 'open_ID_claims' type to
 // the given stream.
-func WriteOpenIDClaimsList(list []*OpenIDClaims, stream *jsoniter.Stream) {
+func writeOpenIDClaimsList(list []*OpenIDClaims, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteOpenIDClaims(value, stream)
+		writeOpenIDClaims(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalOpenIDClaimsList(source interface{}) (items []*OpenIDClaims, err e
 	if err != nil {
 		return
 	}
-	items = ReadOpenIDClaimsList(iterator)
+	items = readOpenIDClaimsList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadOpenIDClaimsList reads list of values of the ”open_ID_claims' type from
+// readOpenIDClaimsList reads list of values of the ”open_ID_claims' type from
 // the given iterator.
-func ReadOpenIDClaimsList(iterator *jsoniter.Iterator) []*OpenIDClaims {
+func readOpenIDClaimsList(iterator *jsoniter.Iterator) []*OpenIDClaims {
 	list := []*OpenIDClaims{}
 	for iterator.ReadArray() {
-		item := ReadOpenIDClaims(iterator)
+		item := readOpenIDClaims(iterator)
 		list = append(list, item)
 	}
 	return list

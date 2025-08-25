@@ -30,7 +30,7 @@ import (
 // MarshalContract writes a value of the 'contract' type to the given writer.
 func MarshalContract(object *Contract, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteContract(object, stream)
+	writeContract(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalContract(object *Contract, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteContract writes a value of the 'contract' type to the given stream.
-func WriteContract(object *Contract, stream *jsoniter.Stream) {
+// writeContract writes a value of the 'contract' type to the given stream.
+func writeContract(object *Contract, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -49,7 +49,7 @@ func WriteContract(object *Contract, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("dimensions")
-		WriteContractDimensionList(object.dimensions, stream)
+		writeContractDimensionList(object.dimensions, stream)
 		count++
 	}
 	present_ = object.bitmap_&2 != 0
@@ -79,13 +79,13 @@ func UnmarshalContract(source interface{}) (object *Contract, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadContract(iterator)
+	object = readContract(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadContract reads a value of the 'contract' type from the given iterator.
-func ReadContract(iterator *jsoniter.Iterator) *Contract {
+// readContract reads a value of the 'contract' type from the given iterator.
+func readContract(iterator *jsoniter.Iterator) *Contract {
 	object := &Contract{}
 	for {
 		field := iterator.ReadObject()
@@ -94,7 +94,7 @@ func ReadContract(iterator *jsoniter.Iterator) *Contract {
 		}
 		switch field {
 		case "dimensions":
-			value := ReadContractDimensionList(iterator)
+			value := readContractDimensionList(iterator)
 			object.dimensions = value
 			object.bitmap_ |= 1
 		case "end_date":

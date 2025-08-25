@@ -29,7 +29,7 @@ import (
 // MarshalPrivateLinkClusterConfiguration writes a value of the 'private_link_cluster_configuration' type to the given writer.
 func MarshalPrivateLinkClusterConfiguration(object *PrivateLinkClusterConfiguration, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WritePrivateLinkClusterConfiguration(object, stream)
+	writePrivateLinkClusterConfiguration(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalPrivateLinkClusterConfiguration(object *PrivateLinkClusterConfigurat
 	return stream.Error
 }
 
-// WritePrivateLinkClusterConfiguration writes a value of the 'private_link_cluster_configuration' type to the given stream.
-func WritePrivateLinkClusterConfiguration(object *PrivateLinkClusterConfiguration, stream *jsoniter.Stream) {
+// writePrivateLinkClusterConfiguration writes a value of the 'private_link_cluster_configuration' type to the given stream.
+func writePrivateLinkClusterConfiguration(object *PrivateLinkClusterConfiguration, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -48,7 +48,7 @@ func WritePrivateLinkClusterConfiguration(object *PrivateLinkClusterConfiguratio
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("principals")
-		WritePrivateLinkPrincipalList(object.principals, stream)
+		writePrivateLinkPrincipalList(object.principals, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -60,13 +60,13 @@ func UnmarshalPrivateLinkClusterConfiguration(source interface{}) (object *Priva
 	if err != nil {
 		return
 	}
-	object = ReadPrivateLinkClusterConfiguration(iterator)
+	object = readPrivateLinkClusterConfiguration(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadPrivateLinkClusterConfiguration reads a value of the 'private_link_cluster_configuration' type from the given iterator.
-func ReadPrivateLinkClusterConfiguration(iterator *jsoniter.Iterator) *PrivateLinkClusterConfiguration {
+// readPrivateLinkClusterConfiguration reads a value of the 'private_link_cluster_configuration' type from the given iterator.
+func readPrivateLinkClusterConfiguration(iterator *jsoniter.Iterator) *PrivateLinkClusterConfiguration {
 	object := &PrivateLinkClusterConfiguration{}
 	for {
 		field := iterator.ReadObject()
@@ -75,7 +75,7 @@ func ReadPrivateLinkClusterConfiguration(iterator *jsoniter.Iterator) *PrivateLi
 		}
 		switch field {
 		case "principals":
-			value := ReadPrivateLinkPrincipalList(iterator)
+			value := readPrivateLinkPrincipalList(iterator)
 			object.principals = value
 			object.bitmap_ |= 1
 		default:

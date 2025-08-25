@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalExternalAuthConfigList(list []*ExternalAuthConfig, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteExternalAuthConfigList(list, stream)
+	writeExternalAuthConfigList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalExternalAuthConfigList(list []*ExternalAuthConfig, writer io.Writer)
 	return stream.Error
 }
 
-// WriteExternalAuthConfigList writes a list of value of the 'external_auth_config' type to
+// writeExternalAuthConfigList writes a list of value of the 'external_auth_config' type to
 // the given stream.
-func WriteExternalAuthConfigList(list []*ExternalAuthConfig, stream *jsoniter.Stream) {
+func writeExternalAuthConfigList(list []*ExternalAuthConfig, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteExternalAuthConfig(value, stream)
+		writeExternalAuthConfig(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalExternalAuthConfigList(source interface{}) (items []*ExternalAuthC
 	if err != nil {
 		return
 	}
-	items = ReadExternalAuthConfigList(iterator)
+	items = readExternalAuthConfigList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadExternalAuthConfigList reads list of values of the ”external_auth_config' type from
+// readExternalAuthConfigList reads list of values of the ”external_auth_config' type from
 // the given iterator.
-func ReadExternalAuthConfigList(iterator *jsoniter.Iterator) []*ExternalAuthConfig {
+func readExternalAuthConfigList(iterator *jsoniter.Iterator) []*ExternalAuthConfig {
 	list := []*ExternalAuthConfig{}
 	for iterator.ReadArray() {
-		item := ReadExternalAuthConfig(iterator)
+		item := readExternalAuthConfig(iterator)
 		list = append(list, item)
 	}
 	return list

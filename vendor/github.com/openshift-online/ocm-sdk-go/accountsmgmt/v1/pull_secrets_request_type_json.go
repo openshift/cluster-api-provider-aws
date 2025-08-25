@@ -29,7 +29,7 @@ import (
 // MarshalPullSecretsRequest writes a value of the 'pull_secrets_request' type to the given writer.
 func MarshalPullSecretsRequest(object *PullSecretsRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WritePullSecretsRequest(object, stream)
+	writePullSecretsRequest(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalPullSecretsRequest(object *PullSecretsRequest, writer io.Writer) err
 	return stream.Error
 }
 
-// WritePullSecretsRequest writes a value of the 'pull_secrets_request' type to the given stream.
-func WritePullSecretsRequest(object *PullSecretsRequest, stream *jsoniter.Stream) {
+// writePullSecretsRequest writes a value of the 'pull_secrets_request' type to the given stream.
+func writePullSecretsRequest(object *PullSecretsRequest, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -60,13 +60,13 @@ func UnmarshalPullSecretsRequest(source interface{}) (object *PullSecretsRequest
 	if err != nil {
 		return
 	}
-	object = ReadPullSecretsRequest(iterator)
+	object = readPullSecretsRequest(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadPullSecretsRequest reads a value of the 'pull_secrets_request' type from the given iterator.
-func ReadPullSecretsRequest(iterator *jsoniter.Iterator) *PullSecretsRequest {
+// readPullSecretsRequest reads a value of the 'pull_secrets_request' type from the given iterator.
+func readPullSecretsRequest(iterator *jsoniter.Iterator) *PullSecretsRequest {
 	object := &PullSecretsRequest{}
 	for {
 		field := iterator.ReadObject()

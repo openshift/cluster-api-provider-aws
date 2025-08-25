@@ -57,7 +57,7 @@ func readApplicationsListResponse(response *ApplicationsListResponse, reader io.
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadApplicationList(iterator)
+			items := readApplicationList(iterator)
 			response.items = &ApplicationList{
 				items: items,
 			}

@@ -49,7 +49,7 @@ func readAddonInquiriesListResponse(response *AddonInquiriesListResponse, reader
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadAddOnList(iterator)
+			items := readAddOnList(iterator)
 			response.items = &AddOnList{
 				items: items,
 			}

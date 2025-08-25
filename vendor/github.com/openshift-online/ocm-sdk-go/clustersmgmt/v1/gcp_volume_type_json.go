@@ -29,7 +29,7 @@ import (
 // MarshalGCPVolume writes a value of the 'GCP_volume' type to the given writer.
 func MarshalGCPVolume(object *GCPVolume, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteGCPVolume(object, stream)
+	writeGCPVolume(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalGCPVolume(object *GCPVolume, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteGCPVolume writes a value of the 'GCP_volume' type to the given stream.
-func WriteGCPVolume(object *GCPVolume, stream *jsoniter.Stream) {
+// writeGCPVolume writes a value of the 'GCP_volume' type to the given stream.
+func writeGCPVolume(object *GCPVolume, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -60,13 +60,13 @@ func UnmarshalGCPVolume(source interface{}) (object *GCPVolume, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadGCPVolume(iterator)
+	object = readGCPVolume(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadGCPVolume reads a value of the 'GCP_volume' type from the given iterator.
-func ReadGCPVolume(iterator *jsoniter.Iterator) *GCPVolume {
+// readGCPVolume reads a value of the 'GCP_volume' type from the given iterator.
+func readGCPVolume(iterator *jsoniter.Iterator) *GCPVolume {
 	object := &GCPVolume{}
 	for {
 		field := iterator.ReadObject()

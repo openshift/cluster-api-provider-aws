@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAutoscalerScaleDownConfigList(list []*AutoscalerScaleDownConfig, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAutoscalerScaleDownConfigList(list, stream)
+	writeAutoscalerScaleDownConfigList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAutoscalerScaleDownConfigList(list []*AutoscalerScaleDownConfig, wri
 	return stream.Error
 }
 
-// WriteAutoscalerScaleDownConfigList writes a list of value of the 'autoscaler_scale_down_config' type to
+// writeAutoscalerScaleDownConfigList writes a list of value of the 'autoscaler_scale_down_config' type to
 // the given stream.
-func WriteAutoscalerScaleDownConfigList(list []*AutoscalerScaleDownConfig, stream *jsoniter.Stream) {
+func writeAutoscalerScaleDownConfigList(list []*AutoscalerScaleDownConfig, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteAutoscalerScaleDownConfig(value, stream)
+		writeAutoscalerScaleDownConfig(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAutoscalerScaleDownConfigList(source interface{}) (items []*Autosc
 	if err != nil {
 		return
 	}
-	items = ReadAutoscalerScaleDownConfigList(iterator)
+	items = readAutoscalerScaleDownConfigList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAutoscalerScaleDownConfigList reads list of values of the ”autoscaler_scale_down_config' type from
+// readAutoscalerScaleDownConfigList reads list of values of the ”autoscaler_scale_down_config' type from
 // the given iterator.
-func ReadAutoscalerScaleDownConfigList(iterator *jsoniter.Iterator) []*AutoscalerScaleDownConfig {
+func readAutoscalerScaleDownConfigList(iterator *jsoniter.Iterator) []*AutoscalerScaleDownConfig {
 	list := []*AutoscalerScaleDownConfig{}
 	for iterator.ReadArray() {
-		item := ReadAutoscalerScaleDownConfig(iterator)
+		item := readAutoscalerScaleDownConfig(iterator)
 		list = append(list, item)
 	}
 	return list

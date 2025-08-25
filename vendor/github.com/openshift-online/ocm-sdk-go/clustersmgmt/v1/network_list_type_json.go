@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalNetworkList(list []*Network, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteNetworkList(list, stream)
+	writeNetworkList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalNetworkList(list []*Network, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteNetworkList writes a list of value of the 'network' type to
+// writeNetworkList writes a list of value of the 'network' type to
 // the given stream.
-func WriteNetworkList(list []*Network, stream *jsoniter.Stream) {
+func writeNetworkList(list []*Network, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteNetwork(value, stream)
+		writeNetwork(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalNetworkList(source interface{}) (items []*Network, err error) {
 	if err != nil {
 		return
 	}
-	items = ReadNetworkList(iterator)
+	items = readNetworkList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadNetworkList reads list of values of the ”network' type from
+// readNetworkList reads list of values of the ”network' type from
 // the given iterator.
-func ReadNetworkList(iterator *jsoniter.Iterator) []*Network {
+func readNetworkList(iterator *jsoniter.Iterator) []*Network {
 	list := []*Network{}
 	for iterator.ReadArray() {
-		item := ReadNetwork(iterator)
+		item := readNetwork(iterator)
 		list = append(list, item)
 	}
 	return list

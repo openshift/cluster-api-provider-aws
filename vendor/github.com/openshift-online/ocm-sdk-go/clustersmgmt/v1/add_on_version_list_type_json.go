@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAddOnVersionList(list []*AddOnVersion, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAddOnVersionList(list, stream)
+	writeAddOnVersionList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAddOnVersionList(list []*AddOnVersion, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteAddOnVersionList writes a list of value of the 'add_on_version' type to
+// writeAddOnVersionList writes a list of value of the 'add_on_version' type to
 // the given stream.
-func WriteAddOnVersionList(list []*AddOnVersion, stream *jsoniter.Stream) {
+func writeAddOnVersionList(list []*AddOnVersion, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteAddOnVersion(value, stream)
+		writeAddOnVersion(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAddOnVersionList(source interface{}) (items []*AddOnVersion, err e
 	if err != nil {
 		return
 	}
-	items = ReadAddOnVersionList(iterator)
+	items = readAddOnVersionList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAddOnVersionList reads list of values of the ”add_on_version' type from
+// readAddOnVersionList reads list of values of the ”add_on_version' type from
 // the given iterator.
-func ReadAddOnVersionList(iterator *jsoniter.Iterator) []*AddOnVersion {
+func readAddOnVersionList(iterator *jsoniter.Iterator) []*AddOnVersion {
 	list := []*AddOnVersion{}
 	for iterator.ReadArray() {
-		item := ReadAddOnVersion(iterator)
+		item := readAddOnVersion(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalClusterManagementReferenceList(list []*ClusterManagementReference, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteClusterManagementReferenceList(list, stream)
+	writeClusterManagementReferenceList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalClusterManagementReferenceList(list []*ClusterManagementReference, w
 	return stream.Error
 }
 
-// WriteClusterManagementReferenceList writes a list of value of the 'cluster_management_reference' type to
+// writeClusterManagementReferenceList writes a list of value of the 'cluster_management_reference' type to
 // the given stream.
-func WriteClusterManagementReferenceList(list []*ClusterManagementReference, stream *jsoniter.Stream) {
+func writeClusterManagementReferenceList(list []*ClusterManagementReference, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteClusterManagementReference(value, stream)
+		writeClusterManagementReference(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalClusterManagementReferenceList(source interface{}) (items []*Clust
 	if err != nil {
 		return
 	}
-	items = ReadClusterManagementReferenceList(iterator)
+	items = readClusterManagementReferenceList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadClusterManagementReferenceList reads list of values of the ”cluster_management_reference' type from
+// readClusterManagementReferenceList reads list of values of the ”cluster_management_reference' type from
 // the given iterator.
-func ReadClusterManagementReferenceList(iterator *jsoniter.Iterator) []*ClusterManagementReference {
+func readClusterManagementReferenceList(iterator *jsoniter.Iterator) []*ClusterManagementReference {
 	list := []*ClusterManagementReference{}
 	for iterator.ReadArray() {
-		item := ReadClusterManagementReference(iterator)
+		item := readClusterManagementReference(iterator)
 		list = append(list, item)
 	}
 	return list

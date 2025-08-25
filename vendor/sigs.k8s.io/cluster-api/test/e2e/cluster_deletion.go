@@ -183,7 +183,7 @@ func ClusterDeletionSpec(ctx context.Context, inputGetter func() ClusterDeletion
 				Flavor:                   flavor,
 				Namespace:                namespace.Name,
 				ClusterName:              clusterName,
-				KubernetesVersion:        input.E2EConfig.MustGetVariable(KubernetesVersion),
+				KubernetesVersion:        input.E2EConfig.GetVariable(KubernetesVersion),
 				ControlPlaneMachineCount: controlPlaneMachineCount,
 				WorkerMachineCount:       workerMachineCount,
 			},
@@ -254,10 +254,9 @@ func ClusterDeletionSpec(ctx context.Context, inputGetter func() ClusterDeletion
 
 		log.Logf("Waiting for the Cluster %s to be deleted", klog.KObj(clusterResources.Cluster))
 		framework.WaitForClusterDeleted(ctx, framework.WaitForClusterDeletedInput{
-			ClusterProxy:         input.BootstrapClusterProxy,
-			ClusterctlConfigPath: input.ClusterctlConfigPath,
-			Cluster:              clusterResources.Cluster,
-			ArtifactFolder:       input.ArtifactFolder,
+			Client:         input.BootstrapClusterProxy.GetClient(),
+			Cluster:        clusterResources.Cluster,
+			ArtifactFolder: input.ArtifactFolder,
 		}, input.E2EConfig.GetIntervals(specName, "wait-delete-cluster")...)
 
 		By("PASSED!")
@@ -265,7 +264,7 @@ func ClusterDeletionSpec(ctx context.Context, inputGetter func() ClusterDeletion
 
 	AfterEach(func() {
 		// Dump all the resources in the spec namespace and the workload cluster.
-		framework.DumpAllResourcesAndLogs(ctx, input.BootstrapClusterProxy, input.ClusterctlConfigPath, input.ArtifactFolder, namespace, clusterResources.Cluster)
+		framework.DumpAllResourcesAndLogs(ctx, input.BootstrapClusterProxy, input.ArtifactFolder, namespace, clusterResources.Cluster)
 
 		if !input.SkipCleanup {
 			// Remove finalizers we added to block normal deletion.
@@ -276,10 +275,9 @@ func ClusterDeletionSpec(ctx context.Context, inputGetter func() ClusterDeletion
 			// that cluster variable is not set even if the cluster exists, so we are calling DeleteAllClustersAndWait
 			// instead of DeleteClusterAndWait
 			framework.DeleteAllClustersAndWait(ctx, framework.DeleteAllClustersAndWaitInput{
-				ClusterProxy:         input.BootstrapClusterProxy,
-				ClusterctlConfigPath: input.ClusterctlConfigPath,
-				Namespace:            namespace.Name,
-				ArtifactFolder:       input.ArtifactFolder,
+				Client:         input.BootstrapClusterProxy.GetClient(),
+				Namespace:      namespace.Name,
+				ArtifactFolder: input.ArtifactFolder,
 			}, input.E2EConfig.GetIntervals(specName, "wait-delete-cluster")...)
 
 			By(fmt.Sprintf("Deleting namespace used for hosting the %q test spec", specName))

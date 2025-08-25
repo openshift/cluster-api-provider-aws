@@ -49,7 +49,7 @@ func readLimitedSupportReasonTemplatesListResponse(response *LimitedSupportReaso
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadLimitedSupportReasonTemplateList(iterator)
+			items := readLimitedSupportReasonTemplateList(iterator)
 			response.items = &LimitedSupportReasonTemplateList{
 				items: items,
 			}

@@ -29,7 +29,7 @@ import (
 // MarshalCloudAccount writes a value of the 'cloud_account' type to the given writer.
 func MarshalCloudAccount(object *CloudAccount, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteCloudAccount(object, stream)
+	writeCloudAccount(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalCloudAccount(object *CloudAccount, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteCloudAccount writes a value of the 'cloud_account' type to the given stream.
-func WriteCloudAccount(object *CloudAccount, stream *jsoniter.Stream) {
+// writeCloudAccount writes a value of the 'cloud_account' type to the given stream.
+func writeCloudAccount(object *CloudAccount, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -66,7 +66,7 @@ func WriteCloudAccount(object *CloudAccount, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("contracts")
-		WriteContractList(object.contracts, stream)
+		writeContractList(object.contracts, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -78,13 +78,13 @@ func UnmarshalCloudAccount(source interface{}) (object *CloudAccount, err error)
 	if err != nil {
 		return
 	}
-	object = ReadCloudAccount(iterator)
+	object = readCloudAccount(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadCloudAccount reads a value of the 'cloud_account' type from the given iterator.
-func ReadCloudAccount(iterator *jsoniter.Iterator) *CloudAccount {
+// readCloudAccount reads a value of the 'cloud_account' type from the given iterator.
+func readCloudAccount(iterator *jsoniter.Iterator) *CloudAccount {
 	object := &CloudAccount{}
 	for {
 		field := iterator.ReadObject()
@@ -101,7 +101,7 @@ func ReadCloudAccount(iterator *jsoniter.Iterator) *CloudAccount {
 			object.cloudProviderID = value
 			object.bitmap_ |= 2
 		case "contracts":
-			value := ReadContractList(iterator)
+			value := readContractList(iterator)
 			object.contracts = value
 			object.bitmap_ |= 4
 		default:

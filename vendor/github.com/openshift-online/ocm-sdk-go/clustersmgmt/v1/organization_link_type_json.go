@@ -29,7 +29,7 @@ import (
 // MarshalOrganizationLink writes a value of the 'organization_link' type to the given writer.
 func MarshalOrganizationLink(object *OrganizationLink, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteOrganizationLink(object, stream)
+	writeOrganizationLink(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalOrganizationLink(object *OrganizationLink, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteOrganizationLink writes a value of the 'organization_link' type to the given stream.
-func WriteOrganizationLink(object *OrganizationLink, stream *jsoniter.Stream) {
+// writeOrganizationLink writes a value of the 'organization_link' type to the given stream.
+func writeOrganizationLink(object *OrganizationLink, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -69,13 +69,13 @@ func UnmarshalOrganizationLink(source interface{}) (object *OrganizationLink, er
 	if err != nil {
 		return
 	}
-	object = ReadOrganizationLink(iterator)
+	object = readOrganizationLink(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadOrganizationLink reads a value of the 'organization_link' type from the given iterator.
-func ReadOrganizationLink(iterator *jsoniter.Iterator) *OrganizationLink {
+// readOrganizationLink reads a value of the 'organization_link' type from the given iterator.
+func readOrganizationLink(iterator *jsoniter.Iterator) *OrganizationLink {
 	object := &OrganizationLink{}
 	for {
 		field := iterator.ReadObject()

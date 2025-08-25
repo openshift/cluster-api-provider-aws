@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAccessRequestPostRequestList(list []*AccessRequestPostRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAccessRequestPostRequestList(list, stream)
+	writeAccessRequestPostRequestList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAccessRequestPostRequestList(list []*AccessRequestPostRequest, write
 	return stream.Error
 }
 
-// WriteAccessRequestPostRequestList writes a list of value of the 'access_request_post_request' type to
+// writeAccessRequestPostRequestList writes a list of value of the 'access_request_post_request' type to
 // the given stream.
-func WriteAccessRequestPostRequestList(list []*AccessRequestPostRequest, stream *jsoniter.Stream) {
+func writeAccessRequestPostRequestList(list []*AccessRequestPostRequest, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteAccessRequestPostRequest(value, stream)
+		writeAccessRequestPostRequest(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAccessRequestPostRequestList(source interface{}) (items []*AccessR
 	if err != nil {
 		return
 	}
-	items = ReadAccessRequestPostRequestList(iterator)
+	items = readAccessRequestPostRequestList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAccessRequestPostRequestList reads list of values of the ”access_request_post_request' type from
+// readAccessRequestPostRequestList reads list of values of the ”access_request_post_request' type from
 // the given iterator.
-func ReadAccessRequestPostRequestList(iterator *jsoniter.Iterator) []*AccessRequestPostRequest {
+func readAccessRequestPostRequestList(iterator *jsoniter.Iterator) []*AccessRequestPostRequest {
 	list := []*AccessRequestPostRequest{}
 	for iterator.ReadArray() {
-		item := ReadAccessRequestPostRequest(iterator)
+		item := readAccessRequestPostRequest(iterator)
 		list = append(list, item)
 	}
 	return list

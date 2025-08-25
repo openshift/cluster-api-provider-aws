@@ -11,18 +11,15 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Describes the specified event windows or all event windows.
-//
-// If you specify event window IDs, the output includes information for only the
-// specified event windows. If you specify filters, the output includes information
-// for only those event windows that meet the filter criteria. If you do not
-// specify event windows IDs or filters, the output includes information for all
-// event windows, which can affect performance. We recommend that you use
-// pagination to ensure that the operation returns quickly and successfully.
-//
-// For more information, see [Define event windows for scheduled events] in the Amazon EC2 User Guide.
-//
-// [Define event windows for scheduled events]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/event-windows.html
+// Describes the specified event windows or all event windows. If you specify
+// event window IDs, the output includes information for only the specified event
+// windows. If you specify filters, the output includes information for only those
+// event windows that meet the filter criteria. If you do not specify event windows
+// IDs or filters, the output includes information for all event windows, which can
+// affect performance. We recommend that you use pagination to ensure that the
+// operation returns quickly and successfully. For more information, see Define
+// event windows for scheduled events (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/event-windows.html)
+// in the Amazon EC2 User Guide.
 func (c *Client) DescribeInstanceEventWindows(ctx context.Context, params *DescribeInstanceEventWindowsInput, optFns ...func(*Options)) (*DescribeInstanceEventWindowsOutput, error) {
 	if params == nil {
 		params = &DescribeInstanceEventWindowsInput{}
@@ -48,32 +45,24 @@ type DescribeInstanceEventWindowsInput struct {
 	DryRun *bool
 
 	// One or more filters.
-	//
 	//   - dedicated-host-id - The event windows associated with the specified
 	//   Dedicated Host ID.
-	//
 	//   - event-window-name - The event windows associated with the specified names.
-	//
 	//   - instance-id - The event windows associated with the specified instance ID.
-	//
-	//   - instance-tag - The event windows associated with the specified tag and value.
-	//
+	//   - instance-tag - The event windows associated with the specified tag and
+	//   value.
 	//   - instance-tag-key - The event windows associated with the specified tag key,
 	//   regardless of the value.
-	//
 	//   - instance-tag-value - The event windows associated with the specified tag
 	//   value, regardless of the key.
-	//
 	//   - tag: - The key/value combination of a tag assigned to the event window. Use
 	//   the tag key in the filter name and the tag value as the filter value. For
 	//   example, to find all resources that have a tag with the key Owner and the
 	//   value CMX , specify tag:Owner for the filter name and CMX for the filter
 	//   value.
-	//
 	//   - tag-key - The key of a tag assigned to the event window. Use this filter to
 	//   find all event windows that have a tag with a specific key, regardless of the
 	//   tag value.
-	//
 	//   - tag-value - The value of a tag assigned to the event window. Use this filter
 	//   to find all event windows that have a tag with a specific value, regardless of
 	//   the tag key.
@@ -152,9 +141,6 @@ func (c *Client) addOperationDescribeInstanceEventWindowsMiddlewares(stack *midd
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -165,15 +151,6 @@ func (c *Client) addOperationDescribeInstanceEventWindowsMiddlewares(stack *midd
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeInstanceEventWindows(options.Region), middleware.Before); err != nil {
@@ -194,20 +171,16 @@ func (c *Client) addOperationDescribeInstanceEventWindowsMiddlewares(stack *midd
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
-		return err
-	}
 	return nil
 }
+
+// DescribeInstanceEventWindowsAPIClient is a client that implements the
+// DescribeInstanceEventWindows operation.
+type DescribeInstanceEventWindowsAPIClient interface {
+	DescribeInstanceEventWindows(context.Context, *DescribeInstanceEventWindowsInput, ...func(*Options)) (*DescribeInstanceEventWindowsOutput, error)
+}
+
+var _ DescribeInstanceEventWindowsAPIClient = (*Client)(nil)
 
 // DescribeInstanceEventWindowsPaginatorOptions is the paginator options for
 // DescribeInstanceEventWindows
@@ -278,9 +251,6 @@ func (p *DescribeInstanceEventWindowsPaginator) NextPage(ctx context.Context, op
 	}
 	params.MaxResults = limit
 
-	optFns = append([]func(*Options){
-		addIsPaginatorUserAgent,
-	}, optFns...)
 	result, err := p.client.DescribeInstanceEventWindows(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -299,14 +269,6 @@ func (p *DescribeInstanceEventWindowsPaginator) NextPage(ctx context.Context, op
 
 	return result, nil
 }
-
-// DescribeInstanceEventWindowsAPIClient is a client that implements the
-// DescribeInstanceEventWindows operation.
-type DescribeInstanceEventWindowsAPIClient interface {
-	DescribeInstanceEventWindows(context.Context, *DescribeInstanceEventWindowsInput, ...func(*Options)) (*DescribeInstanceEventWindowsOutput, error)
-}
-
-var _ DescribeInstanceEventWindowsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeInstanceEventWindows(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

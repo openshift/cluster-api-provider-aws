@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalHTPasswdUserList(list []*HTPasswdUser, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteHTPasswdUserList(list, stream)
+	writeHTPasswdUserList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalHTPasswdUserList(list []*HTPasswdUser, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteHTPasswdUserList writes a list of value of the 'HT_passwd_user' type to
+// writeHTPasswdUserList writes a list of value of the 'HT_passwd_user' type to
 // the given stream.
-func WriteHTPasswdUserList(list []*HTPasswdUser, stream *jsoniter.Stream) {
+func writeHTPasswdUserList(list []*HTPasswdUser, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteHTPasswdUser(value, stream)
+		writeHTPasswdUser(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalHTPasswdUserList(source interface{}) (items []*HTPasswdUser, err e
 	if err != nil {
 		return
 	}
-	items = ReadHTPasswdUserList(iterator)
+	items = readHTPasswdUserList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadHTPasswdUserList reads list of values of the ”HT_passwd_user' type from
+// readHTPasswdUserList reads list of values of the ”HT_passwd_user' type from
 // the given iterator.
-func ReadHTPasswdUserList(iterator *jsoniter.Iterator) []*HTPasswdUser {
+func readHTPasswdUserList(iterator *jsoniter.Iterator) []*HTPasswdUser {
 	list := []*HTPasswdUser{}
 	for iterator.ReadArray() {
-		item := ReadHTPasswdUser(iterator)
+		item := readHTPasswdUser(iterator)
 		list = append(list, item)
 	}
 	return list

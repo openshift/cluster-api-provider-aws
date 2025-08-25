@@ -17,18 +17,16 @@ limitations under the License.
 package secretsmanager
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"path"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
-	"github.com/aws/smithy-go"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/uuid"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/awserrors"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/converters"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/scope"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/wait"
@@ -45,9 +43,9 @@ const (
 
 var retryableErrors = []string{
 	// Returned when the secret is scheduled for deletion
-	"InvalidRequestException",
+	secretsmanager.ErrCodeInvalidRequestException,
 	// Returned during retries of deletes prior to recreation
-	"ResourceNotFoundException",
+	secretsmanager.ErrCodeResourceNotFoundException,
 }
 
 // Create stores data in AWS Secrets Manager for a given machine, chunking at 10kb per secret. The prefix of the secret
@@ -88,17 +86,16 @@ func (s *Service) Create(m *scope.MachineScope, data []byte) (string, int32, err
 
 // retryableCreateSecret is a function to be passed into a waiter. In a separate function for ease of reading.
 func (s *Service) retryableCreateSecret(name string, chunk []byte, tags infrav1.Tags) (bool, error) {
-	_, err := s.SecretsManagerClient.CreateSecret(context.TODO(), &secretsmanager.CreateSecretInput{
+	_, err := s.SecretsManagerClient.CreateSecret(&secretsmanager.CreateSecretInput{
 		Name:         aws.String(name),
 		SecretBinary: chunk,
 		Tags:         converters.MapToSecretsManagerTags(tags),
 	})
 	// If the secret already exists, delete it, return request to retry, as deletes are eventually consistent
+	if awserrors.IsResourceExists(err) {
+		return false, s.forceDeleteSecretEntry(name)
+	}
 	if err != nil {
-		var aerr smithy.APIError
-		if errors.As(err, &aerr) && aerr.ErrorCode() == "ResourceExistsException" {
-			return false, s.forceDeleteSecretEntry(name)
-		}
 		return false, err
 	}
 	return true, err
@@ -106,15 +103,12 @@ func (s *Service) retryableCreateSecret(name string, chunk []byte, tags infrav1.
 
 // forceDeleteSecretEntry deletes a single secret, ignoring if it is absent.
 func (s *Service) forceDeleteSecretEntry(name string) error {
-	_, err := s.SecretsManagerClient.DeleteSecret(context.TODO(), &secretsmanager.DeleteSecretInput{
+	_, err := s.SecretsManagerClient.DeleteSecret(&secretsmanager.DeleteSecretInput{
 		SecretId:                   aws.String(name),
 		ForceDeleteWithoutRecovery: aws.Bool(true),
 	})
-	if err != nil {
-		var aerr smithy.APIError
-		if errors.As(err, &aerr) && aerr.ErrorCode() == "ResourceNotFoundException" {
-			return nil
-		}
+	if awserrors.IsNotFound(err) {
+		return nil
 	}
 	return err
 }

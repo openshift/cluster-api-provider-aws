@@ -29,7 +29,7 @@ import (
 // MarshalNodesInfo writes a value of the 'nodes_info' type to the given writer.
 func MarshalNodesInfo(object *NodesInfo, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteNodesInfo(object, stream)
+	writeNodesInfo(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalNodesInfo(object *NodesInfo, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteNodesInfo writes a value of the 'nodes_info' type to the given stream.
-func WriteNodesInfo(object *NodesInfo, stream *jsoniter.Stream) {
+// writeNodesInfo writes a value of the 'nodes_info' type to the given stream.
+func writeNodesInfo(object *NodesInfo, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -48,7 +48,7 @@ func WriteNodesInfo(object *NodesInfo, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("nodes")
-		WriteNodeInfoList(object.nodes, stream)
+		writeNodeInfoList(object.nodes, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -60,13 +60,13 @@ func UnmarshalNodesInfo(source interface{}) (object *NodesInfo, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadNodesInfo(iterator)
+	object = readNodesInfo(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadNodesInfo reads a value of the 'nodes_info' type from the given iterator.
-func ReadNodesInfo(iterator *jsoniter.Iterator) *NodesInfo {
+// readNodesInfo reads a value of the 'nodes_info' type from the given iterator.
+func readNodesInfo(iterator *jsoniter.Iterator) *NodesInfo {
 	object := &NodesInfo{}
 	for {
 		field := iterator.ReadObject()
@@ -75,7 +75,7 @@ func ReadNodesInfo(iterator *jsoniter.Iterator) *NodesInfo {
 		}
 		switch field {
 		case "nodes":
-			value := ReadNodeInfoList(iterator)
+			value := readNodeInfoList(iterator)
 			object.nodes = value
 			object.bitmap_ |= 1
 		default:

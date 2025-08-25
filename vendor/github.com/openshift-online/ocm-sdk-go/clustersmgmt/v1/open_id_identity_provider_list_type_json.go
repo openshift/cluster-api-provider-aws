@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalOpenIDIdentityProviderList(list []*OpenIDIdentityProvider, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteOpenIDIdentityProviderList(list, stream)
+	writeOpenIDIdentityProviderList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalOpenIDIdentityProviderList(list []*OpenIDIdentityProvider, writer io
 	return stream.Error
 }
 
-// WriteOpenIDIdentityProviderList writes a list of value of the 'open_ID_identity_provider' type to
+// writeOpenIDIdentityProviderList writes a list of value of the 'open_ID_identity_provider' type to
 // the given stream.
-func WriteOpenIDIdentityProviderList(list []*OpenIDIdentityProvider, stream *jsoniter.Stream) {
+func writeOpenIDIdentityProviderList(list []*OpenIDIdentityProvider, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteOpenIDIdentityProvider(value, stream)
+		writeOpenIDIdentityProvider(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalOpenIDIdentityProviderList(source interface{}) (items []*OpenIDIde
 	if err != nil {
 		return
 	}
-	items = ReadOpenIDIdentityProviderList(iterator)
+	items = readOpenIDIdentityProviderList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadOpenIDIdentityProviderList reads list of values of the ”open_ID_identity_provider' type from
+// readOpenIDIdentityProviderList reads list of values of the ”open_ID_identity_provider' type from
 // the given iterator.
-func ReadOpenIDIdentityProviderList(iterator *jsoniter.Iterator) []*OpenIDIdentityProvider {
+func readOpenIDIdentityProviderList(iterator *jsoniter.Iterator) []*OpenIDIdentityProvider {
 	list := []*OpenIDIdentityProvider{}
 	for iterator.ReadArray() {
-		item := ReadOpenIDIdentityProvider(iterator)
+		item := readOpenIDIdentityProvider(iterator)
 		list = append(list, item)
 	}
 	return list

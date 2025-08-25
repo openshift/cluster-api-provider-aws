@@ -26,7 +26,6 @@ type Azure struct {
 	bitmap_                        uint32
 	managedResourceGroupName       string
 	networkSecurityGroupResourceID string
-	nodesOutboundConnectivity      *AzureNodesOutboundConnectivity
 	operatorsAuthentication        *AzureOperatorsAuthentication
 	resourceGroupName              string
 	resourceName                   string
@@ -146,33 +145,6 @@ func (o *Azure) GetNetworkSecurityGroupResourceID() (value string, ok bool) {
 	return
 }
 
-// NodesOutboundConnectivity returns the value of the 'nodes_outbound_connectivity' attribute, or
-// the zero value of the type if the attribute doesn't have a value.
-//
-// NodesOutboundConnectivity defines how the network outbound
-// configuration of the Cluster's Node Pool's Nodes is performed.
-// By default this is configured as Azure Load Balancer. This value is immutable.
-func (o *Azure) NodesOutboundConnectivity() *AzureNodesOutboundConnectivity {
-	if o != nil && o.bitmap_&4 != 0 {
-		return o.nodesOutboundConnectivity
-	}
-	return nil
-}
-
-// GetNodesOutboundConnectivity returns the value of the 'nodes_outbound_connectivity' attribute and
-// a flag indicating if the attribute has a value.
-//
-// NodesOutboundConnectivity defines how the network outbound
-// configuration of the Cluster's Node Pool's Nodes is performed.
-// By default this is configured as Azure Load Balancer. This value is immutable.
-func (o *Azure) GetNodesOutboundConnectivity() (value *AzureNodesOutboundConnectivity, ok bool) {
-	ok = o != nil && o.bitmap_&4 != 0
-	if ok {
-		value = o.nodesOutboundConnectivity
-	}
-	return
-}
-
 // OperatorsAuthentication returns the value of the 'operators_authentication' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
@@ -180,7 +152,7 @@ func (o *Azure) GetNodesOutboundConnectivity() (value *AzureNodesOutboundConnect
 // Required during creation.
 // Immutable.
 func (o *Azure) OperatorsAuthentication() *AzureOperatorsAuthentication {
-	if o != nil && o.bitmap_&8 != 0 {
+	if o != nil && o.bitmap_&4 != 0 {
 		return o.operatorsAuthentication
 	}
 	return nil
@@ -193,7 +165,7 @@ func (o *Azure) OperatorsAuthentication() *AzureOperatorsAuthentication {
 // Required during creation.
 // Immutable.
 func (o *Azure) GetOperatorsAuthentication() (value *AzureOperatorsAuthentication, ok bool) {
-	ok = o != nil && o.bitmap_&8 != 0
+	ok = o != nil && o.bitmap_&4 != 0
 	if ok {
 		value = o.operatorsAuthentication
 	}
@@ -211,7 +183,7 @@ func (o *Azure) GetOperatorsAuthentication() (value *AzureOperatorsAuthenticatio
 // Required during creation.
 // Immutable.
 func (o *Azure) ResourceGroupName() string {
-	if o != nil && o.bitmap_&16 != 0 {
+	if o != nil && o.bitmap_&8 != 0 {
 		return o.resourceGroupName
 	}
 	return ""
@@ -228,7 +200,7 @@ func (o *Azure) ResourceGroupName() string {
 // Required during creation.
 // Immutable.
 func (o *Azure) GetResourceGroupName() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&16 != 0
+	ok = o != nil && o.bitmap_&8 != 0
 	if ok {
 		value = o.resourceGroupName
 	}
@@ -244,7 +216,7 @@ func (o *Azure) GetResourceGroupName() (value string, ok bool) {
 // Required during creation.
 // Immutable.
 func (o *Azure) ResourceName() string {
-	if o != nil && o.bitmap_&32 != 0 {
+	if o != nil && o.bitmap_&16 != 0 {
 		return o.resourceName
 	}
 	return ""
@@ -259,7 +231,7 @@ func (o *Azure) ResourceName() string {
 // Required during creation.
 // Immutable.
 func (o *Azure) GetResourceName() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&32 != 0
+	ok = o != nil && o.bitmap_&16 != 0
 	if ok {
 		value = o.resourceName
 	}
@@ -286,7 +258,7 @@ func (o *Azure) GetResourceName() (value string, ok bool) {
 // Required during creation.
 // Immutable.
 func (o *Azure) SubnetResourceID() string {
-	if o != nil && o.bitmap_&64 != 0 {
+	if o != nil && o.bitmap_&32 != 0 {
 		return o.subnetResourceID
 	}
 	return ""
@@ -312,7 +284,7 @@ func (o *Azure) SubnetResourceID() string {
 // Required during creation.
 // Immutable.
 func (o *Azure) GetSubnetResourceID() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&64 != 0
+	ok = o != nil && o.bitmap_&32 != 0
 	if ok {
 		value = o.subnetResourceID
 	}
@@ -327,7 +299,7 @@ func (o *Azure) GetSubnetResourceID() (value string, ok bool) {
 // Required during creation.
 // Immutable.
 func (o *Azure) SubscriptionID() string {
-	if o != nil && o.bitmap_&128 != 0 {
+	if o != nil && o.bitmap_&64 != 0 {
 		return o.subscriptionID
 	}
 	return ""
@@ -341,7 +313,7 @@ func (o *Azure) SubscriptionID() string {
 // Required during creation.
 // Immutable.
 func (o *Azure) GetSubscriptionID() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&128 != 0
+	ok = o != nil && o.bitmap_&64 != 0
 	if ok {
 		value = o.subscriptionID
 	}
@@ -355,7 +327,7 @@ func (o *Azure) GetSubscriptionID() (value string, ok bool) {
 // Required during creation.
 // Immutable.
 func (o *Azure) TenantID() string {
-	if o != nil && o.bitmap_&256 != 0 {
+	if o != nil && o.bitmap_&128 != 0 {
 		return o.tenantID
 	}
 	return ""
@@ -368,7 +340,7 @@ func (o *Azure) TenantID() string {
 // Required during creation.
 // Immutable.
 func (o *Azure) GetTenantID() (value string, ok bool) {
-	ok = o != nil && o.bitmap_&256 != 0
+	ok = o != nil && o.bitmap_&128 != 0
 	if ok {
 		value = o.tenantID
 	}
@@ -400,29 +372,6 @@ func (l *AzureList) Len() int {
 		return 0
 	}
 	return len(l.items)
-}
-
-// Items sets the items of the list.
-func (l *AzureList) SetLink(link bool) {
-	l.link = link
-}
-
-// Items sets the items of the list.
-func (l *AzureList) SetHREF(href string) {
-	l.href = href
-}
-
-// Items sets the items of the list.
-func (l *AzureList) SetItems(items []*Azure) {
-	l.items = items
-}
-
-// Items returns the items of the list.
-func (l *AzureList) Items() []*Azure {
-	if l == nil {
-		return nil
-	}
-	return l.items
 }
 
 // Empty returns true if the list is empty.

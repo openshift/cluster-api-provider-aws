@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalHypershiftConfigList(list []*HypershiftConfig, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteHypershiftConfigList(list, stream)
+	writeHypershiftConfigList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalHypershiftConfigList(list []*HypershiftConfig, writer io.Writer) err
 	return stream.Error
 }
 
-// WriteHypershiftConfigList writes a list of value of the 'hypershift_config' type to
+// writeHypershiftConfigList writes a list of value of the 'hypershift_config' type to
 // the given stream.
-func WriteHypershiftConfigList(list []*HypershiftConfig, stream *jsoniter.Stream) {
+func writeHypershiftConfigList(list []*HypershiftConfig, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteHypershiftConfig(value, stream)
+		writeHypershiftConfig(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalHypershiftConfigList(source interface{}) (items []*HypershiftConfi
 	if err != nil {
 		return
 	}
-	items = ReadHypershiftConfigList(iterator)
+	items = readHypershiftConfigList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadHypershiftConfigList reads list of values of the ”hypershift_config' type from
+// readHypershiftConfigList reads list of values of the ”hypershift_config' type from
 // the given iterator.
-func ReadHypershiftConfigList(iterator *jsoniter.Iterator) []*HypershiftConfig {
+func readHypershiftConfigList(iterator *jsoniter.Iterator) []*HypershiftConfig {
 	list := []*HypershiftConfig{}
 	for iterator.ReadArray() {
-		item := ReadHypershiftConfig(iterator)
+		item := readHypershiftConfig(iterator)
 		list = append(list, item)
 	}
 	return list

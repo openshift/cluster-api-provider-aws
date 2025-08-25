@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalSkuRuleList(list []*SkuRule, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteSkuRuleList(list, stream)
+	writeSkuRuleList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalSkuRuleList(list []*SkuRule, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteSkuRuleList writes a list of value of the 'sku_rule' type to
+// writeSkuRuleList writes a list of value of the 'sku_rule' type to
 // the given stream.
-func WriteSkuRuleList(list []*SkuRule, stream *jsoniter.Stream) {
+func writeSkuRuleList(list []*SkuRule, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteSkuRule(value, stream)
+		writeSkuRule(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalSkuRuleList(source interface{}) (items []*SkuRule, err error) {
 	if err != nil {
 		return
 	}
-	items = ReadSkuRuleList(iterator)
+	items = readSkuRuleList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadSkuRuleList reads list of values of the ”sku_rule' type from
+// readSkuRuleList reads list of values of the ”sku_rule' type from
 // the given iterator.
-func ReadSkuRuleList(iterator *jsoniter.Iterator) []*SkuRule {
+func readSkuRuleList(iterator *jsoniter.Iterator) []*SkuRule {
 	list := []*SkuRule{}
 	for iterator.ReadArray() {
-		item := ReadSkuRule(iterator)
+		item := readSkuRule(iterator)
 		list = append(list, item)
 	}
 	return list

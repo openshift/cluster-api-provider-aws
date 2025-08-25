@@ -49,7 +49,7 @@ func readSubscriptionReservedResourcesListResponse(response *SubscriptionReserve
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadReservedResourceList(iterator)
+			items := readReservedResourceList(iterator)
 			response.items = &ReservedResourceList{
 				items: items,
 			}

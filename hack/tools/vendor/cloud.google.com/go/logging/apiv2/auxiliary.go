@@ -1,4 +1,4 @@
-// Copyright 2024 Google LLC
+// Copyright 2023 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,15 +30,13 @@ import (
 
 // CopyLogEntriesOperation manages a long-running operation from CopyLogEntries.
 type CopyLogEntriesOperation struct {
-	lro      *longrunning.Operation
-	pollPath string
+	lro *longrunning.Operation
 }
 
 // Wait blocks until the long-running operation is completed, returning the response and any errors encountered.
 //
 // See documentation of Poll for error-handling information.
 func (op *CopyLogEntriesOperation) Wait(ctx context.Context, opts ...gax.CallOption) (*loggingpb.CopyLogEntriesResponse, error) {
-	opts = append([]gax.CallOption{gax.WithPath(op.pollPath)}, opts...)
 	var resp loggingpb.CopyLogEntriesResponse
 	if err := op.lro.WaitWithInterval(ctx, &resp, time.Minute, opts...); err != nil {
 		return nil, err
@@ -56,7 +54,6 @@ func (op *CopyLogEntriesOperation) Wait(ctx context.Context, opts ...gax.CallOpt
 // op.Done will return true, and the response of the operation is returned.
 // If Poll succeeds and the operation has not completed, the returned response and error are both nil.
 func (op *CopyLogEntriesOperation) Poll(ctx context.Context, opts ...gax.CallOption) (*loggingpb.CopyLogEntriesResponse, error) {
-	opts = append([]gax.CallOption{gax.WithPath(op.pollPath)}, opts...)
 	var resp loggingpb.CopyLogEntriesResponse
 	if err := op.lro.Poll(ctx, &resp, opts...); err != nil {
 		return nil, err
@@ -94,15 +91,13 @@ func (op *CopyLogEntriesOperation) Name() string {
 
 // CreateBucketAsyncOperation manages a long-running operation from CreateBucketAsync.
 type CreateBucketAsyncOperation struct {
-	lro      *longrunning.Operation
-	pollPath string
+	lro *longrunning.Operation
 }
 
 // Wait blocks until the long-running operation is completed, returning the response and any errors encountered.
 //
 // See documentation of Poll for error-handling information.
 func (op *CreateBucketAsyncOperation) Wait(ctx context.Context, opts ...gax.CallOption) (*loggingpb.LogBucket, error) {
-	opts = append([]gax.CallOption{gax.WithPath(op.pollPath)}, opts...)
 	var resp loggingpb.LogBucket
 	if err := op.lro.WaitWithInterval(ctx, &resp, time.Minute, opts...); err != nil {
 		return nil, err
@@ -120,7 +115,6 @@ func (op *CreateBucketAsyncOperation) Wait(ctx context.Context, opts ...gax.Call
 // op.Done will return true, and the response of the operation is returned.
 // If Poll succeeds and the operation has not completed, the returned response and error are both nil.
 func (op *CreateBucketAsyncOperation) Poll(ctx context.Context, opts ...gax.CallOption) (*loggingpb.LogBucket, error) {
-	opts = append([]gax.CallOption{gax.WithPath(op.pollPath)}, opts...)
 	var resp loggingpb.LogBucket
 	if err := op.lro.Poll(ctx, &resp, opts...); err != nil {
 		return nil, err
@@ -158,15 +152,13 @@ func (op *CreateBucketAsyncOperation) Name() string {
 
 // CreateLinkOperation manages a long-running operation from CreateLink.
 type CreateLinkOperation struct {
-	lro      *longrunning.Operation
-	pollPath string
+	lro *longrunning.Operation
 }
 
 // Wait blocks until the long-running operation is completed, returning the response and any errors encountered.
 //
 // See documentation of Poll for error-handling information.
 func (op *CreateLinkOperation) Wait(ctx context.Context, opts ...gax.CallOption) (*loggingpb.Link, error) {
-	opts = append([]gax.CallOption{gax.WithPath(op.pollPath)}, opts...)
 	var resp loggingpb.Link
 	if err := op.lro.WaitWithInterval(ctx, &resp, time.Minute, opts...); err != nil {
 		return nil, err
@@ -184,7 +176,6 @@ func (op *CreateLinkOperation) Wait(ctx context.Context, opts ...gax.CallOption)
 // op.Done will return true, and the response of the operation is returned.
 // If Poll succeeds and the operation has not completed, the returned response and error are both nil.
 func (op *CreateLinkOperation) Poll(ctx context.Context, opts ...gax.CallOption) (*loggingpb.Link, error) {
-	opts = append([]gax.CallOption{gax.WithPath(op.pollPath)}, opts...)
 	var resp loggingpb.Link
 	if err := op.lro.Poll(ctx, &resp, opts...); err != nil {
 		return nil, err
@@ -222,15 +213,13 @@ func (op *CreateLinkOperation) Name() string {
 
 // DeleteLinkOperation manages a long-running operation from DeleteLink.
 type DeleteLinkOperation struct {
-	lro      *longrunning.Operation
-	pollPath string
+	lro *longrunning.Operation
 }
 
 // Wait blocks until the long-running operation is completed, returning the response and any errors encountered.
 //
 // See documentation of Poll for error-handling information.
 func (op *DeleteLinkOperation) Wait(ctx context.Context, opts ...gax.CallOption) error {
-	opts = append([]gax.CallOption{gax.WithPath(op.pollPath)}, opts...)
 	return op.lro.WaitWithInterval(ctx, nil, time.Minute, opts...)
 }
 
@@ -244,7 +233,6 @@ func (op *DeleteLinkOperation) Wait(ctx context.Context, opts ...gax.CallOption)
 // op.Done will return true, and the response of the operation is returned.
 // If Poll succeeds and the operation has not completed, the returned response and error are both nil.
 func (op *DeleteLinkOperation) Poll(ctx context.Context, opts ...gax.CallOption) error {
-	opts = append([]gax.CallOption{gax.WithPath(op.pollPath)}, opts...)
 	return op.lro.Poll(ctx, nil, opts...)
 }
 
@@ -275,15 +263,13 @@ func (op *DeleteLinkOperation) Name() string {
 
 // UpdateBucketAsyncOperation manages a long-running operation from UpdateBucketAsync.
 type UpdateBucketAsyncOperation struct {
-	lro      *longrunning.Operation
-	pollPath string
+	lro *longrunning.Operation
 }
 
 // Wait blocks until the long-running operation is completed, returning the response and any errors encountered.
 //
 // See documentation of Poll for error-handling information.
 func (op *UpdateBucketAsyncOperation) Wait(ctx context.Context, opts ...gax.CallOption) (*loggingpb.LogBucket, error) {
-	opts = append([]gax.CallOption{gax.WithPath(op.pollPath)}, opts...)
 	var resp loggingpb.LogBucket
 	if err := op.lro.WaitWithInterval(ctx, &resp, time.Minute, opts...); err != nil {
 		return nil, err
@@ -301,7 +287,6 @@ func (op *UpdateBucketAsyncOperation) Wait(ctx context.Context, opts ...gax.Call
 // op.Done will return true, and the response of the operation is returned.
 // If Poll succeeds and the operation has not completed, the returned response and error are both nil.
 func (op *UpdateBucketAsyncOperation) Poll(ctx context.Context, opts ...gax.CallOption) (*loggingpb.LogBucket, error) {
-	opts = append([]gax.CallOption{gax.WithPath(op.pollPath)}, opts...)
 	var resp loggingpb.LogBucket
 	if err := op.lro.Poll(ctx, &resp, opts...); err != nil {
 		return nil, err
@@ -357,7 +342,7 @@ type LinkIterator struct {
 	InternalFetch func(pageSize int, pageToken string) (results []*loggingpb.Link, nextPageToken string, err error)
 }
 
-// PageInfo supports pagination. See the [google.golang.org/api/iterator] package for details.
+// PageInfo supports pagination. See the google.golang.org/api/iterator package for details.
 func (it *LinkIterator) PageInfo() *iterator.PageInfo {
 	return it.pageInfo
 }
@@ -404,7 +389,7 @@ type LogBucketIterator struct {
 	InternalFetch func(pageSize int, pageToken string) (results []*loggingpb.LogBucket, nextPageToken string, err error)
 }
 
-// PageInfo supports pagination. See the [google.golang.org/api/iterator] package for details.
+// PageInfo supports pagination. See the google.golang.org/api/iterator package for details.
 func (it *LogBucketIterator) PageInfo() *iterator.PageInfo {
 	return it.pageInfo
 }
@@ -451,7 +436,7 @@ type LogEntryIterator struct {
 	InternalFetch func(pageSize int, pageToken string) (results []*loggingpb.LogEntry, nextPageToken string, err error)
 }
 
-// PageInfo supports pagination. See the [google.golang.org/api/iterator] package for details.
+// PageInfo supports pagination. See the google.golang.org/api/iterator package for details.
 func (it *LogEntryIterator) PageInfo() *iterator.PageInfo {
 	return it.pageInfo
 }
@@ -498,7 +483,7 @@ type LogExclusionIterator struct {
 	InternalFetch func(pageSize int, pageToken string) (results []*loggingpb.LogExclusion, nextPageToken string, err error)
 }
 
-// PageInfo supports pagination. See the [google.golang.org/api/iterator] package for details.
+// PageInfo supports pagination. See the google.golang.org/api/iterator package for details.
 func (it *LogExclusionIterator) PageInfo() *iterator.PageInfo {
 	return it.pageInfo
 }
@@ -545,7 +530,7 @@ type LogMetricIterator struct {
 	InternalFetch func(pageSize int, pageToken string) (results []*loggingpb.LogMetric, nextPageToken string, err error)
 }
 
-// PageInfo supports pagination. See the [google.golang.org/api/iterator] package for details.
+// PageInfo supports pagination. See the google.golang.org/api/iterator package for details.
 func (it *LogMetricIterator) PageInfo() *iterator.PageInfo {
 	return it.pageInfo
 }
@@ -592,7 +577,7 @@ type LogSinkIterator struct {
 	InternalFetch func(pageSize int, pageToken string) (results []*loggingpb.LogSink, nextPageToken string, err error)
 }
 
-// PageInfo supports pagination. See the [google.golang.org/api/iterator] package for details.
+// PageInfo supports pagination. See the google.golang.org/api/iterator package for details.
 func (it *LogSinkIterator) PageInfo() *iterator.PageInfo {
 	return it.pageInfo
 }
@@ -639,7 +624,7 @@ type LogViewIterator struct {
 	InternalFetch func(pageSize int, pageToken string) (results []*loggingpb.LogView, nextPageToken string, err error)
 }
 
-// PageInfo supports pagination. See the [google.golang.org/api/iterator] package for details.
+// PageInfo supports pagination. See the google.golang.org/api/iterator package for details.
 func (it *LogViewIterator) PageInfo() *iterator.PageInfo {
 	return it.pageInfo
 }
@@ -686,7 +671,7 @@ type MonitoredResourceDescriptorIterator struct {
 	InternalFetch func(pageSize int, pageToken string) (results []*monitoredrespb.MonitoredResourceDescriptor, nextPageToken string, err error)
 }
 
-// PageInfo supports pagination. See the [google.golang.org/api/iterator] package for details.
+// PageInfo supports pagination. See the google.golang.org/api/iterator package for details.
 func (it *MonitoredResourceDescriptorIterator) PageInfo() *iterator.PageInfo {
 	return it.pageInfo
 }
@@ -733,7 +718,7 @@ type OperationIterator struct {
 	InternalFetch func(pageSize int, pageToken string) (results []*longrunningpb.Operation, nextPageToken string, err error)
 }
 
-// PageInfo supports pagination. See the [google.golang.org/api/iterator] package for details.
+// PageInfo supports pagination. See the google.golang.org/api/iterator package for details.
 func (it *OperationIterator) PageInfo() *iterator.PageInfo {
 	return it.pageInfo
 }
@@ -780,7 +765,7 @@ type StringIterator struct {
 	InternalFetch func(pageSize int, pageToken string) (results []string, nextPageToken string, err error)
 }
 
-// PageInfo supports pagination. See the [google.golang.org/api/iterator] package for details.
+// PageInfo supports pagination. See the google.golang.org/api/iterator package for details.
 func (it *StringIterator) PageInfo() *iterator.PageInfo {
 	return it.pageInfo
 }

@@ -30,7 +30,7 @@ import (
 // MarshalReservedResource writes a value of the 'reserved_resource' type to the given writer.
 func MarshalReservedResource(object *ReservedResource, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteReservedResource(object, stream)
+	writeReservedResource(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalReservedResource(object *ReservedResource, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteReservedResource writes a value of the 'reserved_resource' type to the given stream.
-func WriteReservedResource(object *ReservedResource, stream *jsoniter.Stream) {
+// writeReservedResource writes a value of the 'reserved_resource' type to the given stream.
+func writeReservedResource(object *ReservedResource, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -142,13 +142,13 @@ func UnmarshalReservedResource(source interface{}) (object *ReservedResource, er
 	if err != nil {
 		return
 	}
-	object = ReadReservedResource(iterator)
+	object = readReservedResource(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadReservedResource reads a value of the 'reserved_resource' type from the given iterator.
-func ReadReservedResource(iterator *jsoniter.Iterator) *ReservedResource {
+// readReservedResource reads a value of the 'reserved_resource' type from the given iterator.
+func readReservedResource(iterator *jsoniter.Iterator) *ReservedResource {
 	object := &ReservedResource{}
 	for {
 		field := iterator.ReadObject()

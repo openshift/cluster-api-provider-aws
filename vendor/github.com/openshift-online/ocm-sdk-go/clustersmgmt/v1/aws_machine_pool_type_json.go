@@ -30,7 +30,7 @@ import (
 // MarshalAWSMachinePool writes a value of the 'AWS_machine_pool' type to the given writer.
 func MarshalAWSMachinePool(object *AWSMachinePool, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAWSMachinePool(object, stream)
+	writeAWSMachinePool(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalAWSMachinePool(object *AWSMachinePool, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteAWSMachinePool writes a value of the 'AWS_machine_pool' type to the given stream.
-func WriteAWSMachinePool(object *AWSMachinePool, stream *jsoniter.Stream) {
+// writeAWSMachinePool writes a value of the 'AWS_machine_pool' type to the given stream.
+func writeAWSMachinePool(object *AWSMachinePool, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -72,7 +72,7 @@ func WriteAWSMachinePool(object *AWSMachinePool, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("additional_security_group_ids")
-		WriteStringList(object.additionalSecurityGroupIds, stream)
+		writeStringList(object.additionalSecurityGroupIds, stream)
 		count++
 	}
 	present_ = object.bitmap_&16 != 0 && object.availabilityZoneTypes != nil
@@ -110,7 +110,7 @@ func WriteAWSMachinePool(object *AWSMachinePool, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("spot_market_options")
-		WriteAWSSpotMarketOptions(object.spotMarketOptions, stream)
+		writeAWSSpotMarketOptions(object.spotMarketOptions, stream)
 		count++
 	}
 	present_ = object.bitmap_&64 != 0 && object.subnetOutposts != nil
@@ -180,13 +180,13 @@ func UnmarshalAWSMachinePool(source interface{}) (object *AWSMachinePool, err er
 	if err != nil {
 		return
 	}
-	object = ReadAWSMachinePool(iterator)
+	object = readAWSMachinePool(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAWSMachinePool reads a value of the 'AWS_machine_pool' type from the given iterator.
-func ReadAWSMachinePool(iterator *jsoniter.Iterator) *AWSMachinePool {
+// readAWSMachinePool reads a value of the 'AWS_machine_pool' type from the given iterator.
+func readAWSMachinePool(iterator *jsoniter.Iterator) *AWSMachinePool {
 	object := &AWSMachinePool{}
 	for {
 		field := iterator.ReadObject()
@@ -206,7 +206,7 @@ func ReadAWSMachinePool(iterator *jsoniter.Iterator) *AWSMachinePool {
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
 		case "additional_security_group_ids":
-			value := ReadStringList(iterator)
+			value := readStringList(iterator)
 			object.additionalSecurityGroupIds = value
 			object.bitmap_ |= 8
 		case "availability_zone_types":
@@ -222,7 +222,7 @@ func ReadAWSMachinePool(iterator *jsoniter.Iterator) *AWSMachinePool {
 			object.availabilityZoneTypes = value
 			object.bitmap_ |= 16
 		case "spot_market_options":
-			value := ReadAWSSpotMarketOptions(iterator)
+			value := readAWSSpotMarketOptions(iterator)
 			object.spotMarketOptions = value
 			object.bitmap_ |= 32
 		case "subnet_outposts":

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/ast"
 )
 
 // funcstack implements a simple map structure used to keep track of virtual
@@ -111,7 +111,7 @@ func (t *ruletrie) Rules() []*ast.Rule {
 
 func (t *ruletrie) Push(key ast.Ref) {
 	node := t
-	for i := range len(key) - 1 {
+	for i := 0; i < len(key)-1; i++ {
 		node = node.Get(key[i].Value)
 		if node == nil {
 			return
@@ -123,7 +123,7 @@ func (t *ruletrie) Push(key ast.Ref) {
 
 func (t *ruletrie) Pop(key ast.Ref) {
 	node := t
-	for i := range len(key) - 1 {
+	for i := 0; i < len(key)-1; i++ {
 		node = node.Get(key[i].Value)
 		if node == nil {
 			return

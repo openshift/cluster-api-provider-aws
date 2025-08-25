@@ -29,7 +29,7 @@ import (
 // MarshalHTPasswdIdentityProvider writes a value of the 'HT_passwd_identity_provider' type to the given writer.
 func MarshalHTPasswdIdentityProvider(object *HTPasswdIdentityProvider, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteHTPasswdIdentityProvider(object, stream)
+	writeHTPasswdIdentityProvider(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalHTPasswdIdentityProvider(object *HTPasswdIdentityProvider, writer io
 	return stream.Error
 }
 
-// WriteHTPasswdIdentityProvider writes a value of the 'HT_passwd_identity_provider' type to the given stream.
-func WriteHTPasswdIdentityProvider(object *HTPasswdIdentityProvider, stream *jsoniter.Stream) {
+// writeHTPasswdIdentityProvider writes a value of the 'HT_passwd_identity_provider' type to the given stream.
+func writeHTPasswdIdentityProvider(object *HTPasswdIdentityProvider, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -68,7 +68,7 @@ func WriteHTPasswdIdentityProvider(object *HTPasswdIdentityProvider, stream *jso
 		stream.WriteObjectField("users")
 		stream.WriteObjectStart()
 		stream.WriteObjectField("items")
-		WriteHTPasswdUserList(object.users.Items(), stream)
+		writeHTPasswdUserList(object.users.items, stream)
 		stream.WriteObjectEnd()
 	}
 	stream.WriteObjectEnd()
@@ -81,13 +81,13 @@ func UnmarshalHTPasswdIdentityProvider(source interface{}) (object *HTPasswdIden
 	if err != nil {
 		return
 	}
-	object = ReadHTPasswdIdentityProvider(iterator)
+	object = readHTPasswdIdentityProvider(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadHTPasswdIdentityProvider reads a value of the 'HT_passwd_identity_provider' type from the given iterator.
-func ReadHTPasswdIdentityProvider(iterator *jsoniter.Iterator) *HTPasswdIdentityProvider {
+// readHTPasswdIdentityProvider reads a value of the 'HT_passwd_identity_provider' type from the given iterator.
+func readHTPasswdIdentityProvider(iterator *jsoniter.Iterator) *HTPasswdIdentityProvider {
 	object := &HTPasswdIdentityProvider{}
 	for {
 		field := iterator.ReadObject()
@@ -113,11 +113,11 @@ func ReadHTPasswdIdentityProvider(iterator *jsoniter.Iterator) *HTPasswdIdentity
 				switch field {
 				case "kind":
 					text := iterator.ReadString()
-					value.SetLink(text == HTPasswdUserListLinkKind)
+					value.link = text == HTPasswdUserListLinkKind
 				case "href":
-					value.SetHREF(iterator.ReadString())
+					value.href = iterator.ReadString()
 				case "items":
-					value.SetItems(ReadHTPasswdUserList(iterator))
+					value.items = readHTPasswdUserList(iterator)
 				default:
 					iterator.ReadAny()
 				}

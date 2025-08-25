@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAddonRequirementStatusList(list []*AddonRequirementStatus, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAddonRequirementStatusList(list, stream)
+	writeAddonRequirementStatusList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAddonRequirementStatusList(list []*AddonRequirementStatus, writer io
 	return stream.Error
 }
 
-// WriteAddonRequirementStatusList writes a list of value of the 'addon_requirement_status' type to
+// writeAddonRequirementStatusList writes a list of value of the 'addon_requirement_status' type to
 // the given stream.
-func WriteAddonRequirementStatusList(list []*AddonRequirementStatus, stream *jsoniter.Stream) {
+func writeAddonRequirementStatusList(list []*AddonRequirementStatus, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteAddonRequirementStatus(value, stream)
+		writeAddonRequirementStatus(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAddonRequirementStatusList(source interface{}) (items []*AddonRequ
 	if err != nil {
 		return
 	}
-	items = ReadAddonRequirementStatusList(iterator)
+	items = readAddonRequirementStatusList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAddonRequirementStatusList reads list of values of the ”addon_requirement_status' type from
+// readAddonRequirementStatusList reads list of values of the ”addon_requirement_status' type from
 // the given iterator.
-func ReadAddonRequirementStatusList(iterator *jsoniter.Iterator) []*AddonRequirementStatus {
+func readAddonRequirementStatusList(iterator *jsoniter.Iterator) []*AddonRequirementStatus {
 	list := []*AddonRequirementStatus{}
 	for iterator.ReadArray() {
-		item := ReadAddonRequirementStatus(iterator)
+		item := readAddonRequirementStatus(iterator)
 		list = append(list, item)
 	}
 	return list

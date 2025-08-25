@@ -30,7 +30,7 @@ import (
 // MarshalApplication writes a value of the 'application' type to the given writer.
 func MarshalApplication(object *Application, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteApplication(object, stream)
+	writeApplication(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalApplication(object *Application, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteApplication writes a value of the 'application' type to the given stream.
-func WriteApplication(object *Application, stream *jsoniter.Stream) {
+// writeApplication writes a value of the 'application' type to the given stream.
+func writeApplication(object *Application, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -108,7 +108,7 @@ func WriteApplication(object *Application, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("owners")
-		WriteOwnerList(object.owners, stream)
+		writeOwnerList(object.owners, stream)
 		count++
 	}
 	present_ = object.bitmap_&256 != 0 && object.product != nil
@@ -117,7 +117,7 @@ func WriteApplication(object *Application, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("product")
-		WriteProduct(object.product, stream)
+		writeProduct(object.product, stream)
 		count++
 	}
 	present_ = object.bitmap_&512 != 0
@@ -138,13 +138,13 @@ func UnmarshalApplication(source interface{}) (object *Application, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadApplication(iterator)
+	object = readApplication(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadApplication reads a value of the 'application' type from the given iterator.
-func ReadApplication(iterator *jsoniter.Iterator) *Application {
+// readApplication reads a value of the 'application' type from the given iterator.
+func readApplication(iterator *jsoniter.Iterator) *Application {
 	object := &Application{}
 	for {
 		field := iterator.ReadObject()
@@ -185,11 +185,11 @@ func ReadApplication(iterator *jsoniter.Iterator) *Application {
 			object.name = value
 			object.bitmap_ |= 64
 		case "owners":
-			value := ReadOwnerList(iterator)
+			value := readOwnerList(iterator)
 			object.owners = value
 			object.bitmap_ |= 128
 		case "product":
-			value := ReadProduct(iterator)
+			value := readProduct(iterator)
 			object.product = value
 			object.bitmap_ |= 256
 		case "updated_at":

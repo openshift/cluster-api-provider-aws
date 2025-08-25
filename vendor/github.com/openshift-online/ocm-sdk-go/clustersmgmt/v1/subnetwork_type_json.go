@@ -29,7 +29,7 @@ import (
 // MarshalSubnetwork writes a value of the 'subnetwork' type to the given writer.
 func MarshalSubnetwork(object *Subnetwork, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteSubnetwork(object, stream)
+	writeSubnetwork(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalSubnetwork(object *Subnetwork, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteSubnetwork writes a value of the 'subnetwork' type to the given stream.
-func WriteSubnetwork(object *Subnetwork, stream *jsoniter.Stream) {
+// writeSubnetwork writes a value of the 'subnetwork' type to the given stream.
+func writeSubnetwork(object *Subnetwork, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -105,13 +105,13 @@ func UnmarshalSubnetwork(source interface{}) (object *Subnetwork, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadSubnetwork(iterator)
+	object = readSubnetwork(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadSubnetwork reads a value of the 'subnetwork' type from the given iterator.
-func ReadSubnetwork(iterator *jsoniter.Iterator) *Subnetwork {
+// readSubnetwork reads a value of the 'subnetwork' type from the given iterator.
+func readSubnetwork(iterator *jsoniter.Iterator) *Subnetwork {
 	object := &Subnetwork{}
 	for {
 		field := iterator.ReadObject()

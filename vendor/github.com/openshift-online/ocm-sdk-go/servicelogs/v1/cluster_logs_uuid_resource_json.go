@@ -49,7 +49,7 @@ func readClusterLogsUUIDListResponse(response *ClusterLogsUUIDListResponse, read
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadLogEntryList(iterator)
+			items := readLogEntryList(iterator)
 			response.items = &LogEntryList{
 				items: items,
 			}

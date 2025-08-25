@@ -29,7 +29,7 @@ import (
 // MarshalOperatorIAMRole writes a value of the 'operator_IAM_role' type to the given writer.
 func MarshalOperatorIAMRole(object *OperatorIAMRole, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteOperatorIAMRole(object, stream)
+	writeOperatorIAMRole(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalOperatorIAMRole(object *OperatorIAMRole, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteOperatorIAMRole writes a value of the 'operator_IAM_role' type to the given stream.
-func WriteOperatorIAMRole(object *OperatorIAMRole, stream *jsoniter.Stream) {
+// writeOperatorIAMRole writes a value of the 'operator_IAM_role' type to the given stream.
+func writeOperatorIAMRole(object *OperatorIAMRole, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -78,13 +78,13 @@ func UnmarshalOperatorIAMRole(source interface{}) (object *OperatorIAMRole, err 
 	if err != nil {
 		return
 	}
-	object = ReadOperatorIAMRole(iterator)
+	object = readOperatorIAMRole(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadOperatorIAMRole reads a value of the 'operator_IAM_role' type from the given iterator.
-func ReadOperatorIAMRole(iterator *jsoniter.Iterator) *OperatorIAMRole {
+// readOperatorIAMRole reads a value of the 'operator_IAM_role' type from the given iterator.
+func readOperatorIAMRole(iterator *jsoniter.Iterator) *OperatorIAMRole {
 	object := &OperatorIAMRole{}
 	for {
 		field := iterator.ReadObject()

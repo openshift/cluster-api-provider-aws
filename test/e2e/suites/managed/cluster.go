@@ -25,7 +25,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -43,7 +43,7 @@ type ManagedClusterSpecInput struct {
 	E2EConfig                *clusterctl.E2EConfig
 	ConfigClusterFn          DefaultConfigClusterFn
 	BootstrapClusterProxy    framework.ClusterProxy
-	AWSSession               *aws.Config
+	AWSSession               client.ConfigProvider
 	Namespace                *corev1.Namespace
 	ClusterName              string
 	Flavour                  string
@@ -87,14 +87,14 @@ func ManagedClusterSpec(ctx context.Context, inputGetter func() ManagedClusterSp
 
 	ginkgo.By("Checking EKS cluster is active")
 	eksClusterName := getEKSClusterName(input.Namespace.Name, input.ClusterName)
-	verifyClusterActiveAndOwned(ctx, eksClusterName, input.AWSSession)
+	verifyClusterActiveAndOwned(eksClusterName, input.AWSSession)
 
 	if input.CluserSpecificRoles {
 		ginkgo.By("Checking that the cluster specific IAM role exists")
-		VerifyRoleExistsAndOwned(ctx, fmt.Sprintf("%s-iam-service-role", input.ClusterName), eksClusterName, true, input.AWSSession)
+		VerifyRoleExistsAndOwned(fmt.Sprintf("%s-iam-service-role", input.ClusterName), eksClusterName, true, input.AWSSession)
 	} else {
 		ginkgo.By("Checking that the cluster default IAM role exists")
-		VerifyRoleExistsAndOwned(ctx, ekscontrolplanev1.DefaultEKSControlPlaneRole, eksClusterName, false, input.AWSSession)
+		VerifyRoleExistsAndOwned(ekscontrolplanev1.DefaultEKSControlPlaneRole, eksClusterName, false, input.AWSSession)
 	}
 
 	ginkgo.By("Checking kubeconfig secrets exist")

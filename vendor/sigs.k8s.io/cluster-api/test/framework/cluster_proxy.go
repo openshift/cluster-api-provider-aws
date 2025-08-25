@@ -188,14 +188,12 @@ type clusterProxy struct {
 }
 
 // NewClusterProxy returns a clusterProxy given a KubeconfigPath and the scheme defining the types hosted in the cluster.
-// If a kubeconfig file isn't provided, standard kubeconfig locations will be used (first with in-cluster, then kubectl loading rules apply).
+// If a kubeconfig file isn't provided, standard kubeconfig locations will be used (kubectl loading rules apply).
 func NewClusterProxy(name string, kubeconfigPath string, scheme *runtime.Scheme, options ...Option) ClusterProxy {
 	Expect(scheme).NotTo(BeNil(), "scheme is required for NewClusterProxy")
 
 	if kubeconfigPath == "" {
-		if _, err := rest.InClusterConfig(); err != nil {
-			kubeconfigPath = clientcmd.NewDefaultClientConfigLoadingRules().GetDefaultFilename()
-		}
+		kubeconfigPath = clientcmd.NewDefaultClientConfigLoadingRules().GetDefaultFilename()
 	}
 
 	proxy := &clusterProxy{
@@ -356,18 +354,11 @@ func (p *clusterProxy) CreateOrUpdate(ctx context.Context, resources []byte, opt
 }
 
 func (p *clusterProxy) GetRESTConfig() *rest.Config {
-	var restConfig *rest.Config
-	var err error
-	if p.kubeconfigPath == "" {
-		restConfig, err = rest.InClusterConfig()
-		Expect(err).NotTo(HaveOccurred(), "Failed to get in-cluster config")
-	} else {
-		config, err := clientcmd.LoadFromFile(p.kubeconfigPath)
-		Expect(err).ToNot(HaveOccurred(), "Failed to load Kubeconfig file from %q", p.kubeconfigPath)
+	config, err := clientcmd.LoadFromFile(p.kubeconfigPath)
+	Expect(err).ToNot(HaveOccurred(), "Failed to load Kubeconfig file from %q", p.kubeconfigPath)
 
-		restConfig, err = clientcmd.NewDefaultClientConfig(*config, &clientcmd.ConfigOverrides{}).ClientConfig()
-		Expect(err).ToNot(HaveOccurred(), "Failed to get ClientConfig from %q", p.kubeconfigPath)
-	}
+	restConfig, err := clientcmd.NewDefaultClientConfig(*config, &clientcmd.ConfigOverrides{}).ClientConfig()
+	Expect(err).ToNot(HaveOccurred(), "Failed to get ClientConfig from %q", p.kubeconfigPath)
 
 	restConfig.UserAgent = "cluster-api-e2e"
 

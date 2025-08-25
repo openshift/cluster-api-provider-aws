@@ -57,7 +57,7 @@ func readAccountsListResponse(response *AccountsListResponse, reader io.Reader) 
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadAccountList(iterator)
+			items := readAccountList(iterator)
 			response.items = &AccountList{
 				items: items,
 			}

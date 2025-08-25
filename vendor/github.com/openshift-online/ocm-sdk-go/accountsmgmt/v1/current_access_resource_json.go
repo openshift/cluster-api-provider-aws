@@ -49,7 +49,7 @@ func readCurrentAccessListResponse(response *CurrentAccessListResponse, reader i
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadRoleList(iterator)
+			items := readRoleList(iterator)
 			response.items = &RoleList{
 				items: items,
 			}

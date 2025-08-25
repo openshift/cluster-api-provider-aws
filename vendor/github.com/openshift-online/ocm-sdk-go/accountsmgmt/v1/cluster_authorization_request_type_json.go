@@ -29,7 +29,7 @@ import (
 // MarshalClusterAuthorizationRequest writes a value of the 'cluster_authorization_request' type to the given writer.
 func MarshalClusterAuthorizationRequest(object *ClusterAuthorizationRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteClusterAuthorizationRequest(object, stream)
+	writeClusterAuthorizationRequest(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalClusterAuthorizationRequest(object *ClusterAuthorizationRequest, wri
 	return stream.Error
 }
 
-// WriteClusterAuthorizationRequest writes a value of the 'cluster_authorization_request' type to the given stream.
-func WriteClusterAuthorizationRequest(object *ClusterAuthorizationRequest, stream *jsoniter.Stream) {
+// writeClusterAuthorizationRequest writes a value of the 'cluster_authorization_request' type to the given stream.
+func writeClusterAuthorizationRequest(object *ClusterAuthorizationRequest, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -174,19 +174,10 @@ func WriteClusterAuthorizationRequest(object *ClusterAuthorizationRequest, strea
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("resources")
-		WriteReservedResourceList(object.resources, stream)
+		writeReservedResourceList(object.resources, stream)
 		count++
 	}
 	present_ = object.bitmap_&32768 != 0
-	if present_ {
-		if count > 0 {
-			stream.WriteMore()
-		}
-		stream.WriteObjectField("rh_region_id")
-		stream.WriteString(object.rhRegionID)
-		count++
-	}
-	present_ = object.bitmap_&65536 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -204,13 +195,13 @@ func UnmarshalClusterAuthorizationRequest(source interface{}) (object *ClusterAu
 	if err != nil {
 		return
 	}
-	object = ReadClusterAuthorizationRequest(iterator)
+	object = readClusterAuthorizationRequest(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadClusterAuthorizationRequest reads a value of the 'cluster_authorization_request' type from the given iterator.
-func ReadClusterAuthorizationRequest(iterator *jsoniter.Iterator) *ClusterAuthorizationRequest {
+// readClusterAuthorizationRequest reads a value of the 'cluster_authorization_request' type from the given iterator.
+func readClusterAuthorizationRequest(iterator *jsoniter.Iterator) *ClusterAuthorizationRequest {
 	object := &ClusterAuthorizationRequest{}
 	for {
 		field := iterator.ReadObject()
@@ -275,17 +266,13 @@ func ReadClusterAuthorizationRequest(iterator *jsoniter.Iterator) *ClusterAuthor
 			object.reserve = value
 			object.bitmap_ |= 8192
 		case "resources":
-			value := ReadReservedResourceList(iterator)
+			value := readReservedResourceList(iterator)
 			object.resources = value
 			object.bitmap_ |= 16384
-		case "rh_region_id":
-			value := iterator.ReadString()
-			object.rhRegionID = value
-			object.bitmap_ |= 32768
 		case "scope":
 			value := iterator.ReadString()
 			object.scope = value
-			object.bitmap_ |= 65536
+			object.bitmap_ |= 32768
 		default:
 			iterator.ReadAny()
 		}

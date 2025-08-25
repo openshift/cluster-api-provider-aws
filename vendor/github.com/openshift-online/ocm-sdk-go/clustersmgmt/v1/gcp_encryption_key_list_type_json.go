@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalGCPEncryptionKeyList(list []*GCPEncryptionKey, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteGCPEncryptionKeyList(list, stream)
+	writeGCPEncryptionKeyList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalGCPEncryptionKeyList(list []*GCPEncryptionKey, writer io.Writer) err
 	return stream.Error
 }
 
-// WriteGCPEncryptionKeyList writes a list of value of the 'GCP_encryption_key' type to
+// writeGCPEncryptionKeyList writes a list of value of the 'GCP_encryption_key' type to
 // the given stream.
-func WriteGCPEncryptionKeyList(list []*GCPEncryptionKey, stream *jsoniter.Stream) {
+func writeGCPEncryptionKeyList(list []*GCPEncryptionKey, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteGCPEncryptionKey(value, stream)
+		writeGCPEncryptionKey(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalGCPEncryptionKeyList(source interface{}) (items []*GCPEncryptionKe
 	if err != nil {
 		return
 	}
-	items = ReadGCPEncryptionKeyList(iterator)
+	items = readGCPEncryptionKeyList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadGCPEncryptionKeyList reads list of values of the ”GCP_encryption_key' type from
+// readGCPEncryptionKeyList reads list of values of the ”GCP_encryption_key' type from
 // the given iterator.
-func ReadGCPEncryptionKeyList(iterator *jsoniter.Iterator) []*GCPEncryptionKey {
+func readGCPEncryptionKeyList(iterator *jsoniter.Iterator) []*GCPEncryptionKey {
 	list := []*GCPEncryptionKey{}
 	for iterator.ReadArray() {
-		item := ReadGCPEncryptionKey(iterator)
+		item := readGCPEncryptionKey(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -11,12 +11,10 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Deletes the specified set of tags from the specified set of resources.
-//
-// To list the current tags, use DescribeTags. For more information about tags, see [Tag your Amazon EC2 resources] in the
-// Amazon Elastic Compute Cloud User Guide.
-//
-// [Tag your Amazon EC2 resources]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Tags.html
+// Deletes the specified set of tags from the specified set of resources. To list
+// the current tags, use DescribeTags . For more information about tags, see Tag
+// your Amazon EC2 resources (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Tags.html)
+// in the Amazon Elastic Compute Cloud User Guide.
 func (c *Client) DeleteTags(ctx context.Context, params *DeleteTagsInput, optFns ...func(*Options)) (*DeleteTagsOutput, error) {
 	if params == nil {
 		params = &DeleteTagsInput{}
@@ -34,10 +32,8 @@ func (c *Client) DeleteTags(ctx context.Context, params *DeleteTagsInput, optFns
 
 type DeleteTagsInput struct {
 
-	// The IDs of the resources, separated by spaces.
-	//
-	// Constraints: Up to 1000 resource IDs. We recommend breaking up this request
-	// into smaller batches.
+	// The IDs of the resources, separated by spaces. Constraints: Up to 1000 resource
+	// IDs. We recommend breaking up this request into smaller batches.
 	//
 	// This member is required.
 	Resources []string
@@ -52,12 +48,9 @@ type DeleteTagsInput struct {
 	// specific tags. If you specify a tag key without a tag value, we delete any tag
 	// with this key regardless of its value. If you specify a tag key with an empty
 	// string as the tag value, we delete the tag only if its value is an empty string.
-	//
 	// If you omit this parameter, we delete all user-defined tags for the specified
 	// resources. We do not delete Amazon Web Services-generated tags (tags that have
-	// the aws: prefix).
-	//
-	// Constraints: Up to 1000 tags.
+	// the aws: prefix). Constraints: Up to 1000 tags.
 	Tags []types.Tag
 
 	noSmithyDocumentSerde
@@ -113,9 +106,6 @@ func (c *Client) addOperationDeleteTagsMiddlewares(stack *middleware.Stack, opti
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -126,15 +116,6 @@ func (c *Client) addOperationDeleteTagsMiddlewares(stack *middleware.Stack, opti
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeleteTagsValidationMiddleware(stack); err != nil {
@@ -156,18 +137,6 @@ func (c *Client) addOperationDeleteTagsMiddlewares(stack *middleware.Stack, opti
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

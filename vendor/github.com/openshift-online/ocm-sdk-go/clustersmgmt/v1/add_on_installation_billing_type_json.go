@@ -29,7 +29,7 @@ import (
 // MarshalAddOnInstallationBilling writes a value of the 'add_on_installation_billing' type to the given writer.
 func MarshalAddOnInstallationBilling(object *AddOnInstallationBilling, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAddOnInstallationBilling(object, stream)
+	writeAddOnInstallationBilling(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAddOnInstallationBilling(object *AddOnInstallationBilling, writer io
 	return stream.Error
 }
 
-// WriteAddOnInstallationBilling writes a value of the 'add_on_installation_billing' type to the given stream.
-func WriteAddOnInstallationBilling(object *AddOnInstallationBilling, stream *jsoniter.Stream) {
+// writeAddOnInstallationBilling writes a value of the 'add_on_installation_billing' type to the given stream.
+func writeAddOnInstallationBilling(object *AddOnInstallationBilling, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -92,13 +92,13 @@ func UnmarshalAddOnInstallationBilling(source interface{}) (object *AddOnInstall
 	if err != nil {
 		return
 	}
-	object = ReadAddOnInstallationBilling(iterator)
+	object = readAddOnInstallationBilling(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAddOnInstallationBilling reads a value of the 'add_on_installation_billing' type from the given iterator.
-func ReadAddOnInstallationBilling(iterator *jsoniter.Iterator) *AddOnInstallationBilling {
+// readAddOnInstallationBilling reads a value of the 'add_on_installation_billing' type from the given iterator.
+func readAddOnInstallationBilling(iterator *jsoniter.Iterator) *AddOnInstallationBilling {
 	object := &AddOnInstallationBilling{}
 	for {
 		field := iterator.ReadObject()

@@ -22,10 +22,8 @@ package mocks
 
 import (
 	reflect "reflect"
-	time "time"
 
-	aws "github.com/aws/aws-sdk-go-v2/aws"
-	logging "github.com/aws/smithy-go/logging"
+	client "github.com/aws/aws-sdk-go/aws/client"
 	logr "github.com/go-logr/logr"
 	gomock "github.com/golang/mock/gomock"
 	unstructured "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -34,7 +32,7 @@ import (
 	throttle "sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/throttle"
 	logger "sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
 	v1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	client "sigs.k8s.io/controller-runtime/pkg/client"
+	client0 "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // MockClusterScoper is a mock of ClusterScoper interface.
@@ -164,20 +162,6 @@ func (mr *MockClusterScoperMockRecorder) Error(arg0, arg1 interface{}, arg2 ...i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Error", reflect.TypeOf((*MockClusterScoper)(nil).Error), varargs...)
 }
 
-// GetAWSLogger mocks base method.
-func (m *MockClusterScoper) GetAWSLogger() logging.Logger {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAWSLogger")
-	ret0, _ := ret[0].(logging.Logger)
-	return ret0
-}
-
-// GetAWSLogger indicates an expected call of GetAWSLogger.
-func (mr *MockClusterScoperMockRecorder) GetAWSLogger() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAWSLogger", reflect.TypeOf((*MockClusterScoper)(nil).GetAWSLogger))
-}
-
 // GetLogger mocks base method.
 func (m *MockClusterScoper) GetLogger() logr.Logger {
 	m.ctrl.T.Helper()
@@ -266,10 +250,10 @@ func (mr *MockClusterScoperMockRecorder) KubernetesClusterName() *gomock.Call {
 }
 
 // ListOptionsLabelSelector mocks base method.
-func (m *MockClusterScoper) ListOptionsLabelSelector() client.ListOption {
+func (m *MockClusterScoper) ListOptionsLabelSelector() client0.ListOption {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListOptionsLabelSelector")
-	ret0, _ := ret[0].(client.ListOption)
+	ret0, _ := ret[0].(client0.ListOption)
 	return ret0
 }
 
@@ -277,20 +261,6 @@ func (m *MockClusterScoper) ListOptionsLabelSelector() client.ListOption {
 func (mr *MockClusterScoperMockRecorder) ListOptionsLabelSelector() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOptionsLabelSelector", reflect.TypeOf((*MockClusterScoper)(nil).ListOptionsLabelSelector))
-}
-
-// MaxWaitDuration mocks base method.
-func (m *MockClusterScoper) MaxWaitDuration() time.Duration {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MaxWaitDuration")
-	ret0, _ := ret[0].(time.Duration)
-	return ret0
-}
-
-// MaxWaitDuration indicates an expected call of MaxWaitDuration.
-func (mr *MockClusterScoperMockRecorder) MaxWaitDuration() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MaxWaitDuration", reflect.TypeOf((*MockClusterScoper)(nil).MaxWaitDuration))
 }
 
 // Name mocks base method.
@@ -364,10 +334,10 @@ func (mr *MockClusterScoperMockRecorder) ServiceLimiter(arg0 interface{}) *gomoc
 }
 
 // Session mocks base method.
-func (m *MockClusterScoper) Session() aws.Config {
+func (m *MockClusterScoper) Session() client.ConfigProvider {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Session")
-	ret0, _ := ret[0].(aws.Config)
+	ret0, _ := ret[0].(client.ConfigProvider)
 	return ret0
 }
 

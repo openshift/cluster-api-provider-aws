@@ -29,7 +29,7 @@ import (
 // MarshalAccessReviewRequest writes a value of the 'access_review_request' type to the given writer.
 func MarshalAccessReviewRequest(object *AccessReviewRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAccessReviewRequest(object, stream)
+	writeAccessReviewRequest(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAccessReviewRequest(object *AccessReviewRequest, writer io.Writer) e
 	return stream.Error
 }
 
-// WriteAccessReviewRequest writes a value of the 'access_review_request' type to the given stream.
-func WriteAccessReviewRequest(object *AccessReviewRequest, stream *jsoniter.Stream) {
+// writeAccessReviewRequest writes a value of the 'access_review_request' type to the given stream.
+func writeAccessReviewRequest(object *AccessReviewRequest, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -114,13 +114,13 @@ func UnmarshalAccessReviewRequest(source interface{}) (object *AccessReviewReque
 	if err != nil {
 		return
 	}
-	object = ReadAccessReviewRequest(iterator)
+	object = readAccessReviewRequest(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAccessReviewRequest reads a value of the 'access_review_request' type from the given iterator.
-func ReadAccessReviewRequest(iterator *jsoniter.Iterator) *AccessReviewRequest {
+// readAccessReviewRequest reads a value of the 'access_review_request' type from the given iterator.
+func readAccessReviewRequest(iterator *jsoniter.Iterator) *AccessReviewRequest {
 	object := &AccessReviewRequest{}
 	for {
 		field := iterator.ReadObject()

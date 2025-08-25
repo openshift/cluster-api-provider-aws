@@ -41,15 +41,11 @@ type GetCoipPoolUsageInput struct {
 	DryRun *bool
 
 	// One or more filters.
-	//
 	//   - coip-address-usage.allocation-id - The allocation ID of the address.
-	//
 	//   - coip-address-usage.aws-account-id - The ID of the Amazon Web Services
 	//   account that is using the customer-owned IP address.
-	//
 	//   - coip-address-usage.aws-service - The Amazon Web Services service that is
 	//   using the customer-owned IP address.
-	//
 	//   - coip-address-usage.co-ip - The customer-owned IP address.
 	Filters []types.Filter
 
@@ -127,9 +123,6 @@ func (c *Client) addOperationGetCoipPoolUsageMiddlewares(stack *middleware.Stack
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -140,15 +133,6 @@ func (c *Client) addOperationGetCoipPoolUsageMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpGetCoipPoolUsageValidationMiddleware(stack); err != nil {
@@ -170,18 +154,6 @@ func (c *Client) addOperationGetCoipPoolUsageMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

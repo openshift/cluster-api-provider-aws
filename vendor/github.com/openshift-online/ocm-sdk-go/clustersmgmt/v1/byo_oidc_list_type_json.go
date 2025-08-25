@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalByoOidcList(list []*ByoOidc, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteByoOidcList(list, stream)
+	writeByoOidcList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalByoOidcList(list []*ByoOidc, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteByoOidcList writes a list of value of the 'byo_oidc' type to
+// writeByoOidcList writes a list of value of the 'byo_oidc' type to
 // the given stream.
-func WriteByoOidcList(list []*ByoOidc, stream *jsoniter.Stream) {
+func writeByoOidcList(list []*ByoOidc, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteByoOidc(value, stream)
+		writeByoOidc(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalByoOidcList(source interface{}) (items []*ByoOidc, err error) {
 	if err != nil {
 		return
 	}
-	items = ReadByoOidcList(iterator)
+	items = readByoOidcList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadByoOidcList reads list of values of the ”byo_oidc' type from
+// readByoOidcList reads list of values of the ”byo_oidc' type from
 // the given iterator.
-func ReadByoOidcList(iterator *jsoniter.Iterator) []*ByoOidc {
+func readByoOidcList(iterator *jsoniter.Iterator) []*ByoOidc {
 	list := []*ByoOidc{}
 	for iterator.ReadArray() {
-		item := ReadByoOidc(iterator)
+		item := readByoOidc(iterator)
 		list = append(list, item)
 	}
 	return list

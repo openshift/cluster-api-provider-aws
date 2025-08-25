@@ -29,7 +29,7 @@ import (
 // MarshalCapability writes a value of the 'capability' type to the given writer.
 func MarshalCapability(object *Capability, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteCapability(object, stream)
+	writeCapability(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalCapability(object *Capability, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteCapability writes a value of the 'capability' type to the given stream.
-func WriteCapability(object *Capability, stream *jsoniter.Stream) {
+// writeCapability writes a value of the 'capability' type to the given stream.
+func writeCapability(object *Capability, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -78,13 +78,13 @@ func UnmarshalCapability(source interface{}) (object *Capability, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadCapability(iterator)
+	object = readCapability(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadCapability reads a value of the 'capability' type from the given iterator.
-func ReadCapability(iterator *jsoniter.Iterator) *Capability {
+// readCapability reads a value of the 'capability' type from the given iterator.
+func readCapability(iterator *jsoniter.Iterator) *Capability {
 	object := &Capability{}
 	for {
 		field := iterator.ReadObject()

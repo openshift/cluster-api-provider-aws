@@ -30,7 +30,7 @@ import (
 // MarshalOrganization writes a value of the 'organization' type to the given writer.
 func MarshalOrganization(object *Organization, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteOrganization(object, stream)
+	writeOrganization(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalOrganization(object *Organization, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteOrganization writes a value of the 'organization' type to the given stream.
-func WriteOrganization(object *Organization, stream *jsoniter.Stream) {
+// writeOrganization writes a value of the 'organization' type to the given stream.
+func writeOrganization(object *Organization, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -72,7 +72,7 @@ func WriteOrganization(object *Organization, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("capabilities")
-		WriteCapabilityList(object.capabilities, stream)
+		writeCapabilityList(object.capabilities, stream)
 		count++
 	}
 	present_ = object.bitmap_&16 != 0
@@ -108,7 +108,7 @@ func WriteOrganization(object *Organization, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("labels")
-		WriteLabelList(object.labels, stream)
+		writeLabelList(object.labels, stream)
 		count++
 	}
 	present_ = object.bitmap_&256 != 0
@@ -138,13 +138,13 @@ func UnmarshalOrganization(source interface{}) (object *Organization, err error)
 	if err != nil {
 		return
 	}
-	object = ReadOrganization(iterator)
+	object = readOrganization(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadOrganization reads a value of the 'organization' type from the given iterator.
-func ReadOrganization(iterator *jsoniter.Iterator) *Organization {
+// readOrganization reads a value of the 'organization' type from the given iterator.
+func readOrganization(iterator *jsoniter.Iterator) *Organization {
 	object := &Organization{}
 	for {
 		field := iterator.ReadObject()
@@ -164,7 +164,7 @@ func ReadOrganization(iterator *jsoniter.Iterator) *Organization {
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
 		case "capabilities":
-			value := ReadCapabilityList(iterator)
+			value := readCapabilityList(iterator)
 			object.capabilities = value
 			object.bitmap_ |= 8
 		case "created_at":
@@ -184,7 +184,7 @@ func ReadOrganization(iterator *jsoniter.Iterator) *Organization {
 			object.externalID = value
 			object.bitmap_ |= 64
 		case "labels":
-			value := ReadLabelList(iterator)
+			value := readLabelList(iterator)
 			object.labels = value
 			object.bitmap_ |= 128
 		case "name":

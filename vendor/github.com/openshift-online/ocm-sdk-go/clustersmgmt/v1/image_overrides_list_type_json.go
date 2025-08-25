@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalImageOverridesList(list []*ImageOverrides, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteImageOverridesList(list, stream)
+	writeImageOverridesList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalImageOverridesList(list []*ImageOverrides, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteImageOverridesList writes a list of value of the 'image_overrides' type to
+// writeImageOverridesList writes a list of value of the 'image_overrides' type to
 // the given stream.
-func WriteImageOverridesList(list []*ImageOverrides, stream *jsoniter.Stream) {
+func writeImageOverridesList(list []*ImageOverrides, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteImageOverrides(value, stream)
+		writeImageOverrides(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalImageOverridesList(source interface{}) (items []*ImageOverrides, e
 	if err != nil {
 		return
 	}
-	items = ReadImageOverridesList(iterator)
+	items = readImageOverridesList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadImageOverridesList reads list of values of the ”image_overrides' type from
+// readImageOverridesList reads list of values of the ”image_overrides' type from
 // the given iterator.
-func ReadImageOverridesList(iterator *jsoniter.Iterator) []*ImageOverrides {
+func readImageOverridesList(iterator *jsoniter.Iterator) []*ImageOverrides {
 	list := []*ImageOverrides{}
 	for iterator.ReadArray() {
-		item := ReadImageOverrides(iterator)
+		item := readImageOverrides(iterator)
 		list = append(list, item)
 	}
 	return list

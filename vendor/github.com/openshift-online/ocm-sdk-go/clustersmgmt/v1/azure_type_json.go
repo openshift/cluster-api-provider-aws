@@ -29,7 +29,7 @@ import (
 // MarshalAzure writes a value of the 'azure' type to the given writer.
 func MarshalAzure(object *Azure, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAzure(object, stream)
+	writeAzure(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAzure(object *Azure, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteAzure writes a value of the 'azure' type to the given stream.
-func WriteAzure(object *Azure, stream *jsoniter.Stream) {
+// writeAzure writes a value of the 'azure' type to the given stream.
+func writeAzure(object *Azure, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -60,25 +60,16 @@ func WriteAzure(object *Azure, stream *jsoniter.Stream) {
 		stream.WriteString(object.networkSecurityGroupResourceID)
 		count++
 	}
-	present_ = object.bitmap_&4 != 0 && object.nodesOutboundConnectivity != nil
-	if present_ {
-		if count > 0 {
-			stream.WriteMore()
-		}
-		stream.WriteObjectField("nodes_outbound_connectivity")
-		WriteAzureNodesOutboundConnectivity(object.nodesOutboundConnectivity, stream)
-		count++
-	}
-	present_ = object.bitmap_&8 != 0 && object.operatorsAuthentication != nil
+	present_ = object.bitmap_&4 != 0 && object.operatorsAuthentication != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("operators_authentication")
-		WriteAzureOperatorsAuthentication(object.operatorsAuthentication, stream)
+		writeAzureOperatorsAuthentication(object.operatorsAuthentication, stream)
 		count++
 	}
-	present_ = object.bitmap_&16 != 0
+	present_ = object.bitmap_&8 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -87,7 +78,7 @@ func WriteAzure(object *Azure, stream *jsoniter.Stream) {
 		stream.WriteString(object.resourceGroupName)
 		count++
 	}
-	present_ = object.bitmap_&32 != 0
+	present_ = object.bitmap_&16 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -96,7 +87,7 @@ func WriteAzure(object *Azure, stream *jsoniter.Stream) {
 		stream.WriteString(object.resourceName)
 		count++
 	}
-	present_ = object.bitmap_&64 != 0
+	present_ = object.bitmap_&32 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -105,7 +96,7 @@ func WriteAzure(object *Azure, stream *jsoniter.Stream) {
 		stream.WriteString(object.subnetResourceID)
 		count++
 	}
-	present_ = object.bitmap_&128 != 0
+	present_ = object.bitmap_&64 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -114,7 +105,7 @@ func WriteAzure(object *Azure, stream *jsoniter.Stream) {
 		stream.WriteString(object.subscriptionID)
 		count++
 	}
-	present_ = object.bitmap_&256 != 0
+	present_ = object.bitmap_&128 != 0
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -132,13 +123,13 @@ func UnmarshalAzure(source interface{}) (object *Azure, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadAzure(iterator)
+	object = readAzure(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAzure reads a value of the 'azure' type from the given iterator.
-func ReadAzure(iterator *jsoniter.Iterator) *Azure {
+// readAzure reads a value of the 'azure' type from the given iterator.
+func readAzure(iterator *jsoniter.Iterator) *Azure {
 	object := &Azure{}
 	for {
 		field := iterator.ReadObject()
@@ -154,34 +145,30 @@ func ReadAzure(iterator *jsoniter.Iterator) *Azure {
 			value := iterator.ReadString()
 			object.networkSecurityGroupResourceID = value
 			object.bitmap_ |= 2
-		case "nodes_outbound_connectivity":
-			value := ReadAzureNodesOutboundConnectivity(iterator)
-			object.nodesOutboundConnectivity = value
-			object.bitmap_ |= 4
 		case "operators_authentication":
-			value := ReadAzureOperatorsAuthentication(iterator)
+			value := readAzureOperatorsAuthentication(iterator)
 			object.operatorsAuthentication = value
-			object.bitmap_ |= 8
+			object.bitmap_ |= 4
 		case "resource_group_name":
 			value := iterator.ReadString()
 			object.resourceGroupName = value
-			object.bitmap_ |= 16
+			object.bitmap_ |= 8
 		case "resource_name":
 			value := iterator.ReadString()
 			object.resourceName = value
-			object.bitmap_ |= 32
+			object.bitmap_ |= 16
 		case "subnet_resource_id":
 			value := iterator.ReadString()
 			object.subnetResourceID = value
-			object.bitmap_ |= 64
+			object.bitmap_ |= 32
 		case "subscription_id":
 			value := iterator.ReadString()
 			object.subscriptionID = value
-			object.bitmap_ |= 128
+			object.bitmap_ |= 64
 		case "tenant_id":
 			value := iterator.ReadString()
 			object.tenantID = value
-			object.bitmap_ |= 256
+			object.bitmap_ |= 128
 		default:
 			iterator.ReadAny()
 		}

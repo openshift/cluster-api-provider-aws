@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAccessRequestList(list []*AccessRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAccessRequestList(list, stream)
+	writeAccessRequestList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAccessRequestList(list []*AccessRequest, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteAccessRequestList writes a list of value of the 'access_request' type to
+// writeAccessRequestList writes a list of value of the 'access_request' type to
 // the given stream.
-func WriteAccessRequestList(list []*AccessRequest, stream *jsoniter.Stream) {
+func writeAccessRequestList(list []*AccessRequest, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteAccessRequest(value, stream)
+		writeAccessRequest(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAccessRequestList(source interface{}) (items []*AccessRequest, err
 	if err != nil {
 		return
 	}
-	items = ReadAccessRequestList(iterator)
+	items = readAccessRequestList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAccessRequestList reads list of values of the ”access_request' type from
+// readAccessRequestList reads list of values of the ”access_request' type from
 // the given iterator.
-func ReadAccessRequestList(iterator *jsoniter.Iterator) []*AccessRequest {
+func readAccessRequestList(iterator *jsoniter.Iterator) []*AccessRequest {
 	list := []*AccessRequest{}
 	for iterator.ReadArray() {
-		item := ReadAccessRequest(iterator)
+		item := readAccessRequest(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -29,7 +29,7 @@ import (
 // MarshalAdditionalCatalogSource writes a value of the 'additional_catalog_source' type to the given writer.
 func MarshalAdditionalCatalogSource(object *AdditionalCatalogSource, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAdditionalCatalogSource(object, stream)
+	writeAdditionalCatalogSource(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAdditionalCatalogSource(object *AdditionalCatalogSource, writer io.W
 	return stream.Error
 }
 
-// WriteAdditionalCatalogSource writes a value of the 'additional_catalog_source' type to the given stream.
-func WriteAdditionalCatalogSource(object *AdditionalCatalogSource, stream *jsoniter.Stream) {
+// writeAdditionalCatalogSource writes a value of the 'additional_catalog_source' type to the given stream.
+func writeAdditionalCatalogSource(object *AdditionalCatalogSource, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -87,13 +87,13 @@ func UnmarshalAdditionalCatalogSource(source interface{}) (object *AdditionalCat
 	if err != nil {
 		return
 	}
-	object = ReadAdditionalCatalogSource(iterator)
+	object = readAdditionalCatalogSource(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAdditionalCatalogSource reads a value of the 'additional_catalog_source' type from the given iterator.
-func ReadAdditionalCatalogSource(iterator *jsoniter.Iterator) *AdditionalCatalogSource {
+// readAdditionalCatalogSource reads a value of the 'additional_catalog_source' type from the given iterator.
+func readAdditionalCatalogSource(iterator *jsoniter.Iterator) *AdditionalCatalogSource {
 	object := &AdditionalCatalogSource{}
 	for {
 		field := iterator.ReadObject()

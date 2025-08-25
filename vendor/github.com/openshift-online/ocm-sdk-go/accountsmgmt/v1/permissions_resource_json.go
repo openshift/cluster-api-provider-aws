@@ -57,7 +57,7 @@ func readPermissionsListResponse(response *PermissionsListResponse, reader io.Re
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadPermissionList(iterator)
+			items := readPermissionList(iterator)
 			response.items = &PermissionList{
 				items: items,
 			}

@@ -30,7 +30,7 @@ import (
 // MarshalAddonUpgradePolicy writes a value of the 'addon_upgrade_policy' type to the given writer.
 func MarshalAddonUpgradePolicy(object *AddonUpgradePolicy, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAddonUpgradePolicy(object, stream)
+	writeAddonUpgradePolicy(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalAddonUpgradePolicy(object *AddonUpgradePolicy, writer io.Writer) err
 	return stream.Error
 }
 
-// WriteAddonUpgradePolicy writes a value of the 'addon_upgrade_policy' type to the given stream.
-func WriteAddonUpgradePolicy(object *AddonUpgradePolicy, stream *jsoniter.Stream) {
+// writeAddonUpgradePolicy writes a value of the 'addon_upgrade_policy' type to the given stream.
+func writeAddonUpgradePolicy(object *AddonUpgradePolicy, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -138,13 +138,13 @@ func UnmarshalAddonUpgradePolicy(source interface{}) (object *AddonUpgradePolicy
 	if err != nil {
 		return
 	}
-	object = ReadAddonUpgradePolicy(iterator)
+	object = readAddonUpgradePolicy(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAddonUpgradePolicy reads a value of the 'addon_upgrade_policy' type from the given iterator.
-func ReadAddonUpgradePolicy(iterator *jsoniter.Iterator) *AddonUpgradePolicy {
+// readAddonUpgradePolicy reads a value of the 'addon_upgrade_policy' type from the given iterator.
+func readAddonUpgradePolicy(iterator *jsoniter.Iterator) *AddonUpgradePolicy {
 	object := &AddonUpgradePolicy{}
 	for {
 		field := iterator.ReadObject()

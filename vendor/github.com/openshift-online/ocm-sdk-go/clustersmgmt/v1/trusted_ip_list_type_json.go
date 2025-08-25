@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalTrustedIpList(list []*TrustedIp, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteTrustedIpList(list, stream)
+	writeTrustedIpList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalTrustedIpList(list []*TrustedIp, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteTrustedIpList writes a list of value of the 'trusted_ip' type to
+// writeTrustedIpList writes a list of value of the 'trusted_ip' type to
 // the given stream.
-func WriteTrustedIpList(list []*TrustedIp, stream *jsoniter.Stream) {
+func writeTrustedIpList(list []*TrustedIp, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteTrustedIp(value, stream)
+		writeTrustedIp(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalTrustedIpList(source interface{}) (items []*TrustedIp, err error) 
 	if err != nil {
 		return
 	}
-	items = ReadTrustedIpList(iterator)
+	items = readTrustedIpList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadTrustedIpList reads list of values of the ”trusted_ip' type from
+// readTrustedIpList reads list of values of the ”trusted_ip' type from
 // the given iterator.
-func ReadTrustedIpList(iterator *jsoniter.Iterator) []*TrustedIp {
+func readTrustedIpList(iterator *jsoniter.Iterator) []*TrustedIp {
 	list := []*TrustedIp{}
 	for iterator.ReadArray() {
-		item := ReadTrustedIp(iterator)
+		item := readTrustedIp(iterator)
 		list = append(list, item)
 	}
 	return list

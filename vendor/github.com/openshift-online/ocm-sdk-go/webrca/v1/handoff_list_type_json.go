@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalHandoffList(list []*Handoff, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteHandoffList(list, stream)
+	writeHandoffList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalHandoffList(list []*Handoff, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteHandoffList writes a list of value of the 'handoff' type to
+// writeHandoffList writes a list of value of the 'handoff' type to
 // the given stream.
-func WriteHandoffList(list []*Handoff, stream *jsoniter.Stream) {
+func writeHandoffList(list []*Handoff, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteHandoff(value, stream)
+		writeHandoff(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalHandoffList(source interface{}) (items []*Handoff, err error) {
 	if err != nil {
 		return
 	}
-	items = ReadHandoffList(iterator)
+	items = readHandoffList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadHandoffList reads list of values of the ”handoff' type from
+// readHandoffList reads list of values of the ”handoff' type from
 // the given iterator.
-func ReadHandoffList(iterator *jsoniter.Iterator) []*Handoff {
+func readHandoffList(iterator *jsoniter.Iterator) []*Handoff {
 	list := []*Handoff{}
 	for iterator.ReadArray() {
-		item := ReadHandoff(iterator)
+		item := readHandoff(iterator)
 		list = append(list, item)
 	}
 	return list

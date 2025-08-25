@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalEventList(list []*Event, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteEventList(list, stream)
+	writeEventList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalEventList(list []*Event, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteEventList writes a list of value of the 'event' type to
+// writeEventList writes a list of value of the 'event' type to
 // the given stream.
-func WriteEventList(list []*Event, stream *jsoniter.Stream) {
+func writeEventList(list []*Event, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteEvent(value, stream)
+		writeEvent(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalEventList(source interface{}) (items []*Event, err error) {
 	if err != nil {
 		return
 	}
-	items = ReadEventList(iterator)
+	items = readEventList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadEventList reads list of values of the ”event' type from
+// readEventList reads list of values of the ”event' type from
 // the given iterator.
-func ReadEventList(iterator *jsoniter.Iterator) []*Event {
+func readEventList(iterator *jsoniter.Iterator) []*Event {
 	list := []*Event{}
 	for iterator.ReadArray() {
-		item := ReadEvent(iterator)
+		item := readEvent(iterator)
 		list = append(list, item)
 	}
 	return list

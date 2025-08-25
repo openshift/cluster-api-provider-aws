@@ -35,9 +35,9 @@ type DescribeIpamScopesInput struct {
 	// UnauthorizedOperation .
 	DryRun *bool
 
-	// One or more filters for the request. For more information about filtering, see [Filtering CLI output].
-	//
-	// [Filtering CLI output]: https://docs.aws.amazon.com/cli/latest/userguide/cli-usage-filter.html
+	// One or more filters for the request. For more information about filtering, see
+	// Filtering CLI output (https://docs.aws.amazon.com/cli/latest/userguide/cli-usage-filter.html)
+	// .
 	Filters []types.Filter
 
 	// The IDs of the scopes you want information on.
@@ -110,9 +110,6 @@ func (c *Client) addOperationDescribeIpamScopesMiddlewares(stack *middleware.Sta
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -123,15 +120,6 @@ func (c *Client) addOperationDescribeIpamScopesMiddlewares(stack *middleware.Sta
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeIpamScopes(options.Region), middleware.Before); err != nil {
@@ -152,20 +140,16 @@ func (c *Client) addOperationDescribeIpamScopesMiddlewares(stack *middleware.Sta
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
-		return err
-	}
 	return nil
 }
+
+// DescribeIpamScopesAPIClient is a client that implements the DescribeIpamScopes
+// operation.
+type DescribeIpamScopesAPIClient interface {
+	DescribeIpamScopes(context.Context, *DescribeIpamScopesInput, ...func(*Options)) (*DescribeIpamScopesOutput, error)
+}
+
+var _ DescribeIpamScopesAPIClient = (*Client)(nil)
 
 // DescribeIpamScopesPaginatorOptions is the paginator options for
 // DescribeIpamScopes
@@ -231,9 +215,6 @@ func (p *DescribeIpamScopesPaginator) NextPage(ctx context.Context, optFns ...fu
 	}
 	params.MaxResults = limit
 
-	optFns = append([]func(*Options){
-		addIsPaginatorUserAgent,
-	}, optFns...)
 	result, err := p.client.DescribeIpamScopes(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -252,14 +233,6 @@ func (p *DescribeIpamScopesPaginator) NextPage(ctx context.Context, optFns ...fu
 
 	return result, nil
 }
-
-// DescribeIpamScopesAPIClient is a client that implements the DescribeIpamScopes
-// operation.
-type DescribeIpamScopesAPIClient interface {
-	DescribeIpamScopes(context.Context, *DescribeIpamScopesInput, ...func(*Options)) (*DescribeIpamScopesOutput, error)
-}
-
-var _ DescribeIpamScopesAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeIpamScopes(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

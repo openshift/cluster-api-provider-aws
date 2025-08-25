@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalRolePolicyBindingStatusList(list []*RolePolicyBindingStatus, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteRolePolicyBindingStatusList(list, stream)
+	writeRolePolicyBindingStatusList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalRolePolicyBindingStatusList(list []*RolePolicyBindingStatus, writer 
 	return stream.Error
 }
 
-// WriteRolePolicyBindingStatusList writes a list of value of the 'role_policy_binding_status' type to
+// writeRolePolicyBindingStatusList writes a list of value of the 'role_policy_binding_status' type to
 // the given stream.
-func WriteRolePolicyBindingStatusList(list []*RolePolicyBindingStatus, stream *jsoniter.Stream) {
+func writeRolePolicyBindingStatusList(list []*RolePolicyBindingStatus, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteRolePolicyBindingStatus(value, stream)
+		writeRolePolicyBindingStatus(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalRolePolicyBindingStatusList(source interface{}) (items []*RolePoli
 	if err != nil {
 		return
 	}
-	items = ReadRolePolicyBindingStatusList(iterator)
+	items = readRolePolicyBindingStatusList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadRolePolicyBindingStatusList reads list of values of the ”role_policy_binding_status' type from
+// readRolePolicyBindingStatusList reads list of values of the ”role_policy_binding_status' type from
 // the given iterator.
-func ReadRolePolicyBindingStatusList(iterator *jsoniter.Iterator) []*RolePolicyBindingStatus {
+func readRolePolicyBindingStatusList(iterator *jsoniter.Iterator) []*RolePolicyBindingStatus {
 	list := []*RolePolicyBindingStatus{}
 	for iterator.ReadArray() {
-		item := ReadRolePolicyBindingStatus(iterator)
+		item := readRolePolicyBindingStatus(iterator)
 		list = append(list, item)
 	}
 	return list

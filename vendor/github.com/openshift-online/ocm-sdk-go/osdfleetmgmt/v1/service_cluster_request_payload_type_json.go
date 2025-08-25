@@ -29,7 +29,7 @@ import (
 // MarshalServiceClusterRequestPayload writes a value of the 'service_cluster_request_payload' type to the given writer.
 func MarshalServiceClusterRequestPayload(object *ServiceClusterRequestPayload, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteServiceClusterRequestPayload(object, stream)
+	writeServiceClusterRequestPayload(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalServiceClusterRequestPayload(object *ServiceClusterRequestPayload, w
 	return stream.Error
 }
 
-// WriteServiceClusterRequestPayload writes a value of the 'service_cluster_request_payload' type to the given stream.
-func WriteServiceClusterRequestPayload(object *ServiceClusterRequestPayload, stream *jsoniter.Stream) {
+// writeServiceClusterRequestPayload writes a value of the 'service_cluster_request_payload' type to the given stream.
+func writeServiceClusterRequestPayload(object *ServiceClusterRequestPayload, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -57,7 +57,7 @@ func WriteServiceClusterRequestPayload(object *ServiceClusterRequestPayload, str
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("labels")
-		WriteLabelRequestPayloadList(object.labels, stream)
+		writeLabelRequestPayloadList(object.labels, stream)
 		count++
 	}
 	present_ = object.bitmap_&4 != 0
@@ -78,13 +78,13 @@ func UnmarshalServiceClusterRequestPayload(source interface{}) (object *ServiceC
 	if err != nil {
 		return
 	}
-	object = ReadServiceClusterRequestPayload(iterator)
+	object = readServiceClusterRequestPayload(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadServiceClusterRequestPayload reads a value of the 'service_cluster_request_payload' type from the given iterator.
-func ReadServiceClusterRequestPayload(iterator *jsoniter.Iterator) *ServiceClusterRequestPayload {
+// readServiceClusterRequestPayload reads a value of the 'service_cluster_request_payload' type from the given iterator.
+func readServiceClusterRequestPayload(iterator *jsoniter.Iterator) *ServiceClusterRequestPayload {
 	object := &ServiceClusterRequestPayload{}
 	for {
 		field := iterator.ReadObject()
@@ -97,7 +97,7 @@ func ReadServiceClusterRequestPayload(iterator *jsoniter.Iterator) *ServiceClust
 			object.cloudProvider = value
 			object.bitmap_ |= 1
 		case "labels":
-			value := ReadLabelRequestPayloadList(iterator)
+			value := readLabelRequestPayloadList(iterator)
 			object.labels = value
 			object.bitmap_ |= 2
 		case "region":

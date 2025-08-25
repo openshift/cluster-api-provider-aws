@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalRelatedResourceList(list []*RelatedResource, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteRelatedResourceList(list, stream)
+	writeRelatedResourceList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalRelatedResourceList(list []*RelatedResource, writer io.Writer) error
 	return stream.Error
 }
 
-// WriteRelatedResourceList writes a list of value of the 'related_resource' type to
+// writeRelatedResourceList writes a list of value of the 'related_resource' type to
 // the given stream.
-func WriteRelatedResourceList(list []*RelatedResource, stream *jsoniter.Stream) {
+func writeRelatedResourceList(list []*RelatedResource, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteRelatedResource(value, stream)
+		writeRelatedResource(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalRelatedResourceList(source interface{}) (items []*RelatedResource,
 	if err != nil {
 		return
 	}
-	items = ReadRelatedResourceList(iterator)
+	items = readRelatedResourceList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadRelatedResourceList reads list of values of the ”related_resource' type from
+// readRelatedResourceList reads list of values of the ”related_resource' type from
 // the given iterator.
-func ReadRelatedResourceList(iterator *jsoniter.Iterator) []*RelatedResource {
+func readRelatedResourceList(iterator *jsoniter.Iterator) []*RelatedResource {
 	list := []*RelatedResource{}
 	for iterator.ReadArray() {
-		item := ReadRelatedResource(iterator)
+		item := readRelatedResource(iterator)
 		list = append(list, item)
 	}
 	return list

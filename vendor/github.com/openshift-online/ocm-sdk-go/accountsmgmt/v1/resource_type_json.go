@@ -29,7 +29,7 @@ import (
 // MarshalResource writes a value of the 'resource' type to the given writer.
 func MarshalResource(object *Resource, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteResource(object, stream)
+	writeResource(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalResource(object *Resource, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteResource writes a value of the 'resource' type to the given stream.
-func WriteResource(object *Resource, stream *jsoniter.Stream) {
+// writeResource writes a value of the 'resource' type to the given stream.
+func writeResource(object *Resource, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -128,13 +128,13 @@ func UnmarshalResource(source interface{}) (object *Resource, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadResource(iterator)
+	object = readResource(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadResource reads a value of the 'resource' type from the given iterator.
-func ReadResource(iterator *jsoniter.Iterator) *Resource {
+// readResource reads a value of the 'resource' type from the given iterator.
+func readResource(iterator *jsoniter.Iterator) *Resource {
 	object := &Resource{}
 	for {
 		field := iterator.ReadObject()

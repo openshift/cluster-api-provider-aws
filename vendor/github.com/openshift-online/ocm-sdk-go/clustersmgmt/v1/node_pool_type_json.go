@@ -30,7 +30,7 @@ import (
 // MarshalNodePool writes a value of the 'node_pool' type to the given writer.
 func MarshalNodePool(object *NodePool, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteNodePool(object, stream)
+	writeNodePool(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalNodePool(object *NodePool, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteNodePool writes a value of the 'node_pool' type to the given stream.
-func WriteNodePool(object *NodePool, stream *jsoniter.Stream) {
+// writeNodePool writes a value of the 'node_pool' type to the given stream.
+func writeNodePool(object *NodePool, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -72,7 +72,7 @@ func WriteNodePool(object *NodePool, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("aws_node_pool")
-		WriteAWSNodePool(object.awsNodePool, stream)
+		writeAWSNodePool(object.awsNodePool, stream)
 		count++
 	}
 	present_ = object.bitmap_&16 != 0
@@ -90,7 +90,7 @@ func WriteNodePool(object *NodePool, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("autoscaling")
-		WriteNodePoolAutoscaling(object.autoscaling, stream)
+		writeNodePoolAutoscaling(object.autoscaling, stream)
 		count++
 	}
 	present_ = object.bitmap_&64 != 0
@@ -108,7 +108,7 @@ func WriteNodePool(object *NodePool, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("azure_node_pool")
-		WriteAzureNodePool(object.azureNodePool, stream)
+		writeAzureNodePool(object.azureNodePool, stream)
 		count++
 	}
 	present_ = object.bitmap_&256 != 0 && object.kubeletConfigs != nil
@@ -117,7 +117,7 @@ func WriteNodePool(object *NodePool, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("kubelet_configs")
-		WriteStringList(object.kubeletConfigs, stream)
+		writeStringList(object.kubeletConfigs, stream)
 		count++
 	}
 	present_ = object.bitmap_&512 != 0 && object.labels != nil
@@ -155,7 +155,7 @@ func WriteNodePool(object *NodePool, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("management_upgrade")
-		WriteNodePoolManagementUpgrade(object.managementUpgrade, stream)
+		writeNodePoolManagementUpgrade(object.managementUpgrade, stream)
 		count++
 	}
 	present_ = object.bitmap_&2048 != 0 && object.nodeDrainGracePeriod != nil
@@ -164,7 +164,7 @@ func WriteNodePool(object *NodePool, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("node_drain_grace_period")
-		WriteValue(object.nodeDrainGracePeriod, stream)
+		writeValue(object.nodeDrainGracePeriod, stream)
 		count++
 	}
 	present_ = object.bitmap_&4096 != 0
@@ -182,7 +182,7 @@ func WriteNodePool(object *NodePool, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("status")
-		WriteNodePoolStatus(object.status, stream)
+		writeNodePoolStatus(object.status, stream)
 		count++
 	}
 	present_ = object.bitmap_&16384 != 0
@@ -200,7 +200,7 @@ func WriteNodePool(object *NodePool, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("taints")
-		WriteTaintList(object.taints, stream)
+		writeTaintList(object.taints, stream)
 		count++
 	}
 	present_ = object.bitmap_&65536 != 0 && object.tuningConfigs != nil
@@ -209,7 +209,7 @@ func WriteNodePool(object *NodePool, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("tuning_configs")
-		WriteStringList(object.tuningConfigs, stream)
+		writeStringList(object.tuningConfigs, stream)
 		count++
 	}
 	present_ = object.bitmap_&131072 != 0 && object.version != nil
@@ -218,7 +218,7 @@ func WriteNodePool(object *NodePool, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("version")
-		WriteVersion(object.version, stream)
+		writeVersion(object.version, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -230,13 +230,13 @@ func UnmarshalNodePool(source interface{}) (object *NodePool, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadNodePool(iterator)
+	object = readNodePool(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadNodePool reads a value of the 'node_pool' type from the given iterator.
-func ReadNodePool(iterator *jsoniter.Iterator) *NodePool {
+// readNodePool reads a value of the 'node_pool' type from the given iterator.
+func readNodePool(iterator *jsoniter.Iterator) *NodePool {
 	object := &NodePool{}
 	for {
 		field := iterator.ReadObject()
@@ -256,7 +256,7 @@ func ReadNodePool(iterator *jsoniter.Iterator) *NodePool {
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
 		case "aws_node_pool":
-			value := ReadAWSNodePool(iterator)
+			value := readAWSNodePool(iterator)
 			object.awsNodePool = value
 			object.bitmap_ |= 8
 		case "auto_repair":
@@ -264,7 +264,7 @@ func ReadNodePool(iterator *jsoniter.Iterator) *NodePool {
 			object.autoRepair = value
 			object.bitmap_ |= 16
 		case "autoscaling":
-			value := ReadNodePoolAutoscaling(iterator)
+			value := readNodePoolAutoscaling(iterator)
 			object.autoscaling = value
 			object.bitmap_ |= 32
 		case "availability_zone":
@@ -272,11 +272,11 @@ func ReadNodePool(iterator *jsoniter.Iterator) *NodePool {
 			object.availabilityZone = value
 			object.bitmap_ |= 64
 		case "azure_node_pool":
-			value := ReadAzureNodePool(iterator)
+			value := readAzureNodePool(iterator)
 			object.azureNodePool = value
 			object.bitmap_ |= 128
 		case "kubelet_configs":
-			value := ReadStringList(iterator)
+			value := readStringList(iterator)
 			object.kubeletConfigs = value
 			object.bitmap_ |= 256
 		case "labels":
@@ -292,11 +292,11 @@ func ReadNodePool(iterator *jsoniter.Iterator) *NodePool {
 			object.labels = value
 			object.bitmap_ |= 512
 		case "management_upgrade":
-			value := ReadNodePoolManagementUpgrade(iterator)
+			value := readNodePoolManagementUpgrade(iterator)
 			object.managementUpgrade = value
 			object.bitmap_ |= 1024
 		case "node_drain_grace_period":
-			value := ReadValue(iterator)
+			value := readValue(iterator)
 			object.nodeDrainGracePeriod = value
 			object.bitmap_ |= 2048
 		case "replicas":
@@ -304,7 +304,7 @@ func ReadNodePool(iterator *jsoniter.Iterator) *NodePool {
 			object.replicas = value
 			object.bitmap_ |= 4096
 		case "status":
-			value := ReadNodePoolStatus(iterator)
+			value := readNodePoolStatus(iterator)
 			object.status = value
 			object.bitmap_ |= 8192
 		case "subnet":
@@ -312,15 +312,15 @@ func ReadNodePool(iterator *jsoniter.Iterator) *NodePool {
 			object.subnet = value
 			object.bitmap_ |= 16384
 		case "taints":
-			value := ReadTaintList(iterator)
+			value := readTaintList(iterator)
 			object.taints = value
 			object.bitmap_ |= 32768
 		case "tuning_configs":
-			value := ReadStringList(iterator)
+			value := readStringList(iterator)
 			object.tuningConfigs = value
 			object.bitmap_ |= 65536
 		case "version":
-			value := ReadVersion(iterator)
+			value := readVersion(iterator)
 			object.version = value
 			object.bitmap_ |= 131072
 		default:

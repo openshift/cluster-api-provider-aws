@@ -29,7 +29,7 @@ import (
 // MarshalCredentialRequest writes a value of the 'credential_request' type to the given writer.
 func MarshalCredentialRequest(object *CredentialRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteCredentialRequest(object, stream)
+	writeCredentialRequest(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalCredentialRequest(object *CredentialRequest, writer io.Writer) error
 	return stream.Error
 }
 
-// WriteCredentialRequest writes a value of the 'credential_request' type to the given stream.
-func WriteCredentialRequest(object *CredentialRequest, stream *jsoniter.Stream) {
+// writeCredentialRequest writes a value of the 'credential_request' type to the given stream.
+func writeCredentialRequest(object *CredentialRequest, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -66,7 +66,7 @@ func WriteCredentialRequest(object *CredentialRequest, stream *jsoniter.Stream) 
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("policy_permissions")
-		WriteStringList(object.policyPermissions, stream)
+		writeStringList(object.policyPermissions, stream)
 		count++
 	}
 	present_ = object.bitmap_&8 != 0
@@ -87,13 +87,13 @@ func UnmarshalCredentialRequest(source interface{}) (object *CredentialRequest, 
 	if err != nil {
 		return
 	}
-	object = ReadCredentialRequest(iterator)
+	object = readCredentialRequest(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadCredentialRequest reads a value of the 'credential_request' type from the given iterator.
-func ReadCredentialRequest(iterator *jsoniter.Iterator) *CredentialRequest {
+// readCredentialRequest reads a value of the 'credential_request' type from the given iterator.
+func readCredentialRequest(iterator *jsoniter.Iterator) *CredentialRequest {
 	object := &CredentialRequest{}
 	for {
 		field := iterator.ReadObject()
@@ -110,7 +110,7 @@ func ReadCredentialRequest(iterator *jsoniter.Iterator) *CredentialRequest {
 			object.namespace = value
 			object.bitmap_ |= 2
 		case "policy_permissions":
-			value := ReadStringList(iterator)
+			value := readStringList(iterator)
 			object.policyPermissions = value
 			object.bitmap_ |= 4
 		case "service_account":

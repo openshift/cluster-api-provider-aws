@@ -57,7 +57,7 @@ func readRegistryCredentialsListResponse(response *RegistryCredentialsListRespon
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadRegistryCredentialList(iterator)
+			items := readRegistryCredentialList(iterator)
 			response.items = &RegistryCredentialList{
 				items: items,
 			}

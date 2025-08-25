@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalFollowUpList(list []*FollowUp, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteFollowUpList(list, stream)
+	writeFollowUpList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalFollowUpList(list []*FollowUp, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteFollowUpList writes a list of value of the 'follow_up' type to
+// writeFollowUpList writes a list of value of the 'follow_up' type to
 // the given stream.
-func WriteFollowUpList(list []*FollowUp, stream *jsoniter.Stream) {
+func writeFollowUpList(list []*FollowUp, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteFollowUp(value, stream)
+		writeFollowUp(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalFollowUpList(source interface{}) (items []*FollowUp, err error) {
 	if err != nil {
 		return
 	}
-	items = ReadFollowUpList(iterator)
+	items = readFollowUpList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadFollowUpList reads list of values of the ”follow_up' type from
+// readFollowUpList reads list of values of the ”follow_up' type from
 // the given iterator.
-func ReadFollowUpList(iterator *jsoniter.Iterator) []*FollowUp {
+func readFollowUpList(iterator *jsoniter.Iterator) []*FollowUp {
 	list := []*FollowUp{}
 	for iterator.ReadArray() {
-		item := ReadFollowUp(iterator)
+		item := readFollowUp(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -12,9 +12,8 @@ import (
 
 // Enable an Organizations member account as the IPAM admin account. You cannot
 // select the Organizations management account as the IPAM admin account. For more
-// information, see [Enable integration with Organizations]in the Amazon VPC IPAM User Guide.
-//
-// [Enable integration with Organizations]: https://docs.aws.amazon.com/vpc/latest/ipam/enable-integ-ipam.html
+// information, see Enable integration with Organizations (https://docs.aws.amazon.com/vpc/latest/ipam/enable-integ-ipam.html)
+// in the Amazon VPC IPAM User Guide.
 func (c *Client) EnableIpamOrganizationAdminAccount(ctx context.Context, params *EnableIpamOrganizationAdminAccountInput, optFns ...func(*Options)) (*EnableIpamOrganizationAdminAccountOutput, error) {
 	if params == nil {
 		params = &EnableIpamOrganizationAdminAccountInput{}
@@ -100,9 +99,6 @@ func (c *Client) addOperationEnableIpamOrganizationAdminAccountMiddlewares(stack
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -113,15 +109,6 @@ func (c *Client) addOperationEnableIpamOrganizationAdminAccountMiddlewares(stack
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpEnableIpamOrganizationAdminAccountValidationMiddleware(stack); err != nil {
@@ -143,18 +130,6 @@ func (c *Client) addOperationEnableIpamOrganizationAdminAccountMiddlewares(stack
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

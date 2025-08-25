@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalLimitedSupportReasonOverrideList(list []*LimitedSupportReasonOverride, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteLimitedSupportReasonOverrideList(list, stream)
+	writeLimitedSupportReasonOverrideList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalLimitedSupportReasonOverrideList(list []*LimitedSupportReasonOverrid
 	return stream.Error
 }
 
-// WriteLimitedSupportReasonOverrideList writes a list of value of the 'limited_support_reason_override' type to
+// writeLimitedSupportReasonOverrideList writes a list of value of the 'limited_support_reason_override' type to
 // the given stream.
-func WriteLimitedSupportReasonOverrideList(list []*LimitedSupportReasonOverride, stream *jsoniter.Stream) {
+func writeLimitedSupportReasonOverrideList(list []*LimitedSupportReasonOverride, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteLimitedSupportReasonOverride(value, stream)
+		writeLimitedSupportReasonOverride(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalLimitedSupportReasonOverrideList(source interface{}) (items []*Lim
 	if err != nil {
 		return
 	}
-	items = ReadLimitedSupportReasonOverrideList(iterator)
+	items = readLimitedSupportReasonOverrideList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadLimitedSupportReasonOverrideList reads list of values of the ”limited_support_reason_override' type from
+// readLimitedSupportReasonOverrideList reads list of values of the ”limited_support_reason_override' type from
 // the given iterator.
-func ReadLimitedSupportReasonOverrideList(iterator *jsoniter.Iterator) []*LimitedSupportReasonOverride {
+func readLimitedSupportReasonOverrideList(iterator *jsoniter.Iterator) []*LimitedSupportReasonOverride {
 	list := []*LimitedSupportReasonOverride{}
 	for iterator.ReadArray() {
-		item := ReadLimitedSupportReasonOverride(iterator)
+		item := readLimitedSupportReasonOverride(iterator)
 		list = append(list, item)
 	}
 	return list

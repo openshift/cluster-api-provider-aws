@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC
+// Copyright 2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import (
 	"net/url"
 	"time"
 
-	errorreportingpb "cloud.google.com/go/errorreporting/apiv1beta1/errorreportingpb"
 	gax "github.com/googleapis/gax-go/v2"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/iterator"
@@ -33,6 +32,7 @@ import (
 	"google.golang.org/api/option/internaloption"
 	gtransport "google.golang.org/api/transport/grpc"
 	httptransport "google.golang.org/api/transport/http"
+	clouderrorreportingpb "google.golang.org/genproto/googleapis/devtools/clouderrorreporting/v1beta1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -52,7 +52,6 @@ type ErrorStatsCallOptions struct {
 func defaultErrorStatsGRPCClientOptions() []option.ClientOption {
 	return []option.ClientOption{
 		internaloption.WithDefaultEndpoint("clouderrorreporting.googleapis.com:443"),
-		internaloption.WithDefaultEndpointTemplate("clouderrorreporting.UNIVERSE_DOMAIN:443"),
 		internaloption.WithDefaultMTLSEndpoint("clouderrorreporting.mtls.googleapis.com:443"),
 		internaloption.WithDefaultAudience("https://clouderrorreporting.googleapis.com/"),
 		internaloption.WithDefaultScopes(DefaultAuthScopes()...),
@@ -146,9 +145,9 @@ type internalErrorStatsClient interface {
 	Close() error
 	setGoogleClientInfo(...string)
 	Connection() *grpc.ClientConn
-	ListGroupStats(context.Context, *errorreportingpb.ListGroupStatsRequest, ...gax.CallOption) *ErrorGroupStatsIterator
-	ListEvents(context.Context, *errorreportingpb.ListEventsRequest, ...gax.CallOption) *ErrorEventIterator
-	DeleteEvents(context.Context, *errorreportingpb.DeleteEventsRequest, ...gax.CallOption) (*errorreportingpb.DeleteEventsResponse, error)
+	ListGroupStats(context.Context, *clouderrorreportingpb.ListGroupStatsRequest, ...gax.CallOption) *ErrorGroupStatsIterator
+	ListEvents(context.Context, *clouderrorreportingpb.ListEventsRequest, ...gax.CallOption) *ErrorEventIterator
+	DeleteEvents(context.Context, *clouderrorreportingpb.DeleteEventsRequest, ...gax.CallOption) (*clouderrorreportingpb.DeleteEventsResponse, error)
 }
 
 // ErrorStatsClient is a client for interacting with Error Reporting API.
@@ -188,17 +187,17 @@ func (c *ErrorStatsClient) Connection() *grpc.ClientConn {
 }
 
 // ListGroupStats lists the specified groups.
-func (c *ErrorStatsClient) ListGroupStats(ctx context.Context, req *errorreportingpb.ListGroupStatsRequest, opts ...gax.CallOption) *ErrorGroupStatsIterator {
+func (c *ErrorStatsClient) ListGroupStats(ctx context.Context, req *clouderrorreportingpb.ListGroupStatsRequest, opts ...gax.CallOption) *ErrorGroupStatsIterator {
 	return c.internalClient.ListGroupStats(ctx, req, opts...)
 }
 
 // ListEvents lists the specified events.
-func (c *ErrorStatsClient) ListEvents(ctx context.Context, req *errorreportingpb.ListEventsRequest, opts ...gax.CallOption) *ErrorEventIterator {
+func (c *ErrorStatsClient) ListEvents(ctx context.Context, req *clouderrorreportingpb.ListEventsRequest, opts ...gax.CallOption) *ErrorEventIterator {
 	return c.internalClient.ListEvents(ctx, req, opts...)
 }
 
 // DeleteEvents deletes all error events of a given project.
-func (c *ErrorStatsClient) DeleteEvents(ctx context.Context, req *errorreportingpb.DeleteEventsRequest, opts ...gax.CallOption) (*errorreportingpb.DeleteEventsResponse, error) {
+func (c *ErrorStatsClient) DeleteEvents(ctx context.Context, req *clouderrorreportingpb.DeleteEventsRequest, opts ...gax.CallOption) (*clouderrorreportingpb.DeleteEventsResponse, error) {
 	return c.internalClient.DeleteEvents(ctx, req, opts...)
 }
 
@@ -216,7 +215,7 @@ type errorStatsGRPCClient struct {
 	CallOptions **ErrorStatsCallOptions
 
 	// The gRPC API client.
-	errorStatsClient errorreportingpb.ErrorStatsServiceClient
+	errorStatsClient clouderrorreportingpb.ErrorStatsServiceClient
 
 	// The x-goog-* metadata to be sent with each request.
 	xGoogMetadata metadata.MD
@@ -251,7 +250,7 @@ func NewErrorStatsClient(ctx context.Context, opts ...option.ClientOption) (*Err
 	c := &errorStatsGRPCClient{
 		connPool:         connPool,
 		disableDeadlines: disableDeadlines,
-		errorStatsClient: errorreportingpb.NewErrorStatsServiceClient(connPool),
+		errorStatsClient: clouderrorreportingpb.NewErrorStatsServiceClient(connPool),
 		CallOptions:      &client.CallOptions,
 	}
 	c.setGoogleClientInfo()
@@ -273,7 +272,7 @@ func (c *errorStatsGRPCClient) Connection() *grpc.ClientConn {
 // the `x-goog-api-client` header passed on each request. Intended for
 // use by Google-written clients.
 func (c *errorStatsGRPCClient) setGoogleClientInfo(keyval ...string) {
-	kv := append([]string{"gl-go", gax.GoVersion}, keyval...)
+	kv := append([]string{"gl-go", versionGo()}, keyval...)
 	kv = append(kv, "gapic", getVersionClient(), "gax", gax.Version, "grpc", grpc.Version)
 	c.xGoogMetadata = metadata.Pairs("x-goog-api-client", gax.XGoogHeader(kv...))
 }
@@ -324,7 +323,6 @@ func NewErrorStatsRESTClient(ctx context.Context, opts ...option.ClientOption) (
 func defaultErrorStatsRESTClientOptions() []option.ClientOption {
 	return []option.ClientOption{
 		internaloption.WithDefaultEndpoint("https://clouderrorreporting.googleapis.com"),
-		internaloption.WithDefaultEndpointTemplate("https://clouderrorreporting.UNIVERSE_DOMAIN"),
 		internaloption.WithDefaultMTLSEndpoint("https://clouderrorreporting.mtls.googleapis.com"),
 		internaloption.WithDefaultAudience("https://clouderrorreporting.googleapis.com/"),
 		internaloption.WithDefaultScopes(DefaultAuthScopes()...),
@@ -335,7 +333,7 @@ func defaultErrorStatsRESTClientOptions() []option.ClientOption {
 // the `x-goog-api-client` header passed on each request. Intended for
 // use by Google-written clients.
 func (c *errorStatsRESTClient) setGoogleClientInfo(keyval ...string) {
-	kv := append([]string{"gl-go", gax.GoVersion}, keyval...)
+	kv := append([]string{"gl-go", versionGo()}, keyval...)
 	kv = append(kv, "gapic", getVersionClient(), "gax", gax.Version, "rest", "UNKNOWN")
 	c.xGoogMetadata = metadata.Pairs("x-goog-api-client", gax.XGoogHeader(kv...))
 }
@@ -354,15 +352,15 @@ func (c *errorStatsRESTClient) Close() error {
 func (c *errorStatsRESTClient) Connection() *grpc.ClientConn {
 	return nil
 }
-func (c *errorStatsGRPCClient) ListGroupStats(ctx context.Context, req *errorreportingpb.ListGroupStatsRequest, opts ...gax.CallOption) *ErrorGroupStatsIterator {
+func (c *errorStatsGRPCClient) ListGroupStats(ctx context.Context, req *clouderrorreportingpb.ListGroupStatsRequest, opts ...gax.CallOption) *ErrorGroupStatsIterator {
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "project_name", url.QueryEscape(req.GetProjectName())))
 
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).ListGroupStats[0:len((*c.CallOptions).ListGroupStats):len((*c.CallOptions).ListGroupStats)], opts...)
 	it := &ErrorGroupStatsIterator{}
-	req = proto.Clone(req).(*errorreportingpb.ListGroupStatsRequest)
-	it.InternalFetch = func(pageSize int, pageToken string) ([]*errorreportingpb.ErrorGroupStats, string, error) {
-		resp := &errorreportingpb.ListGroupStatsResponse{}
+	req = proto.Clone(req).(*clouderrorreportingpb.ListGroupStatsRequest)
+	it.InternalFetch = func(pageSize int, pageToken string) ([]*clouderrorreportingpb.ErrorGroupStats, string, error) {
+		resp := &clouderrorreportingpb.ListGroupStatsResponse{}
 		if pageToken != "" {
 			req.PageToken = pageToken
 		}
@@ -399,15 +397,15 @@ func (c *errorStatsGRPCClient) ListGroupStats(ctx context.Context, req *errorrep
 	return it
 }
 
-func (c *errorStatsGRPCClient) ListEvents(ctx context.Context, req *errorreportingpb.ListEventsRequest, opts ...gax.CallOption) *ErrorEventIterator {
+func (c *errorStatsGRPCClient) ListEvents(ctx context.Context, req *clouderrorreportingpb.ListEventsRequest, opts ...gax.CallOption) *ErrorEventIterator {
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "project_name", url.QueryEscape(req.GetProjectName())))
 
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).ListEvents[0:len((*c.CallOptions).ListEvents):len((*c.CallOptions).ListEvents)], opts...)
 	it := &ErrorEventIterator{}
-	req = proto.Clone(req).(*errorreportingpb.ListEventsRequest)
-	it.InternalFetch = func(pageSize int, pageToken string) ([]*errorreportingpb.ErrorEvent, string, error) {
-		resp := &errorreportingpb.ListEventsResponse{}
+	req = proto.Clone(req).(*clouderrorreportingpb.ListEventsRequest)
+	it.InternalFetch = func(pageSize int, pageToken string) ([]*clouderrorreportingpb.ErrorEvent, string, error) {
+		resp := &clouderrorreportingpb.ListEventsResponse{}
 		if pageToken != "" {
 			req.PageToken = pageToken
 		}
@@ -444,7 +442,7 @@ func (c *errorStatsGRPCClient) ListEvents(ctx context.Context, req *errorreporti
 	return it
 }
 
-func (c *errorStatsGRPCClient) DeleteEvents(ctx context.Context, req *errorreportingpb.DeleteEventsRequest, opts ...gax.CallOption) (*errorreportingpb.DeleteEventsResponse, error) {
+func (c *errorStatsGRPCClient) DeleteEvents(ctx context.Context, req *clouderrorreportingpb.DeleteEventsRequest, opts ...gax.CallOption) (*clouderrorreportingpb.DeleteEventsResponse, error) {
 	if _, ok := ctx.Deadline(); !ok && !c.disableDeadlines {
 		cctx, cancel := context.WithTimeout(ctx, 600000*time.Millisecond)
 		defer cancel()
@@ -454,7 +452,7 @@ func (c *errorStatsGRPCClient) DeleteEvents(ctx context.Context, req *errorrepor
 
 	ctx = insertMetadata(ctx, c.xGoogMetadata, md)
 	opts = append((*c.CallOptions).DeleteEvents[0:len((*c.CallOptions).DeleteEvents):len((*c.CallOptions).DeleteEvents)], opts...)
-	var resp *errorreportingpb.DeleteEventsResponse
+	var resp *clouderrorreportingpb.DeleteEventsResponse
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		var err error
 		resp, err = c.errorStatsClient.DeleteEvents(ctx, req, settings.GRPC...)
@@ -467,12 +465,12 @@ func (c *errorStatsGRPCClient) DeleteEvents(ctx context.Context, req *errorrepor
 }
 
 // ListGroupStats lists the specified groups.
-func (c *errorStatsRESTClient) ListGroupStats(ctx context.Context, req *errorreportingpb.ListGroupStatsRequest, opts ...gax.CallOption) *ErrorGroupStatsIterator {
+func (c *errorStatsRESTClient) ListGroupStats(ctx context.Context, req *clouderrorreportingpb.ListGroupStatsRequest, opts ...gax.CallOption) *ErrorGroupStatsIterator {
 	it := &ErrorGroupStatsIterator{}
-	req = proto.Clone(req).(*errorreportingpb.ListGroupStatsRequest)
+	req = proto.Clone(req).(*clouderrorreportingpb.ListGroupStatsRequest)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
-	it.InternalFetch = func(pageSize int, pageToken string) ([]*errorreportingpb.ErrorGroupStats, string, error) {
-		resp := &errorreportingpb.ListGroupStatsResponse{}
+	it.InternalFetch = func(pageSize int, pageToken string) ([]*clouderrorreportingpb.ErrorGroupStats, string, error) {
+		resp := &clouderrorreportingpb.ListGroupStatsResponse{}
 		if pageToken != "" {
 			req.PageToken = pageToken
 		}
@@ -488,7 +486,6 @@ func (c *errorStatsRESTClient) ListGroupStats(ctx context.Context, req *errorrep
 		baseUrl.Path += fmt.Sprintf("/v1beta1/%v/groupStats", req.GetProjectName())
 
 		params := url.Values{}
-		params.Add("$alt", "json;enum-encoding=int")
 		if req.GetAlignment() != 0 {
 			params.Add("alignment", fmt.Sprintf("%v", req.GetAlignment()))
 		}
@@ -499,10 +496,8 @@ func (c *errorStatsRESTClient) ListGroupStats(ctx context.Context, req *errorrep
 			}
 			params.Add("alignmentTime", string(alignmentTime))
 		}
-		if items := req.GetGroupId(); len(items) > 0 {
-			for _, item := range items {
-				params.Add("groupId", fmt.Sprintf("%v", item))
-			}
+		if req.GetGroupId() != nil {
+			params.Add("groupId", fmt.Sprintf("%v", req.GetGroupId()))
 		}
 		if req.GetOrder() != 0 {
 			params.Add("order", fmt.Sprintf("%v", req.GetOrder()))
@@ -563,7 +558,7 @@ func (c *errorStatsRESTClient) ListGroupStats(ctx context.Context, req *errorrep
 			}
 
 			if err := unm.Unmarshal(buf, resp); err != nil {
-				return err
+				return maybeUnknownEnum(err)
 			}
 
 			return nil
@@ -592,12 +587,12 @@ func (c *errorStatsRESTClient) ListGroupStats(ctx context.Context, req *errorrep
 }
 
 // ListEvents lists the specified events.
-func (c *errorStatsRESTClient) ListEvents(ctx context.Context, req *errorreportingpb.ListEventsRequest, opts ...gax.CallOption) *ErrorEventIterator {
+func (c *errorStatsRESTClient) ListEvents(ctx context.Context, req *clouderrorreportingpb.ListEventsRequest, opts ...gax.CallOption) *ErrorEventIterator {
 	it := &ErrorEventIterator{}
-	req = proto.Clone(req).(*errorreportingpb.ListEventsRequest)
+	req = proto.Clone(req).(*clouderrorreportingpb.ListEventsRequest)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
-	it.InternalFetch = func(pageSize int, pageToken string) ([]*errorreportingpb.ErrorEvent, string, error) {
-		resp := &errorreportingpb.ListEventsResponse{}
+	it.InternalFetch = func(pageSize int, pageToken string) ([]*clouderrorreportingpb.ErrorEvent, string, error) {
+		resp := &clouderrorreportingpb.ListEventsResponse{}
 		if pageToken != "" {
 			req.PageToken = pageToken
 		}
@@ -613,7 +608,6 @@ func (c *errorStatsRESTClient) ListEvents(ctx context.Context, req *errorreporti
 		baseUrl.Path += fmt.Sprintf("/v1beta1/%v/events", req.GetProjectName())
 
 		params := url.Values{}
-		params.Add("$alt", "json;enum-encoding=int")
 		params.Add("groupId", fmt.Sprintf("%v", req.GetGroupId()))
 		if req.GetPageSize() != 0 {
 			params.Add("pageSize", fmt.Sprintf("%v", req.GetPageSize()))
@@ -664,7 +658,7 @@ func (c *errorStatsRESTClient) ListEvents(ctx context.Context, req *errorreporti
 			}
 
 			if err := unm.Unmarshal(buf, resp); err != nil {
-				return err
+				return maybeUnknownEnum(err)
 			}
 
 			return nil
@@ -693,17 +687,12 @@ func (c *errorStatsRESTClient) ListEvents(ctx context.Context, req *errorreporti
 }
 
 // DeleteEvents deletes all error events of a given project.
-func (c *errorStatsRESTClient) DeleteEvents(ctx context.Context, req *errorreportingpb.DeleteEventsRequest, opts ...gax.CallOption) (*errorreportingpb.DeleteEventsResponse, error) {
+func (c *errorStatsRESTClient) DeleteEvents(ctx context.Context, req *clouderrorreportingpb.DeleteEventsRequest, opts ...gax.CallOption) (*clouderrorreportingpb.DeleteEventsResponse, error) {
 	baseUrl, err := url.Parse(c.endpoint)
 	if err != nil {
 		return nil, err
 	}
 	baseUrl.Path += fmt.Sprintf("/v1beta1/%v/events", req.GetProjectName())
-
-	params := url.Values{}
-	params.Add("$alt", "json;enum-encoding=int")
-
-	baseUrl.RawQuery = params.Encode()
 
 	// Build HTTP headers from client and context metadata.
 	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "project_name", url.QueryEscape(req.GetProjectName())))
@@ -711,7 +700,7 @@ func (c *errorStatsRESTClient) DeleteEvents(ctx context.Context, req *errorrepor
 	headers := buildHeaders(ctx, c.xGoogMetadata, md, metadata.Pairs("Content-Type", "application/json"))
 	opts = append((*c.CallOptions).DeleteEvents[0:len((*c.CallOptions).DeleteEvents):len((*c.CallOptions).DeleteEvents)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
-	resp := &errorreportingpb.DeleteEventsResponse{}
+	resp := &clouderrorreportingpb.DeleteEventsResponse{}
 	e := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		if settings.Path != "" {
 			baseUrl.Path = settings.Path
@@ -739,7 +728,7 @@ func (c *errorStatsRESTClient) DeleteEvents(ctx context.Context, req *errorrepor
 		}
 
 		if err := unm.Unmarshal(buf, resp); err != nil {
-			return err
+			return maybeUnknownEnum(err)
 		}
 
 		return nil
@@ -750,9 +739,9 @@ func (c *errorStatsRESTClient) DeleteEvents(ctx context.Context, req *errorrepor
 	return resp, nil
 }
 
-// ErrorEventIterator manages a stream of *errorreportingpb.ErrorEvent.
+// ErrorEventIterator manages a stream of *clouderrorreportingpb.ErrorEvent.
 type ErrorEventIterator struct {
-	items    []*errorreportingpb.ErrorEvent
+	items    []*clouderrorreportingpb.ErrorEvent
 	pageInfo *iterator.PageInfo
 	nextFunc func() error
 
@@ -767,7 +756,7 @@ type ErrorEventIterator struct {
 	// InternalFetch returns results from a single call to the underlying RPC.
 	// The number of results is no greater than pageSize.
 	// If there are no more results, nextPageToken is empty and err is nil.
-	InternalFetch func(pageSize int, pageToken string) (results []*errorreportingpb.ErrorEvent, nextPageToken string, err error)
+	InternalFetch func(pageSize int, pageToken string) (results []*clouderrorreportingpb.ErrorEvent, nextPageToken string, err error)
 }
 
 // PageInfo supports pagination. See the google.golang.org/api/iterator package for details.
@@ -777,8 +766,8 @@ func (it *ErrorEventIterator) PageInfo() *iterator.PageInfo {
 
 // Next returns the next result. Its second return value is iterator.Done if there are no more
 // results. Once Next returns Done, all subsequent calls will return Done.
-func (it *ErrorEventIterator) Next() (*errorreportingpb.ErrorEvent, error) {
-	var item *errorreportingpb.ErrorEvent
+func (it *ErrorEventIterator) Next() (*clouderrorreportingpb.ErrorEvent, error) {
+	var item *clouderrorreportingpb.ErrorEvent
 	if err := it.nextFunc(); err != nil {
 		return item, err
 	}
@@ -797,9 +786,9 @@ func (it *ErrorEventIterator) takeBuf() interface{} {
 	return b
 }
 
-// ErrorGroupStatsIterator manages a stream of *errorreportingpb.ErrorGroupStats.
+// ErrorGroupStatsIterator manages a stream of *clouderrorreportingpb.ErrorGroupStats.
 type ErrorGroupStatsIterator struct {
-	items    []*errorreportingpb.ErrorGroupStats
+	items    []*clouderrorreportingpb.ErrorGroupStats
 	pageInfo *iterator.PageInfo
 	nextFunc func() error
 
@@ -814,7 +803,7 @@ type ErrorGroupStatsIterator struct {
 	// InternalFetch returns results from a single call to the underlying RPC.
 	// The number of results is no greater than pageSize.
 	// If there are no more results, nextPageToken is empty and err is nil.
-	InternalFetch func(pageSize int, pageToken string) (results []*errorreportingpb.ErrorGroupStats, nextPageToken string, err error)
+	InternalFetch func(pageSize int, pageToken string) (results []*clouderrorreportingpb.ErrorGroupStats, nextPageToken string, err error)
 }
 
 // PageInfo supports pagination. See the google.golang.org/api/iterator package for details.
@@ -824,8 +813,8 @@ func (it *ErrorGroupStatsIterator) PageInfo() *iterator.PageInfo {
 
 // Next returns the next result. Its second return value is iterator.Done if there are no more
 // results. Once Next returns Done, all subsequent calls will return Done.
-func (it *ErrorGroupStatsIterator) Next() (*errorreportingpb.ErrorGroupStats, error) {
-	var item *errorreportingpb.ErrorGroupStats
+func (it *ErrorGroupStatsIterator) Next() (*clouderrorreportingpb.ErrorGroupStats, error) {
+	var item *clouderrorreportingpb.ErrorGroupStats
 	if err := it.nextFunc(); err != nil {
 		return item, err
 	}

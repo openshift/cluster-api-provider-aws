@@ -29,7 +29,7 @@ import (
 // MarshalRolePolicyBindingStatus writes a value of the 'role_policy_binding_status' type to the given writer.
 func MarshalRolePolicyBindingStatus(object *RolePolicyBindingStatus, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteRolePolicyBindingStatus(object, stream)
+	writeRolePolicyBindingStatus(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalRolePolicyBindingStatus(object *RolePolicyBindingStatus, writer io.W
 	return stream.Error
 }
 
-// WriteRolePolicyBindingStatus writes a value of the 'role_policy_binding_status' type to the given stream.
-func WriteRolePolicyBindingStatus(object *RolePolicyBindingStatus, stream *jsoniter.Stream) {
+// writeRolePolicyBindingStatus writes a value of the 'role_policy_binding_status' type to the given stream.
+func writeRolePolicyBindingStatus(object *RolePolicyBindingStatus, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -69,13 +69,13 @@ func UnmarshalRolePolicyBindingStatus(source interface{}) (object *RolePolicyBin
 	if err != nil {
 		return
 	}
-	object = ReadRolePolicyBindingStatus(iterator)
+	object = readRolePolicyBindingStatus(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadRolePolicyBindingStatus reads a value of the 'role_policy_binding_status' type from the given iterator.
-func ReadRolePolicyBindingStatus(iterator *jsoniter.Iterator) *RolePolicyBindingStatus {
+// readRolePolicyBindingStatus reads a value of the 'role_policy_binding_status' type from the given iterator.
+func readRolePolicyBindingStatus(iterator *jsoniter.Iterator) *RolePolicyBindingStatus {
 	object := &RolePolicyBindingStatus{}
 	for {
 		field := iterator.ReadObject()

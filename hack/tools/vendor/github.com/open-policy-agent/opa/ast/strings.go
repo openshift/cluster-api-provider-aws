@@ -5,10 +5,14 @@
 package ast
 
 import (
-	v1 "github.com/open-policy-agent/opa/v1/ast"
+	"reflect"
+	"strings"
 )
 
 // TypeName returns a human readable name for the AST element type.
 func TypeName(x interface{}) string {
-	return v1.TypeName(x)
+	if _, ok := x.(*lazyObj); ok {
+		return "object"
+	}
+	return strings.ToLower(reflect.Indirect(reflect.ValueOf(x)).Type().Name())
 }

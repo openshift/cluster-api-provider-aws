@@ -29,7 +29,7 @@ import (
 // MarshalReleaseImages writes a value of the 'release_images' type to the given writer.
 func MarshalReleaseImages(object *ReleaseImages, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteReleaseImages(object, stream)
+	writeReleaseImages(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalReleaseImages(object *ReleaseImages, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteReleaseImages writes a value of the 'release_images' type to the given stream.
-func WriteReleaseImages(object *ReleaseImages, stream *jsoniter.Stream) {
+// writeReleaseImages writes a value of the 'release_images' type to the given stream.
+func writeReleaseImages(object *ReleaseImages, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -48,7 +48,7 @@ func WriteReleaseImages(object *ReleaseImages, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("arm64")
-		WriteReleaseImageDetails(object.arm64, stream)
+		writeReleaseImageDetails(object.arm64, stream)
 		count++
 	}
 	present_ = object.bitmap_&2 != 0 && object.multi != nil
@@ -57,7 +57,7 @@ func WriteReleaseImages(object *ReleaseImages, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("multi")
-		WriteReleaseImageDetails(object.multi, stream)
+		writeReleaseImageDetails(object.multi, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -69,13 +69,13 @@ func UnmarshalReleaseImages(source interface{}) (object *ReleaseImages, err erro
 	if err != nil {
 		return
 	}
-	object = ReadReleaseImages(iterator)
+	object = readReleaseImages(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadReleaseImages reads a value of the 'release_images' type from the given iterator.
-func ReadReleaseImages(iterator *jsoniter.Iterator) *ReleaseImages {
+// readReleaseImages reads a value of the 'release_images' type from the given iterator.
+func readReleaseImages(iterator *jsoniter.Iterator) *ReleaseImages {
 	object := &ReleaseImages{}
 	for {
 		field := iterator.ReadObject()
@@ -84,11 +84,11 @@ func ReadReleaseImages(iterator *jsoniter.Iterator) *ReleaseImages {
 		}
 		switch field {
 		case "arm64":
-			value := ReadReleaseImageDetails(iterator)
+			value := readReleaseImageDetails(iterator)
 			object.arm64 = value
 			object.bitmap_ |= 1
 		case "multi":
-			value := ReadReleaseImageDetails(iterator)
+			value := readReleaseImageDetails(iterator)
 			object.multi = value
 			object.bitmap_ |= 2
 		default:

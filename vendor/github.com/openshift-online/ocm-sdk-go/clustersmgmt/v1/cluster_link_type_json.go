@@ -29,7 +29,7 @@ import (
 // MarshalClusterLink writes a value of the 'cluster_link' type to the given writer.
 func MarshalClusterLink(object *ClusterLink, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteClusterLink(object, stream)
+	writeClusterLink(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalClusterLink(object *ClusterLink, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteClusterLink writes a value of the 'cluster_link' type to the given stream.
-func WriteClusterLink(object *ClusterLink, stream *jsoniter.Stream) {
+// writeClusterLink writes a value of the 'cluster_link' type to the given stream.
+func writeClusterLink(object *ClusterLink, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -69,13 +69,13 @@ func UnmarshalClusterLink(source interface{}) (object *ClusterLink, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadClusterLink(iterator)
+	object = readClusterLink(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadClusterLink reads a value of the 'cluster_link' type from the given iterator.
-func ReadClusterLink(iterator *jsoniter.Iterator) *ClusterLink {
+// readClusterLink reads a value of the 'cluster_link' type from the given iterator.
+func readClusterLink(iterator *jsoniter.Iterator) *ClusterLink {
 	object := &ClusterLink{}
 	for {
 		field := iterator.ReadObject()

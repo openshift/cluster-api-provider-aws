@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalResourceQuotaList(list []*ResourceQuota, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteResourceQuotaList(list, stream)
+	writeResourceQuotaList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalResourceQuotaList(list []*ResourceQuota, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteResourceQuotaList writes a list of value of the 'resource_quota' type to
+// writeResourceQuotaList writes a list of value of the 'resource_quota' type to
 // the given stream.
-func WriteResourceQuotaList(list []*ResourceQuota, stream *jsoniter.Stream) {
+func writeResourceQuotaList(list []*ResourceQuota, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteResourceQuota(value, stream)
+		writeResourceQuota(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalResourceQuotaList(source interface{}) (items []*ResourceQuota, err
 	if err != nil {
 		return
 	}
-	items = ReadResourceQuotaList(iterator)
+	items = readResourceQuotaList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadResourceQuotaList reads list of values of the ”resource_quota' type from
+// readResourceQuotaList reads list of values of the ”resource_quota' type from
 // the given iterator.
-func ReadResourceQuotaList(iterator *jsoniter.Iterator) []*ResourceQuota {
+func readResourceQuotaList(iterator *jsoniter.Iterator) []*ResourceQuota {
 	list := []*ResourceQuota{}
 	for iterator.ReadArray() {
-		item := ReadResourceQuota(iterator)
+		item := readResourceQuota(iterator)
 		list = append(list, item)
 	}
 	return list

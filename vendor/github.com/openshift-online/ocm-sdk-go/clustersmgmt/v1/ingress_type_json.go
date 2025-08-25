@@ -30,7 +30,7 @@ import (
 // MarshalIngress writes a value of the 'ingress' type to the given writer.
 func MarshalIngress(object *Ingress, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteIngress(object, stream)
+	writeIngress(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalIngress(object *Ingress, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteIngress writes a value of the 'ingress' type to the given stream.
-func WriteIngress(object *Ingress, stream *jsoniter.Stream) {
+// writeIngress writes a value of the 'ingress' type to the given stream.
+func writeIngress(object *Ingress, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -114,7 +114,7 @@ func WriteIngress(object *Ingress, stream *jsoniter.Stream) {
 				}
 				item := object.componentRoutes[key]
 				stream.WriteObjectField(key)
-				WriteComponentRoute(item, stream)
+				writeComponentRoute(item, stream)
 			}
 			stream.WriteObjectEnd()
 		} else {
@@ -137,7 +137,7 @@ func WriteIngress(object *Ingress, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("excluded_namespaces")
-		WriteStringList(object.excludedNamespaces, stream)
+		writeStringList(object.excludedNamespaces, stream)
 		count++
 	}
 	present_ = object.bitmap_&512 != 0
@@ -214,13 +214,13 @@ func UnmarshalIngress(source interface{}) (object *Ingress, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadIngress(iterator)
+	object = readIngress(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadIngress reads a value of the 'ingress' type from the given iterator.
-func ReadIngress(iterator *jsoniter.Iterator) *Ingress {
+// readIngress reads a value of the 'ingress' type from the given iterator.
+func readIngress(iterator *jsoniter.Iterator) *Ingress {
 	object := &Ingress{}
 	for {
 		field := iterator.ReadObject()
@@ -258,7 +258,7 @@ func ReadIngress(iterator *jsoniter.Iterator) *Ingress {
 				if key == "" {
 					break
 				}
-				item := ReadComponentRoute(iterator)
+				item := readComponentRoute(iterator)
 				value[key] = item
 			}
 			object.componentRoutes = value
@@ -268,7 +268,7 @@ func ReadIngress(iterator *jsoniter.Iterator) *Ingress {
 			object.default_ = value
 			object.bitmap_ |= 128
 		case "excluded_namespaces":
-			value := ReadStringList(iterator)
+			value := readStringList(iterator)
 			object.excludedNamespaces = value
 			object.bitmap_ |= 256
 		case "listening":

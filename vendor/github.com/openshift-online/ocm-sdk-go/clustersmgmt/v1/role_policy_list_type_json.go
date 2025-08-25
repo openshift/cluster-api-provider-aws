@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalRolePolicyList(list []*RolePolicy, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteRolePolicyList(list, stream)
+	writeRolePolicyList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalRolePolicyList(list []*RolePolicy, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteRolePolicyList writes a list of value of the 'role_policy' type to
+// writeRolePolicyList writes a list of value of the 'role_policy' type to
 // the given stream.
-func WriteRolePolicyList(list []*RolePolicy, stream *jsoniter.Stream) {
+func writeRolePolicyList(list []*RolePolicy, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteRolePolicy(value, stream)
+		writeRolePolicy(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalRolePolicyList(source interface{}) (items []*RolePolicy, err error
 	if err != nil {
 		return
 	}
-	items = ReadRolePolicyList(iterator)
+	items = readRolePolicyList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadRolePolicyList reads list of values of the ”role_policy' type from
+// readRolePolicyList reads list of values of the ”role_policy' type from
 // the given iterator.
-func ReadRolePolicyList(iterator *jsoniter.Iterator) []*RolePolicy {
+func readRolePolicyList(iterator *jsoniter.Iterator) []*RolePolicy {
 	list := []*RolePolicy{}
 	for iterator.ReadArray() {
-		item := ReadRolePolicy(iterator)
+		item := readRolePolicy(iterator)
 		list = append(list, item)
 	}
 	return list

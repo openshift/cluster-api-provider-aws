@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalPermissionList(list []*Permission, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WritePermissionList(list, stream)
+	writePermissionList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalPermissionList(list []*Permission, writer io.Writer) error {
 	return stream.Error
 }
 
-// WritePermissionList writes a list of value of the 'permission' type to
+// writePermissionList writes a list of value of the 'permission' type to
 // the given stream.
-func WritePermissionList(list []*Permission, stream *jsoniter.Stream) {
+func writePermissionList(list []*Permission, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WritePermission(value, stream)
+		writePermission(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalPermissionList(source interface{}) (items []*Permission, err error
 	if err != nil {
 		return
 	}
-	items = ReadPermissionList(iterator)
+	items = readPermissionList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadPermissionList reads list of values of the ”permission' type from
+// readPermissionList reads list of values of the ”permission' type from
 // the given iterator.
-func ReadPermissionList(iterator *jsoniter.Iterator) []*Permission {
+func readPermissionList(iterator *jsoniter.Iterator) []*Permission {
 	list := []*Permission{}
 	for iterator.ReadArray() {
-		item := ReadPermission(iterator)
+		item := readPermission(iterator)
 		list = append(list, item)
 	}
 	return list

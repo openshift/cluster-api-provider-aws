@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalNetworkVerificationList(list []*NetworkVerification, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteNetworkVerificationList(list, stream)
+	writeNetworkVerificationList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalNetworkVerificationList(list []*NetworkVerification, writer io.Write
 	return stream.Error
 }
 
-// WriteNetworkVerificationList writes a list of value of the 'network_verification' type to
+// writeNetworkVerificationList writes a list of value of the 'network_verification' type to
 // the given stream.
-func WriteNetworkVerificationList(list []*NetworkVerification, stream *jsoniter.Stream) {
+func writeNetworkVerificationList(list []*NetworkVerification, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteNetworkVerification(value, stream)
+		writeNetworkVerification(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalNetworkVerificationList(source interface{}) (items []*NetworkVerif
 	if err != nil {
 		return
 	}
-	items = ReadNetworkVerificationList(iterator)
+	items = readNetworkVerificationList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadNetworkVerificationList reads list of values of the ”network_verification' type from
+// readNetworkVerificationList reads list of values of the ”network_verification' type from
 // the given iterator.
-func ReadNetworkVerificationList(iterator *jsoniter.Iterator) []*NetworkVerification {
+func readNetworkVerificationList(iterator *jsoniter.Iterator) []*NetworkVerification {
 	list := []*NetworkVerification{}
 	for iterator.ReadArray() {
-		item := ReadNetworkVerification(iterator)
+		item := readNetworkVerification(iterator)
 		list = append(list, item)
 	}
 	return list

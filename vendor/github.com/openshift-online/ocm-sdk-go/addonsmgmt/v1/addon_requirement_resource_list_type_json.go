@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAddonRequirementResourceList(list []AddonRequirementResource, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAddonRequirementResourceList(list, stream)
+	writeAddonRequirementResourceList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,9 +38,9 @@ func MarshalAddonRequirementResourceList(list []AddonRequirementResource, writer
 	return stream.Error
 }
 
-// WriteAddonRequirementResourceList writes a list of value of the 'addon_requirement_resource' type to
+// writeAddonRequirementResourceList writes a list of value of the 'addon_requirement_resource' type to
 // the given stream.
-func WriteAddonRequirementResourceList(list []AddonRequirementResource, stream *jsoniter.Stream) {
+func writeAddonRequirementResourceList(list []AddonRequirementResource, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -58,14 +58,14 @@ func UnmarshalAddonRequirementResourceList(source interface{}) (items []AddonReq
 	if err != nil {
 		return
 	}
-	items = ReadAddonRequirementResourceList(iterator)
+	items = readAddonRequirementResourceList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAddonRequirementResourceList reads list of values of the ”addon_requirement_resource' type from
+// readAddonRequirementResourceList reads list of values of the ”addon_requirement_resource' type from
 // the given iterator.
-func ReadAddonRequirementResourceList(iterator *jsoniter.Iterator) []AddonRequirementResource {
+func readAddonRequirementResourceList(iterator *jsoniter.Iterator) []AddonRequirementResource {
 	list := []AddonRequirementResource{}
 	for iterator.ReadArray() {
 		text := iterator.ReadString()

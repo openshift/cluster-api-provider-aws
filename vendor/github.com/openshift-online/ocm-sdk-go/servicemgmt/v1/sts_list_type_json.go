@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalSTSList(list []*STS, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteSTSList(list, stream)
+	writeSTSList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalSTSList(list []*STS, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteSTSList writes a list of value of the 'STS' type to
+// writeSTSList writes a list of value of the 'STS' type to
 // the given stream.
-func WriteSTSList(list []*STS, stream *jsoniter.Stream) {
+func writeSTSList(list []*STS, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteSTS(value, stream)
+		writeSTS(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalSTSList(source interface{}) (items []*STS, err error) {
 	if err != nil {
 		return
 	}
-	items = ReadSTSList(iterator)
+	items = readSTSList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadSTSList reads list of values of the ”STS' type from
+// readSTSList reads list of values of the ”STS' type from
 // the given iterator.
-func ReadSTSList(iterator *jsoniter.Iterator) []*STS {
+func readSTSList(iterator *jsoniter.Iterator) []*STS {
 	list := []*STS{}
 	for iterator.ReadArray() {
-		item := ReadSTS(iterator)
+		item := readSTS(iterator)
 		list = append(list, item)
 	}
 	return list

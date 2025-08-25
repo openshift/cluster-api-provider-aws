@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalActionList(list []Action, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteActionList(list, stream)
+	writeActionList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,9 +38,9 @@ func MarshalActionList(list []Action, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteActionList writes a list of value of the 'action' type to
+// writeActionList writes a list of value of the 'action' type to
 // the given stream.
-func WriteActionList(list []Action, stream *jsoniter.Stream) {
+func writeActionList(list []Action, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -58,14 +58,14 @@ func UnmarshalActionList(source interface{}) (items []Action, err error) {
 	if err != nil {
 		return
 	}
-	items = ReadActionList(iterator)
+	items = readActionList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadActionList reads list of values of the ”action' type from
+// readActionList reads list of values of the ”action' type from
 // the given iterator.
-func ReadActionList(iterator *jsoniter.Iterator) []Action {
+func readActionList(iterator *jsoniter.Iterator) []Action {
 	list := []Action{}
 	for iterator.ReadArray() {
 		text := iterator.ReadString()

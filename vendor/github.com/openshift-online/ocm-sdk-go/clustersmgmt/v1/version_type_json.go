@@ -30,7 +30,7 @@ import (
 // MarshalVersion writes a value of the 'version' type to the given writer.
 func MarshalVersion(object *Version, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteVersion(object, stream)
+	writeVersion(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalVersion(object *Version, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteVersion writes a value of the 'version' type to the given stream.
-func WriteVersion(object *Version, stream *jsoniter.Stream) {
+// writeVersion writes a value of the 'version' type to the given stream.
+func writeVersion(object *Version, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -90,7 +90,7 @@ func WriteVersion(object *Version, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("available_upgrades")
-		WriteStringList(object.availableUpgrades, stream)
+		writeStringList(object.availableUpgrades, stream)
 		count++
 	}
 	present_ = object.bitmap_&64 != 0
@@ -153,7 +153,7 @@ func WriteVersion(object *Version, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("image_overrides")
-		WriteImageOverrides(object.imageOverrides, stream)
+		writeImageOverrides(object.imageOverrides, stream)
 		count++
 	}
 	present_ = object.bitmap_&8192 != 0
@@ -180,7 +180,7 @@ func WriteVersion(object *Version, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("release_images")
-		WriteReleaseImages(object.releaseImages, stream)
+		writeReleaseImages(object.releaseImages, stream)
 		count++
 	}
 	present_ = object.bitmap_&65536 != 0
@@ -201,13 +201,13 @@ func UnmarshalVersion(source interface{}) (object *Version, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadVersion(iterator)
+	object = readVersion(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadVersion reads a value of the 'version' type from the given iterator.
-func ReadVersion(iterator *jsoniter.Iterator) *Version {
+// readVersion reads a value of the 'version' type from the given iterator.
+func readVersion(iterator *jsoniter.Iterator) *Version {
 	object := &Version{}
 	for {
 		field := iterator.ReadObject()
@@ -235,7 +235,7 @@ func ReadVersion(iterator *jsoniter.Iterator) *Version {
 			object.rosaEnabled = value
 			object.bitmap_ |= 16
 		case "available_upgrades":
-			value := ReadStringList(iterator)
+			value := readStringList(iterator)
 			object.availableUpgrades = value
 			object.bitmap_ |= 32
 		case "channel_group":
@@ -267,7 +267,7 @@ func ReadVersion(iterator *jsoniter.Iterator) *Version {
 			object.hostedControlPlaneEnabled = value
 			object.bitmap_ |= 2048
 		case "image_overrides":
-			value := ReadImageOverrides(iterator)
+			value := readImageOverrides(iterator)
 			object.imageOverrides = value
 			object.bitmap_ |= 4096
 		case "raw_id":
@@ -279,7 +279,7 @@ func ReadVersion(iterator *jsoniter.Iterator) *Version {
 			object.releaseImage = value
 			object.bitmap_ |= 16384
 		case "release_images":
-			value := ReadReleaseImages(iterator)
+			value := readReleaseImages(iterator)
 			object.releaseImages = value
 			object.bitmap_ |= 32768
 		case "wif_enabled":

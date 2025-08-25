@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalLabelRequestPayloadList(list []*LabelRequestPayload, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteLabelRequestPayloadList(list, stream)
+	writeLabelRequestPayloadList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalLabelRequestPayloadList(list []*LabelRequestPayload, writer io.Write
 	return stream.Error
 }
 
-// WriteLabelRequestPayloadList writes a list of value of the 'label_request_payload' type to
+// writeLabelRequestPayloadList writes a list of value of the 'label_request_payload' type to
 // the given stream.
-func WriteLabelRequestPayloadList(list []*LabelRequestPayload, stream *jsoniter.Stream) {
+func writeLabelRequestPayloadList(list []*LabelRequestPayload, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteLabelRequestPayload(value, stream)
+		writeLabelRequestPayload(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalLabelRequestPayloadList(source interface{}) (items []*LabelRequest
 	if err != nil {
 		return
 	}
-	items = ReadLabelRequestPayloadList(iterator)
+	items = readLabelRequestPayloadList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadLabelRequestPayloadList reads list of values of the ”label_request_payload' type from
+// readLabelRequestPayloadList reads list of values of the ”label_request_payload' type from
 // the given iterator.
-func ReadLabelRequestPayloadList(iterator *jsoniter.Iterator) []*LabelRequestPayload {
+func readLabelRequestPayloadList(iterator *jsoniter.Iterator) []*LabelRequestPayload {
 	list := []*LabelRequestPayload{}
 	for iterator.ReadArray() {
-		item := ReadLabelRequestPayload(iterator)
+		item := readLabelRequestPayload(iterator)
 		list = append(list, item)
 	}
 	return list

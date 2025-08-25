@@ -29,7 +29,7 @@ import (
 // MarshalAutoscalerScaleDownConfig writes a value of the 'autoscaler_scale_down_config' type to the given writer.
 func MarshalAutoscalerScaleDownConfig(object *AutoscalerScaleDownConfig, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAutoscalerScaleDownConfig(object, stream)
+	writeAutoscalerScaleDownConfig(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAutoscalerScaleDownConfig(object *AutoscalerScaleDownConfig, writer 
 	return stream.Error
 }
 
-// WriteAutoscalerScaleDownConfig writes a value of the 'autoscaler_scale_down_config' type to the given stream.
-func WriteAutoscalerScaleDownConfig(object *AutoscalerScaleDownConfig, stream *jsoniter.Stream) {
+// writeAutoscalerScaleDownConfig writes a value of the 'autoscaler_scale_down_config' type to the given stream.
+func writeAutoscalerScaleDownConfig(object *AutoscalerScaleDownConfig, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -105,13 +105,13 @@ func UnmarshalAutoscalerScaleDownConfig(source interface{}) (object *AutoscalerS
 	if err != nil {
 		return
 	}
-	object = ReadAutoscalerScaleDownConfig(iterator)
+	object = readAutoscalerScaleDownConfig(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAutoscalerScaleDownConfig reads a value of the 'autoscaler_scale_down_config' type from the given iterator.
-func ReadAutoscalerScaleDownConfig(iterator *jsoniter.Iterator) *AutoscalerScaleDownConfig {
+// readAutoscalerScaleDownConfig reads a value of the 'autoscaler_scale_down_config' type from the given iterator.
+func readAutoscalerScaleDownConfig(iterator *jsoniter.Iterator) *AutoscalerScaleDownConfig {
 	object := &AutoscalerScaleDownConfig{}
 	for {
 		field := iterator.ReadObject()

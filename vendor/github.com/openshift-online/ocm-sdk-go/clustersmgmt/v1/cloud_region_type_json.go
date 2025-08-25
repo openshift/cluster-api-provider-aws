@@ -29,7 +29,7 @@ import (
 // MarshalCloudRegion writes a value of the 'cloud_region' type to the given writer.
 func MarshalCloudRegion(object *CloudRegion, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteCloudRegion(object, stream)
+	writeCloudRegion(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalCloudRegion(object *CloudRegion, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteCloudRegion writes a value of the 'cloud_region' type to the given stream.
-func WriteCloudRegion(object *CloudRegion, stream *jsoniter.Stream) {
+// writeCloudRegion writes a value of the 'cloud_region' type to the given stream.
+func writeCloudRegion(object *CloudRegion, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -98,7 +98,7 @@ func WriteCloudRegion(object *CloudRegion, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("cloud_provider")
-		WriteCloudProvider(object.cloudProvider, stream)
+		writeCloudProvider(object.cloudProvider, stream)
 		count++
 	}
 	present_ = object.bitmap_&128 != 0
@@ -164,13 +164,13 @@ func UnmarshalCloudRegion(source interface{}) (object *CloudRegion, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadCloudRegion(iterator)
+	object = readCloudRegion(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadCloudRegion reads a value of the 'cloud_region' type from the given iterator.
-func ReadCloudRegion(iterator *jsoniter.Iterator) *CloudRegion {
+// readCloudRegion reads a value of the 'cloud_region' type from the given iterator.
+func readCloudRegion(iterator *jsoniter.Iterator) *CloudRegion {
 	object := &CloudRegion{}
 	for {
 		field := iterator.ReadObject()
@@ -202,7 +202,7 @@ func ReadCloudRegion(iterator *jsoniter.Iterator) *CloudRegion {
 			object.kmsLocationName = value
 			object.bitmap_ |= 32
 		case "cloud_provider":
-			value := ReadCloudProvider(iterator)
+			value := readCloudProvider(iterator)
 			object.cloudProvider = value
 			object.bitmap_ |= 64
 		case "display_name":

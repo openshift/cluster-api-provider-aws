@@ -5,13 +5,39 @@
 package rego
 
 import (
-	v1 "github.com/open-policy-agent/opa/v1/rego"
+	"context"
+	"sync"
+
+	"github.com/open-policy-agent/opa/ast"
+	"github.com/open-policy-agent/opa/ir"
 )
 
-type TargetPlugin = v1.TargetPlugin
+var targetPlugins = map[string]TargetPlugin{}
+var pluginMtx sync.Mutex
 
-type TargetPluginEval = v1.TargetPluginEval
+type TargetPlugin interface {
+	IsTarget(string) bool
+	PrepareForEval(context.Context, *ir.Policy, ...PrepareOption) (TargetPluginEval, error)
+}
+
+type TargetPluginEval interface {
+	Eval(context.Context, *EvalContext, ast.Value) (ast.Value, error)
+}
+
+func (r *Rego) targetPlugin(tgt string) TargetPlugin {
+	for _, p := range targetPlugins {
+		if p.IsTarget(tgt) {
+			return p
+		}
+	}
+	return nil
+}
 
 func RegisterPlugin(name string, p TargetPlugin) {
-	v1.RegisterPlugin(name, p)
+	pluginMtx.Lock()
+	defer pluginMtx.Unlock()
+	if _, ok := targetPlugins[name]; ok {
+		panic("plugin already registered " + name)
+	}
+	targetPlugins[name] = p
 }

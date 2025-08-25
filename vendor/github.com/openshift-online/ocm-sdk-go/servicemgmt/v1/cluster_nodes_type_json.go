@@ -29,7 +29,7 @@ import (
 // MarshalClusterNodes writes a value of the 'cluster_nodes' type to the given writer.
 func MarshalClusterNodes(object *ClusterNodes, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteClusterNodes(object, stream)
+	writeClusterNodes(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalClusterNodes(object *ClusterNodes, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteClusterNodes writes a value of the 'cluster_nodes' type to the given stream.
-func WriteClusterNodes(object *ClusterNodes, stream *jsoniter.Stream) {
+// writeClusterNodes writes a value of the 'cluster_nodes' type to the given stream.
+func writeClusterNodes(object *ClusterNodes, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -48,7 +48,7 @@ func WriteClusterNodes(object *ClusterNodes, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("availability_zones")
-		WriteStringList(object.availabilityZones, stream)
+		writeStringList(object.availabilityZones, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -60,13 +60,13 @@ func UnmarshalClusterNodes(source interface{}) (object *ClusterNodes, err error)
 	if err != nil {
 		return
 	}
-	object = ReadClusterNodes(iterator)
+	object = readClusterNodes(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadClusterNodes reads a value of the 'cluster_nodes' type from the given iterator.
-func ReadClusterNodes(iterator *jsoniter.Iterator) *ClusterNodes {
+// readClusterNodes reads a value of the 'cluster_nodes' type from the given iterator.
+func readClusterNodes(iterator *jsoniter.Iterator) *ClusterNodes {
 	object := &ClusterNodes{}
 	for {
 		field := iterator.ReadObject()
@@ -75,7 +75,7 @@ func ReadClusterNodes(iterator *jsoniter.Iterator) *ClusterNodes {
 		}
 		switch field {
 		case "availability_zones":
-			value := ReadStringList(iterator)
+			value := readStringList(iterator)
 			object.availabilityZones = value
 			object.bitmap_ |= 1
 		default:

@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalGroupList(list []*Group, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteGroupList(list, stream)
+	writeGroupList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalGroupList(list []*Group, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteGroupList writes a list of value of the 'group' type to
+// writeGroupList writes a list of value of the 'group' type to
 // the given stream.
-func WriteGroupList(list []*Group, stream *jsoniter.Stream) {
+func writeGroupList(list []*Group, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteGroup(value, stream)
+		writeGroup(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalGroupList(source interface{}) (items []*Group, err error) {
 	if err != nil {
 		return
 	}
-	items = ReadGroupList(iterator)
+	items = readGroupList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadGroupList reads list of values of the ”group' type from
+// readGroupList reads list of values of the ”group' type from
 // the given iterator.
-func ReadGroupList(iterator *jsoniter.Iterator) []*Group {
+func readGroupList(iterator *jsoniter.Iterator) []*Group {
 	list := []*Group{}
 	for iterator.ReadArray() {
-		item := ReadGroup(iterator)
+		item := readGroup(iterator)
 		list = append(list, item)
 	}
 	return list

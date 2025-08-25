@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalGithubIdentityProviderList(list []*GithubIdentityProvider, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteGithubIdentityProviderList(list, stream)
+	writeGithubIdentityProviderList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalGithubIdentityProviderList(list []*GithubIdentityProvider, writer io
 	return stream.Error
 }
 
-// WriteGithubIdentityProviderList writes a list of value of the 'github_identity_provider' type to
+// writeGithubIdentityProviderList writes a list of value of the 'github_identity_provider' type to
 // the given stream.
-func WriteGithubIdentityProviderList(list []*GithubIdentityProvider, stream *jsoniter.Stream) {
+func writeGithubIdentityProviderList(list []*GithubIdentityProvider, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteGithubIdentityProvider(value, stream)
+		writeGithubIdentityProvider(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalGithubIdentityProviderList(source interface{}) (items []*GithubIde
 	if err != nil {
 		return
 	}
-	items = ReadGithubIdentityProviderList(iterator)
+	items = readGithubIdentityProviderList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadGithubIdentityProviderList reads list of values of the ”github_identity_provider' type from
+// readGithubIdentityProviderList reads list of values of the ”github_identity_provider' type from
 // the given iterator.
-func ReadGithubIdentityProviderList(iterator *jsoniter.Iterator) []*GithubIdentityProvider {
+func readGithubIdentityProviderList(iterator *jsoniter.Iterator) []*GithubIdentityProvider {
 	list := []*GithubIdentityProvider{}
 	for iterator.ReadArray() {
-		item := ReadGithubIdentityProvider(iterator)
+		item := readGithubIdentityProvider(iterator)
 		list = append(list, item)
 	}
 	return list

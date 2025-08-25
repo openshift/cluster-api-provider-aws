@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalInterfaceList(list []interface{}, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteInterfaceList(list, stream)
+	writeInterfaceList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,9 +38,9 @@ func MarshalInterfaceList(list []interface{}, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteInterfaceList writes a list of value of the 'interface' type to
+// writeInterfaceList writes a list of value of the 'interface' type to
 // the given stream.
-func WriteInterfaceList(list []interface{}, stream *jsoniter.Stream) {
+func writeInterfaceList(list []interface{}, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -58,14 +58,14 @@ func UnmarshalInterfaceList(source interface{}) (items []interface{}, err error)
 	if err != nil {
 		return
 	}
-	items = ReadInterfaceList(iterator)
+	items = readInterfaceList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadInterfaceList reads list of values of the ”interface' type from
+// readInterfaceList reads list of values of the ”interface' type from
 // the given iterator.
-func ReadInterfaceList(iterator *jsoniter.Iterator) []interface{} {
+func readInterfaceList(iterator *jsoniter.Iterator) []interface{} {
 	list := []interface{}{}
 	for iterator.ReadArray() {
 		var item interface{}

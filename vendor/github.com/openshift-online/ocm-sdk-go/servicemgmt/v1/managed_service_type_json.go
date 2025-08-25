@@ -30,7 +30,7 @@ import (
 // MarshalManagedService writes a value of the 'managed_service' type to the given writer.
 func MarshalManagedService(object *ManagedService, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteManagedService(object, stream)
+	writeManagedService(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalManagedService(object *ManagedService, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteManagedService writes a value of the 'managed_service' type to the given stream.
-func WriteManagedService(object *ManagedService, stream *jsoniter.Stream) {
+// writeManagedService writes a value of the 'managed_service' type to the given stream.
+func writeManagedService(object *ManagedService, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -72,7 +72,7 @@ func WriteManagedService(object *ManagedService, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("addon")
-		WriteStatefulObject(object.addon, stream)
+		writeStatefulObject(object.addon, stream)
 		count++
 	}
 	present_ = object.bitmap_&16 != 0 && object.cluster != nil
@@ -81,7 +81,7 @@ func WriteManagedService(object *ManagedService, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("cluster")
-		WriteCluster(object.cluster, stream)
+		writeCluster(object.cluster, stream)
 		count++
 	}
 	present_ = object.bitmap_&32 != 0
@@ -108,7 +108,7 @@ func WriteManagedService(object *ManagedService, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("parameters")
-		WriteServiceParameterList(object.parameters, stream)
+		writeServiceParameterList(object.parameters, stream)
 		count++
 	}
 	present_ = object.bitmap_&256 != 0 && object.resources != nil
@@ -117,7 +117,7 @@ func WriteManagedService(object *ManagedService, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("resources")
-		WriteStatefulObjectList(object.resources, stream)
+		writeStatefulObjectList(object.resources, stream)
 		count++
 	}
 	present_ = object.bitmap_&512 != 0
@@ -156,13 +156,13 @@ func UnmarshalManagedService(source interface{}) (object *ManagedService, err er
 	if err != nil {
 		return
 	}
-	object = ReadManagedService(iterator)
+	object = readManagedService(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadManagedService reads a value of the 'managed_service' type from the given iterator.
-func ReadManagedService(iterator *jsoniter.Iterator) *ManagedService {
+// readManagedService reads a value of the 'managed_service' type from the given iterator.
+func readManagedService(iterator *jsoniter.Iterator) *ManagedService {
 	object := &ManagedService{}
 	for {
 		field := iterator.ReadObject()
@@ -182,11 +182,11 @@ func ReadManagedService(iterator *jsoniter.Iterator) *ManagedService {
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
 		case "addon":
-			value := ReadStatefulObject(iterator)
+			value := readStatefulObject(iterator)
 			object.addon = value
 			object.bitmap_ |= 8
 		case "cluster":
-			value := ReadCluster(iterator)
+			value := readCluster(iterator)
 			object.cluster = value
 			object.bitmap_ |= 16
 		case "created_at":
@@ -206,11 +206,11 @@ func ReadManagedService(iterator *jsoniter.Iterator) *ManagedService {
 			object.expiredAt = value
 			object.bitmap_ |= 64
 		case "parameters":
-			value := ReadServiceParameterList(iterator)
+			value := readServiceParameterList(iterator)
 			object.parameters = value
 			object.bitmap_ |= 128
 		case "resources":
-			value := ReadStatefulObjectList(iterator)
+			value := readStatefulObjectList(iterator)
 			object.resources = value
 			object.bitmap_ |= 256
 		case "service":

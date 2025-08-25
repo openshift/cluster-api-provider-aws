@@ -57,7 +57,7 @@ func readIngressesListResponse(response *IngressesListResponse, reader io.Reader
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadIngressList(iterator)
+			items := readIngressList(iterator)
 			response.items = &IngressList{
 				items: items,
 			}

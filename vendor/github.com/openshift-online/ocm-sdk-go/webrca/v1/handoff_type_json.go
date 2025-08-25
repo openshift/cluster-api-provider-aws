@@ -30,7 +30,7 @@ import (
 // MarshalHandoff writes a value of the 'handoff' type to the given writer.
 func MarshalHandoff(object *Handoff, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteHandoff(object, stream)
+	writeHandoff(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalHandoff(object *Handoff, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteHandoff writes a value of the 'handoff' type to the given stream.
-func WriteHandoff(object *Handoff, stream *jsoniter.Stream) {
+// writeHandoff writes a value of the 'handoff' type to the given stream.
+func writeHandoff(object *Handoff, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -90,7 +90,7 @@ func WriteHandoff(object *Handoff, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("handoff_from")
-		WriteUser(object.handoffFrom, stream)
+		writeUser(object.handoffFrom, stream)
 		count++
 	}
 	present_ = object.bitmap_&64 != 0 && object.handoffTo != nil
@@ -99,7 +99,7 @@ func WriteHandoff(object *Handoff, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("handoff_to")
-		WriteUser(object.handoffTo, stream)
+		writeUser(object.handoffTo, stream)
 		count++
 	}
 	present_ = object.bitmap_&128 != 0
@@ -129,13 +129,13 @@ func UnmarshalHandoff(source interface{}) (object *Handoff, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadHandoff(iterator)
+	object = readHandoff(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadHandoff reads a value of the 'handoff' type from the given iterator.
-func ReadHandoff(iterator *jsoniter.Iterator) *Handoff {
+// readHandoff reads a value of the 'handoff' type from the given iterator.
+func readHandoff(iterator *jsoniter.Iterator) *Handoff {
 	object := &Handoff{}
 	for {
 		field := iterator.ReadObject()
@@ -171,11 +171,11 @@ func ReadHandoff(iterator *jsoniter.Iterator) *Handoff {
 			object.deletedAt = value
 			object.bitmap_ |= 16
 		case "handoff_from":
-			value := ReadUser(iterator)
+			value := readUser(iterator)
 			object.handoffFrom = value
 			object.bitmap_ |= 32
 		case "handoff_to":
-			value := ReadUser(iterator)
+			value := readUser(iterator)
 			object.handoffTo = value
 			object.bitmap_ |= 64
 		case "handoff_type":

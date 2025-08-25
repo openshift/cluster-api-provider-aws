@@ -29,7 +29,7 @@ import (
 // MarshalAddOnVersion writes a value of the 'add_on_version' type to the given writer.
 func MarshalAddOnVersion(object *AddOnVersion, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAddOnVersion(object, stream)
+	writeAddOnVersion(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAddOnVersion(object *AddOnVersion, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteAddOnVersion writes a value of the 'add_on_version' type to the given stream.
-func WriteAddOnVersion(object *AddOnVersion, stream *jsoniter.Stream) {
+// writeAddOnVersion writes a value of the 'add_on_version' type to the given stream.
+func writeAddOnVersion(object *AddOnVersion, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -71,7 +71,7 @@ func WriteAddOnVersion(object *AddOnVersion, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("additional_catalog_sources")
-		WriteAdditionalCatalogSourceList(object.additionalCatalogSources, stream)
+		writeAdditionalCatalogSourceList(object.additionalCatalogSources, stream)
 		count++
 	}
 	present_ = object.bitmap_&16 != 0 && object.availableUpgrades != nil
@@ -80,7 +80,7 @@ func WriteAddOnVersion(object *AddOnVersion, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("available_upgrades")
-		WriteStringList(object.availableUpgrades, stream)
+		writeStringList(object.availableUpgrades, stream)
 		count++
 	}
 	present_ = object.bitmap_&32 != 0
@@ -98,7 +98,7 @@ func WriteAddOnVersion(object *AddOnVersion, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("config")
-		WriteAddOnConfig(object.config, stream)
+		writeAddOnConfig(object.config, stream)
 		count++
 	}
 	present_ = object.bitmap_&128 != 0
@@ -127,7 +127,7 @@ func WriteAddOnVersion(object *AddOnVersion, stream *jsoniter.Stream) {
 		stream.WriteObjectField("parameters")
 		stream.WriteObjectStart()
 		stream.WriteObjectField("items")
-		WriteAddOnParameterList(object.parameters.Items(), stream)
+		writeAddOnParameterList(object.parameters.items, stream)
 		stream.WriteObjectEnd()
 		count++
 	}
@@ -146,7 +146,7 @@ func WriteAddOnVersion(object *AddOnVersion, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("requirements")
-		WriteAddOnRequirementList(object.requirements, stream)
+		writeAddOnRequirementList(object.requirements, stream)
 		count++
 	}
 	present_ = object.bitmap_&4096 != 0
@@ -164,7 +164,7 @@ func WriteAddOnVersion(object *AddOnVersion, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("sub_operators")
-		WriteAddOnSubOperatorList(object.subOperators, stream)
+		writeAddOnSubOperatorList(object.subOperators, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -176,13 +176,13 @@ func UnmarshalAddOnVersion(source interface{}) (object *AddOnVersion, err error)
 	if err != nil {
 		return
 	}
-	object = ReadAddOnVersion(iterator)
+	object = readAddOnVersion(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAddOnVersion reads a value of the 'add_on_version' type from the given iterator.
-func ReadAddOnVersion(iterator *jsoniter.Iterator) *AddOnVersion {
+// readAddOnVersion reads a value of the 'add_on_version' type from the given iterator.
+func readAddOnVersion(iterator *jsoniter.Iterator) *AddOnVersion {
 	object := &AddOnVersion{}
 	for {
 		field := iterator.ReadObject()
@@ -202,11 +202,11 @@ func ReadAddOnVersion(iterator *jsoniter.Iterator) *AddOnVersion {
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
 		case "additional_catalog_sources":
-			value := ReadAdditionalCatalogSourceList(iterator)
+			value := readAdditionalCatalogSourceList(iterator)
 			object.additionalCatalogSources = value
 			object.bitmap_ |= 8
 		case "available_upgrades":
-			value := ReadStringList(iterator)
+			value := readStringList(iterator)
 			object.availableUpgrades = value
 			object.bitmap_ |= 16
 		case "channel":
@@ -214,7 +214,7 @@ func ReadAddOnVersion(iterator *jsoniter.Iterator) *AddOnVersion {
 			object.channel = value
 			object.bitmap_ |= 32
 		case "config":
-			value := ReadAddOnConfig(iterator)
+			value := readAddOnConfig(iterator)
 			object.config = value
 			object.bitmap_ |= 64
 		case "enabled":
@@ -235,11 +235,11 @@ func ReadAddOnVersion(iterator *jsoniter.Iterator) *AddOnVersion {
 				switch field {
 				case "kind":
 					text := iterator.ReadString()
-					value.SetLink(text == AddOnParameterListLinkKind)
+					value.link = text == AddOnParameterListLinkKind
 				case "href":
-					value.SetHREF(iterator.ReadString())
+					value.href = iterator.ReadString()
 				case "items":
-					value.SetItems(ReadAddOnParameterList(iterator))
+					value.items = readAddOnParameterList(iterator)
 				default:
 					iterator.ReadAny()
 				}
@@ -251,7 +251,7 @@ func ReadAddOnVersion(iterator *jsoniter.Iterator) *AddOnVersion {
 			object.pullSecretName = value
 			object.bitmap_ |= 1024
 		case "requirements":
-			value := ReadAddOnRequirementList(iterator)
+			value := readAddOnRequirementList(iterator)
 			object.requirements = value
 			object.bitmap_ |= 2048
 		case "source_image":
@@ -259,7 +259,7 @@ func ReadAddOnVersion(iterator *jsoniter.Iterator) *AddOnVersion {
 			object.sourceImage = value
 			object.bitmap_ |= 4096
 		case "sub_operators":
-			value := ReadAddOnSubOperatorList(iterator)
+			value := readAddOnSubOperatorList(iterator)
 			object.subOperators = value
 			object.bitmap_ |= 8192
 		default:

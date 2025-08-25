@@ -29,7 +29,7 @@ import (
 // MarshalClusterRegistrationResponse writes a value of the 'cluster_registration_response' type to the given writer.
 func MarshalClusterRegistrationResponse(object *ClusterRegistrationResponse, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteClusterRegistrationResponse(object, stream)
+	writeClusterRegistrationResponse(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalClusterRegistrationResponse(object *ClusterRegistrationResponse, wri
 	return stream.Error
 }
 
-// WriteClusterRegistrationResponse writes a value of the 'cluster_registration_response' type to the given stream.
-func WriteClusterRegistrationResponse(object *ClusterRegistrationResponse, stream *jsoniter.Stream) {
+// writeClusterRegistrationResponse writes a value of the 'cluster_registration_response' type to the given stream.
+func writeClusterRegistrationResponse(object *ClusterRegistrationResponse, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -87,13 +87,13 @@ func UnmarshalClusterRegistrationResponse(source interface{}) (object *ClusterRe
 	if err != nil {
 		return
 	}
-	object = ReadClusterRegistrationResponse(iterator)
+	object = readClusterRegistrationResponse(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadClusterRegistrationResponse reads a value of the 'cluster_registration_response' type from the given iterator.
-func ReadClusterRegistrationResponse(iterator *jsoniter.Iterator) *ClusterRegistrationResponse {
+// readClusterRegistrationResponse reads a value of the 'cluster_registration_response' type from the given iterator.
+func readClusterRegistrationResponse(iterator *jsoniter.Iterator) *ClusterRegistrationResponse {
 	object := &ClusterRegistrationResponse{}
 	for {
 		field := iterator.ReadObject()

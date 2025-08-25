@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalMetricsFederationList(list []*MetricsFederation, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteMetricsFederationList(list, stream)
+	writeMetricsFederationList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalMetricsFederationList(list []*MetricsFederation, writer io.Writer) e
 	return stream.Error
 }
 
-// WriteMetricsFederationList writes a list of value of the 'metrics_federation' type to
+// writeMetricsFederationList writes a list of value of the 'metrics_federation' type to
 // the given stream.
-func WriteMetricsFederationList(list []*MetricsFederation, stream *jsoniter.Stream) {
+func writeMetricsFederationList(list []*MetricsFederation, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteMetricsFederation(value, stream)
+		writeMetricsFederation(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalMetricsFederationList(source interface{}) (items []*MetricsFederat
 	if err != nil {
 		return
 	}
-	items = ReadMetricsFederationList(iterator)
+	items = readMetricsFederationList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadMetricsFederationList reads list of values of the ”metrics_federation' type from
+// readMetricsFederationList reads list of values of the ”metrics_federation' type from
 // the given iterator.
-func ReadMetricsFederationList(iterator *jsoniter.Iterator) []*MetricsFederation {
+func readMetricsFederationList(iterator *jsoniter.Iterator) []*MetricsFederation {
 	list := []*MetricsFederation{}
 	for iterator.ReadArray() {
-		item := ReadMetricsFederation(iterator)
+		item := readMetricsFederation(iterator)
 		list = append(list, item)
 	}
 	return list

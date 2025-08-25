@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalServiceList(list []*Service, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteServiceList(list, stream)
+	writeServiceList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalServiceList(list []*Service, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteServiceList writes a list of value of the 'service' type to
+// writeServiceList writes a list of value of the 'service' type to
 // the given stream.
-func WriteServiceList(list []*Service, stream *jsoniter.Stream) {
+func writeServiceList(list []*Service, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteService(value, stream)
+		writeService(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalServiceList(source interface{}) (items []*Service, err error) {
 	if err != nil {
 		return
 	}
-	items = ReadServiceList(iterator)
+	items = readServiceList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadServiceList reads list of values of the ”service' type from
+// readServiceList reads list of values of the ”service' type from
 // the given iterator.
-func ReadServiceList(iterator *jsoniter.Iterator) []*Service {
+func readServiceList(iterator *jsoniter.Iterator) []*Service {
 	list := []*Service{}
 	for iterator.ReadArray() {
-		item := ReadService(iterator)
+		item := readService(iterator)
 		list = append(list, item)
 	}
 	return list

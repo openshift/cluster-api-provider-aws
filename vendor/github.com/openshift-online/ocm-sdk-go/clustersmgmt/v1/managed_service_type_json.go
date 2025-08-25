@@ -29,7 +29,7 @@ import (
 // MarshalManagedService writes a value of the 'managed_service' type to the given writer.
 func MarshalManagedService(object *ManagedService, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteManagedService(object, stream)
+	writeManagedService(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalManagedService(object *ManagedService, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteManagedService writes a value of the 'managed_service' type to the given stream.
-func WriteManagedService(object *ManagedService, stream *jsoniter.Stream) {
+// writeManagedService writes a value of the 'managed_service' type to the given stream.
+func writeManagedService(object *ManagedService, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -60,13 +60,13 @@ func UnmarshalManagedService(source interface{}) (object *ManagedService, err er
 	if err != nil {
 		return
 	}
-	object = ReadManagedService(iterator)
+	object = readManagedService(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadManagedService reads a value of the 'managed_service' type from the given iterator.
-func ReadManagedService(iterator *jsoniter.Iterator) *ManagedService {
+// readManagedService reads a value of the 'managed_service' type from the given iterator.
+func readManagedService(iterator *jsoniter.Iterator) *ManagedService {
 	object := &ManagedService{}
 	for {
 		field := iterator.ReadObject()

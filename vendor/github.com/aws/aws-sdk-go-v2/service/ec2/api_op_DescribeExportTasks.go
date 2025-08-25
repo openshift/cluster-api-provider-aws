@@ -11,6 +11,7 @@ import (
 	smithytime "github.com/aws/smithy-go/time"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 	smithywaiter "github.com/aws/smithy-go/waiter"
+	"github.com/jmespath/go-jmespath"
 	"time"
 )
 
@@ -96,9 +97,6 @@ func (c *Client) addOperationDescribeExportTasksMiddlewares(stack *middleware.St
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -109,15 +107,6 @@ func (c *Client) addOperationDescribeExportTasksMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeExportTasks(options.Region), middleware.Before); err != nil {
@@ -138,20 +127,16 @@ func (c *Client) addOperationDescribeExportTasksMiddlewares(stack *middleware.St
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
-		return err
-	}
 	return nil
 }
+
+// DescribeExportTasksAPIClient is a client that implements the
+// DescribeExportTasks operation.
+type DescribeExportTasksAPIClient interface {
+	DescribeExportTasks(context.Context, *DescribeExportTasksInput, ...func(*Options)) (*DescribeExportTasksOutput, error)
+}
+
+var _ DescribeExportTasksAPIClient = (*Client)(nil)
 
 // ExportTaskCancelledWaiterOptions are waiter options for
 // ExportTaskCancelledWaiter
@@ -187,13 +172,12 @@ type ExportTaskCancelledWaiterOptions struct {
 
 	// Retryable is function that can be used to override the service defined
 	// waiter-behavior based on operation output, or returned error. This function is
-	// used by the waiter to decide if a state is retryable or a terminal state.
-	//
-	// By default service-modeled logic will populate this option. This option can
-	// thus be used to define a custom waiter state with fall-back to service-modeled
-	// waiter state mutators.The function returns an error in case of a failure state.
-	// In case of retry state, this function returns a bool value of true and nil
-	// error, while in case of success it returns a bool value of false and nil error.
+	// used by the waiter to decide if a state is retryable or a terminal state. By
+	// default service-modeled logic will populate this option. This option can thus be
+	// used to define a custom waiter state with fall-back to service-modeled waiter
+	// state mutators.The function returns an error in case of a failure state. In case
+	// of retry state, this function returns a bool value of true and nil error, while
+	// in case of success it returns a bool value of false and nil error.
 	Retryable func(context.Context, *DescribeExportTasksInput, *DescribeExportTasksOutput, error) (bool, error)
 }
 
@@ -270,13 +254,7 @@ func (w *ExportTaskCancelledWaiter) WaitForOutput(ctx context.Context, params *D
 		}
 
 		out, err := w.client.DescribeExportTasks(ctx, params, func(o *Options) {
-			baseOpts := []func(*Options){
-				addIsWaiterUserAgent,
-			}
 			o.APIOptions = append(o.APIOptions, apiOptions...)
-			for _, opt := range baseOpts {
-				opt(o)
-			}
 			for _, opt := range options.ClientOptions {
 				opt(o)
 			}
@@ -315,18 +293,29 @@ func (w *ExportTaskCancelledWaiter) WaitForOutput(ctx context.Context, params *D
 func exportTaskCancelledStateRetryable(ctx context.Context, input *DescribeExportTasksInput, output *DescribeExportTasksOutput, err error) (bool, error) {
 
 	if err == nil {
-		v1 := output.ExportTasks
-		var v2 []types.ExportTaskState
-		for _, v := range v1 {
-			v3 := v.State
-			v2 = append(v2, v3)
+		pathValue, err := jmespath.Search("ExportTasks[].State", output)
+		if err != nil {
+			return false, fmt.Errorf("error evaluating waiter state: %w", err)
 		}
+
 		expectedValue := "cancelled"
-		match := len(v2) > 0
-		for _, v := range v2 {
-			if string(v) != expectedValue {
+		var match = true
+		listOfValues, ok := pathValue.([]interface{})
+		if !ok {
+			return false, fmt.Errorf("waiter comparator expected list got %T", pathValue)
+		}
+
+		if len(listOfValues) == 0 {
+			match = false
+		}
+		for _, v := range listOfValues {
+			value, ok := v.(types.ExportTaskState)
+			if !ok {
+				return false, fmt.Errorf("waiter comparator expected types.ExportTaskState value, got %T", pathValue)
+			}
+
+			if string(value) != expectedValue {
 				match = false
-				break
 			}
 		}
 
@@ -335,9 +324,6 @@ func exportTaskCancelledStateRetryable(ctx context.Context, input *DescribeExpor
 		}
 	}
 
-	if err != nil {
-		return false, err
-	}
 	return true, nil
 }
 
@@ -375,13 +361,12 @@ type ExportTaskCompletedWaiterOptions struct {
 
 	// Retryable is function that can be used to override the service defined
 	// waiter-behavior based on operation output, or returned error. This function is
-	// used by the waiter to decide if a state is retryable or a terminal state.
-	//
-	// By default service-modeled logic will populate this option. This option can
-	// thus be used to define a custom waiter state with fall-back to service-modeled
-	// waiter state mutators.The function returns an error in case of a failure state.
-	// In case of retry state, this function returns a bool value of true and nil
-	// error, while in case of success it returns a bool value of false and nil error.
+	// used by the waiter to decide if a state is retryable or a terminal state. By
+	// default service-modeled logic will populate this option. This option can thus be
+	// used to define a custom waiter state with fall-back to service-modeled waiter
+	// state mutators.The function returns an error in case of a failure state. In case
+	// of retry state, this function returns a bool value of true and nil error, while
+	// in case of success it returns a bool value of false and nil error.
 	Retryable func(context.Context, *DescribeExportTasksInput, *DescribeExportTasksOutput, error) (bool, error)
 }
 
@@ -458,13 +443,7 @@ func (w *ExportTaskCompletedWaiter) WaitForOutput(ctx context.Context, params *D
 		}
 
 		out, err := w.client.DescribeExportTasks(ctx, params, func(o *Options) {
-			baseOpts := []func(*Options){
-				addIsWaiterUserAgent,
-			}
 			o.APIOptions = append(o.APIOptions, apiOptions...)
-			for _, opt := range baseOpts {
-				opt(o)
-			}
 			for _, opt := range options.ClientOptions {
 				opt(o)
 			}
@@ -503,18 +482,29 @@ func (w *ExportTaskCompletedWaiter) WaitForOutput(ctx context.Context, params *D
 func exportTaskCompletedStateRetryable(ctx context.Context, input *DescribeExportTasksInput, output *DescribeExportTasksOutput, err error) (bool, error) {
 
 	if err == nil {
-		v1 := output.ExportTasks
-		var v2 []types.ExportTaskState
-		for _, v := range v1 {
-			v3 := v.State
-			v2 = append(v2, v3)
+		pathValue, err := jmespath.Search("ExportTasks[].State", output)
+		if err != nil {
+			return false, fmt.Errorf("error evaluating waiter state: %w", err)
 		}
+
 		expectedValue := "completed"
-		match := len(v2) > 0
-		for _, v := range v2 {
-			if string(v) != expectedValue {
+		var match = true
+		listOfValues, ok := pathValue.([]interface{})
+		if !ok {
+			return false, fmt.Errorf("waiter comparator expected list got %T", pathValue)
+		}
+
+		if len(listOfValues) == 0 {
+			match = false
+		}
+		for _, v := range listOfValues {
+			value, ok := v.(types.ExportTaskState)
+			if !ok {
+				return false, fmt.Errorf("waiter comparator expected types.ExportTaskState value, got %T", pathValue)
+			}
+
+			if string(value) != expectedValue {
 				match = false
-				break
 			}
 		}
 
@@ -523,19 +513,8 @@ func exportTaskCompletedStateRetryable(ctx context.Context, input *DescribeExpor
 		}
 	}
 
-	if err != nil {
-		return false, err
-	}
 	return true, nil
 }
-
-// DescribeExportTasksAPIClient is a client that implements the
-// DescribeExportTasks operation.
-type DescribeExportTasksAPIClient interface {
-	DescribeExportTasks(context.Context, *DescribeExportTasksInput, ...func(*Options)) (*DescribeExportTasksOutput, error)
-}
-
-var _ DescribeExportTasksAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeExportTasks(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

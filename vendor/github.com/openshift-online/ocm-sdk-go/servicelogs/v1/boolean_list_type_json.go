@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalBooleanList(list []bool, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteBooleanList(list, stream)
+	writeBooleanList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,9 +38,9 @@ func MarshalBooleanList(list []bool, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteBooleanList writes a list of value of the 'boolean' type to
+// writeBooleanList writes a list of value of the 'boolean' type to
 // the given stream.
-func WriteBooleanList(list []bool, stream *jsoniter.Stream) {
+func writeBooleanList(list []bool, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -58,14 +58,14 @@ func UnmarshalBooleanList(source interface{}) (items []bool, err error) {
 	if err != nil {
 		return
 	}
-	items = ReadBooleanList(iterator)
+	items = readBooleanList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadBooleanList reads list of values of the ”boolean' type from
+// readBooleanList reads list of values of the ”boolean' type from
 // the given iterator.
-func ReadBooleanList(iterator *jsoniter.Iterator) []bool {
+func readBooleanList(iterator *jsoniter.Iterator) []bool {
 	list := []bool{}
 	for iterator.ReadArray() {
 		item := iterator.ReadBool()

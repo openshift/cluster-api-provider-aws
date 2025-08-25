@@ -29,7 +29,7 @@ import (
 // MarshalAddonVersion writes a value of the 'addon_version' type to the given writer.
 func MarshalAddonVersion(object *AddonVersion, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAddonVersion(object, stream)
+	writeAddonVersion(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAddonVersion(object *AddonVersion, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteAddonVersion writes a value of the 'addon_version' type to the given stream.
-func WriteAddonVersion(object *AddonVersion, stream *jsoniter.Stream) {
+// writeAddonVersion writes a value of the 'addon_version' type to the given stream.
+func writeAddonVersion(object *AddonVersion, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -71,7 +71,7 @@ func WriteAddonVersion(object *AddonVersion, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("additional_catalog_sources")
-		WriteAdditionalCatalogSourceList(object.additionalCatalogSources, stream)
+		writeAdditionalCatalogSourceList(object.additionalCatalogSources, stream)
 		count++
 	}
 	present_ = object.bitmap_&16 != 0 && object.availableUpgrades != nil
@@ -80,7 +80,7 @@ func WriteAddonVersion(object *AddonVersion, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("available_upgrades")
-		WriteStringList(object.availableUpgrades, stream)
+		writeStringList(object.availableUpgrades, stream)
 		count++
 	}
 	present_ = object.bitmap_&32 != 0
@@ -98,7 +98,7 @@ func WriteAddonVersion(object *AddonVersion, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("config")
-		WriteAddonConfig(object.config, stream)
+		writeAddonConfig(object.config, stream)
 		count++
 	}
 	present_ = object.bitmap_&128 != 0
@@ -116,7 +116,7 @@ func WriteAddonVersion(object *AddonVersion, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("metrics_federation")
-		WriteMetricsFederation(object.metricsFederation, stream)
+		writeMetricsFederation(object.metricsFederation, stream)
 		count++
 	}
 	present_ = object.bitmap_&512 != 0 && object.monitoringStack != nil
@@ -125,7 +125,7 @@ func WriteAddonVersion(object *AddonVersion, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("monitoring_stack")
-		WriteMonitoringStack(object.monitoringStack, stream)
+		writeMonitoringStack(object.monitoringStack, stream)
 		count++
 	}
 	present_ = object.bitmap_&1024 != 0
@@ -143,7 +143,7 @@ func WriteAddonVersion(object *AddonVersion, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("parameters")
-		WriteAddonParameters(object.parameters, stream)
+		writeAddonParameters(object.parameters, stream)
 		count++
 	}
 	present_ = object.bitmap_&4096 != 0
@@ -161,7 +161,7 @@ func WriteAddonVersion(object *AddonVersion, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("requirements")
-		WriteAddonRequirementList(object.requirements, stream)
+		writeAddonRequirementList(object.requirements, stream)
 		count++
 	}
 	present_ = object.bitmap_&16384 != 0
@@ -179,7 +179,7 @@ func WriteAddonVersion(object *AddonVersion, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("sub_operators")
-		WriteAddonSubOperatorList(object.subOperators, stream)
+		writeAddonSubOperatorList(object.subOperators, stream)
 		count++
 	}
 	present_ = object.bitmap_&65536 != 0
@@ -200,13 +200,13 @@ func UnmarshalAddonVersion(source interface{}) (object *AddonVersion, err error)
 	if err != nil {
 		return
 	}
-	object = ReadAddonVersion(iterator)
+	object = readAddonVersion(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAddonVersion reads a value of the 'addon_version' type from the given iterator.
-func ReadAddonVersion(iterator *jsoniter.Iterator) *AddonVersion {
+// readAddonVersion reads a value of the 'addon_version' type from the given iterator.
+func readAddonVersion(iterator *jsoniter.Iterator) *AddonVersion {
 	object := &AddonVersion{}
 	for {
 		field := iterator.ReadObject()
@@ -226,11 +226,11 @@ func ReadAddonVersion(iterator *jsoniter.Iterator) *AddonVersion {
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
 		case "additional_catalog_sources":
-			value := ReadAdditionalCatalogSourceList(iterator)
+			value := readAdditionalCatalogSourceList(iterator)
 			object.additionalCatalogSources = value
 			object.bitmap_ |= 8
 		case "available_upgrades":
-			value := ReadStringList(iterator)
+			value := readStringList(iterator)
 			object.availableUpgrades = value
 			object.bitmap_ |= 16
 		case "channel":
@@ -238,7 +238,7 @@ func ReadAddonVersion(iterator *jsoniter.Iterator) *AddonVersion {
 			object.channel = value
 			object.bitmap_ |= 32
 		case "config":
-			value := ReadAddonConfig(iterator)
+			value := readAddonConfig(iterator)
 			object.config = value
 			object.bitmap_ |= 64
 		case "enabled":
@@ -246,11 +246,11 @@ func ReadAddonVersion(iterator *jsoniter.Iterator) *AddonVersion {
 			object.enabled = value
 			object.bitmap_ |= 128
 		case "metrics_federation":
-			value := ReadMetricsFederation(iterator)
+			value := readMetricsFederation(iterator)
 			object.metricsFederation = value
 			object.bitmap_ |= 256
 		case "monitoring_stack":
-			value := ReadMonitoringStack(iterator)
+			value := readMonitoringStack(iterator)
 			object.monitoringStack = value
 			object.bitmap_ |= 512
 		case "package_image":
@@ -258,7 +258,7 @@ func ReadAddonVersion(iterator *jsoniter.Iterator) *AddonVersion {
 			object.packageImage = value
 			object.bitmap_ |= 1024
 		case "parameters":
-			value := ReadAddonParameters(iterator)
+			value := readAddonParameters(iterator)
 			object.parameters = value
 			object.bitmap_ |= 2048
 		case "pull_secret_name":
@@ -266,7 +266,7 @@ func ReadAddonVersion(iterator *jsoniter.Iterator) *AddonVersion {
 			object.pullSecretName = value
 			object.bitmap_ |= 4096
 		case "requirements":
-			value := ReadAddonRequirementList(iterator)
+			value := readAddonRequirementList(iterator)
 			object.requirements = value
 			object.bitmap_ |= 8192
 		case "source_image":
@@ -274,7 +274,7 @@ func ReadAddonVersion(iterator *jsoniter.Iterator) *AddonVersion {
 			object.sourceImage = value
 			object.bitmap_ |= 16384
 		case "sub_operators":
-			value := ReadAddonSubOperatorList(iterator)
+			value := readAddonSubOperatorList(iterator)
 			object.subOperators = value
 			object.bitmap_ |= 32768
 		case "upgrade_plans_created":

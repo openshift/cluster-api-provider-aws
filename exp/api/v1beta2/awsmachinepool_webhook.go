@@ -17,8 +17,6 @@ limitations under the License.
 package v1beta2
 
 import (
-	"context"
-	"fmt"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -29,30 +27,23 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
-	"sigs.k8s.io/cluster-api-provider-aws/v2/feature"
+	"sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 )
 
 var log = ctrl.Log.WithName("awsmachinepool-resource")
 
 // SetupWebhookWithManager will setup the webhooks for the AWSMachinePool.
 func (r *AWSMachinePool) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	w := new(AWSMachinePoolWebhook)
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
-		WithValidator(w).
-		WithDefaulter(w).
 		Complete()
 }
 
 // +kubebuilder:webhook:verbs=create;update,path=/validate-infrastructure-cluster-x-k8s-io-v1beta2-awsmachinepool,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=awsmachinepools,versions=v1beta2,name=validation.awsmachinepool.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 // +kubebuilder:webhook:verbs=create;update,path=/mutate-infrastructure-cluster-x-k8s-io-v1beta2-awsmachinepool,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=awsmachinepools,versions=v1beta2,name=default.awsmachinepool.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 
-// AWSMachinePoolWebhook implements a custom validation webhook for AWSMachinePool.
-type AWSMachinePoolWebhook struct{}
-
-var _ webhook.CustomDefaulter = &AWSMachinePoolWebhook{}
-var _ webhook.CustomValidator = &AWSMachinePoolWebhook{}
+var _ webhook.Defaulter = &AWSMachinePool{}
+var _ webhook.Validator = &AWSMachinePool{}
 
 func (r *AWSMachinePool) validateDefaultCoolDown() field.ErrorList {
 	var allErrs field.ErrorList
@@ -71,12 +62,12 @@ func (r *AWSMachinePool) validateRootVolume() field.ErrorList {
 		return allErrs
 	}
 
-	if infrav1.VolumeTypesProvisioned.Has(string(r.Spec.AWSLaunchTemplate.RootVolume.Type)) && r.Spec.AWSLaunchTemplate.RootVolume.IOPS == 0 {
+	if v1beta2.VolumeTypesProvisioned.Has(string(r.Spec.AWSLaunchTemplate.RootVolume.Type)) && r.Spec.AWSLaunchTemplate.RootVolume.IOPS == 0 {
 		allErrs = append(allErrs, field.Required(field.NewPath("spec.awsLaunchTemplate.rootVolume.iops"), "iops required if type is 'io1' or 'io2'"))
 	}
 
 	if r.Spec.AWSLaunchTemplate.RootVolume.Throughput != nil {
-		if r.Spec.AWSLaunchTemplate.RootVolume.Type != infrav1.VolumeTypeGP3 {
+		if r.Spec.AWSLaunchTemplate.RootVolume.Type != v1beta2.VolumeTypeGP3 {
 			allErrs = append(allErrs, field.Required(field.NewPath("spec.awsLaunchTemplate.rootVolume.throughput"), "throughput is valid only for type 'gp3'"))
 		}
 		if *r.Spec.AWSLaunchTemplate.RootVolume.Throughput < 0 {
@@ -95,12 +86,12 @@ func (r *AWSMachinePool) validateNonRootVolumes() field.ErrorList {
 	var allErrs field.ErrorList
 
 	for _, volume := range r.Spec.AWSLaunchTemplate.NonRootVolumes {
-		if infrav1.VolumeTypesProvisioned.Has(string(volume.Type)) && volume.IOPS == 0 {
+		if v1beta2.VolumeTypesProvisioned.Has(string(volume.Type)) && volume.IOPS == 0 {
 			allErrs = append(allErrs, field.Required(field.NewPath("spec.template.spec.nonRootVolumes.iops"), "iops required if type is 'io1' or 'io2'"))
 		}
 
 		if volume.Throughput != nil {
-			if volume.Type != infrav1.VolumeTypeGP3 {
+			if volume.Type != v1beta2.VolumeTypeGP3 {
 				allErrs = append(allErrs, field.Required(field.NewPath("spec.template.spec.nonRootVolumes.throughput"), "throughput is valid only for type 'gp3'"))
 			}
 			if *volume.Throughput < 0 {
@@ -171,33 +162,8 @@ func (r *AWSMachinePool) validateRefreshPreferences() field.ErrorList {
 	return allErrs
 }
 
-func (r *AWSMachinePool) validateLifecycleHooks() field.ErrorList {
-	return validateLifecycleHooks(r.Spec.AWSLifecycleHooks)
-}
-
-func (r *AWSMachinePool) ignitionEnabled() bool {
-	return r.Spec.Ignition != nil
-}
-
-func (r *AWSMachinePool) validateIgnition() field.ErrorList {
-	var allErrs field.ErrorList
-
-	// Feature gate is not enabled but ignition is enabled then send a forbidden error.
-	if !feature.Gates.Enabled(feature.BootstrapFormatIgnition) && r.ignitionEnabled() {
-		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec", "ignition"),
-			"can be set only if the BootstrapFormatIgnition feature gate is enabled"))
-	}
-
-	return allErrs
-}
-
 // ValidateCreate will do any extra validation when creating a AWSMachinePool.
-func (*AWSMachinePoolWebhook) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
-	r, ok := obj.(*AWSMachinePool)
-	if !ok {
-		return nil, fmt.Errorf("expected an AWSMachinePool object but got %T", r)
-	}
-
+func (r *AWSMachinePool) ValidateCreate() (admission.Warnings, error) {
 	log.Info("AWSMachinePool validate create", "machine-pool", klog.KObj(r))
 
 	var allErrs field.ErrorList
@@ -211,9 +177,6 @@ func (*AWSMachinePoolWebhook) ValidateCreate(_ context.Context, obj runtime.Obje
 	allErrs = append(allErrs, r.validateSpotInstances()...)
 	allErrs = append(allErrs, r.validateRefreshPreferences()...)
 	allErrs = append(allErrs, r.validateInstanceMarketType()...)
-	allErrs = append(allErrs, r.validateCapacityReservation()...)
-	allErrs = append(allErrs, r.validateLifecycleHooks()...)
-	allErrs = append(allErrs, r.validateIgnition()...)
 
 	if len(allErrs) == 0 {
 		return nil, nil
@@ -226,51 +189,24 @@ func (*AWSMachinePoolWebhook) ValidateCreate(_ context.Context, obj runtime.Obje
 	)
 }
 
-func (r *AWSMachinePool) validateCapacityReservation() field.ErrorList {
-	var allErrs field.ErrorList
-	if r.Spec.AWSLaunchTemplate.CapacityReservationID != nil &&
-		r.Spec.AWSLaunchTemplate.CapacityReservationPreference != infrav1.CapacityReservationPreferenceOnly &&
-		r.Spec.AWSLaunchTemplate.CapacityReservationPreference != "" {
-		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec", "capacityReservationPreference"), "when a reservation ID is specified, capacityReservationPreference may only be `capacity-reservations-only` or empty"))
-	}
-	return allErrs
-}
-
 func (r *AWSMachinePool) validateInstanceMarketType() field.ErrorList {
 	var allErrs field.ErrorList
-	if r.Spec.AWSLaunchTemplate.MarketType == infrav1.MarketTypeCapacityBlock && r.Spec.AWSLaunchTemplate.SpotMarketOptions != nil {
+	if r.Spec.AWSLaunchTemplate.MarketType == v1beta2.MarketTypeCapacityBlock && r.Spec.AWSLaunchTemplate.SpotMarketOptions != nil {
 		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec.awsLaunchTemplate.marketType"), "setting marketType to CapacityBlock and spotMarketOptions cannot be used together"))
 	}
-	if r.Spec.AWSLaunchTemplate.MarketType == infrav1.MarketTypeOnDemand && r.Spec.AWSLaunchTemplate.SpotMarketOptions != nil {
+	if r.Spec.AWSLaunchTemplate.MarketType == v1beta2.MarketTypeOnDemand && r.Spec.AWSLaunchTemplate.SpotMarketOptions != nil {
 		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec.awsLaunchTemplate.marketType"), "setting marketType to OnDemand and spotMarketOptions cannot be used together"))
 	}
 
-	if r.Spec.AWSLaunchTemplate.MarketType == infrav1.MarketTypeCapacityBlock && r.Spec.AWSLaunchTemplate.CapacityReservationID == nil {
+	if r.Spec.AWSLaunchTemplate.MarketType == v1beta2.MarketTypeCapacityBlock && r.Spec.AWSLaunchTemplate.CapacityReservationID == nil {
 		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec.awsLaunchTemplate.capacityReservationID"), "is required when CapacityBlock is provided"))
-	}
-	switch r.Spec.AWSLaunchTemplate.MarketType {
-	case "", infrav1.MarketTypeOnDemand, infrav1.MarketTypeSpot, infrav1.MarketTypeCapacityBlock:
-	default:
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec.awsLaunchTemplate.marketType"), r.Spec.AWSLaunchTemplate.MarketType, fmt.Sprintf("Valid values are: %s, %s, %s and omitted", infrav1.MarketTypeOnDemand, infrav1.MarketTypeSpot, infrav1.MarketTypeCapacityBlock)))
-	}
-	if r.Spec.AWSLaunchTemplate.MarketType == infrav1.MarketTypeSpot && r.Spec.AWSLaunchTemplate.CapacityReservationID != nil {
-		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec.awsLaunchTemplate.marketType"), "cannot be set to 'Spot' when CapacityReservationID is specified"))
-	}
-
-	if r.Spec.AWSLaunchTemplate.CapacityReservationID != nil && r.Spec.AWSLaunchTemplate.SpotMarketOptions != nil {
-		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec.awsLaunchTemplate.spotMarketOptions"), "cannot be set to when CapacityReservationID is specified"))
 	}
 
 	return allErrs
 }
 
 // ValidateUpdate will do any extra validation when updating a AWSMachinePool.
-func (*AWSMachinePoolWebhook) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
-	r, ok := newObj.(*AWSMachinePool)
-	if !ok {
-		return nil, fmt.Errorf("expected an AWSMachinePool object but got %T", r)
-	}
-
+func (r *AWSMachinePool) ValidateUpdate(_ runtime.Object) (admission.Warnings, error) {
 	var allErrs field.ErrorList
 
 	allErrs = append(allErrs, r.validateDefaultCoolDown()...)
@@ -279,7 +215,6 @@ func (*AWSMachinePoolWebhook) ValidateUpdate(_ context.Context, oldObj, newObj r
 	allErrs = append(allErrs, r.validateAdditionalSecurityGroups()...)
 	allErrs = append(allErrs, r.validateSpotInstances()...)
 	allErrs = append(allErrs, r.validateRefreshPreferences()...)
-	allErrs = append(allErrs, r.validateLifecycleHooks()...)
 
 	if len(allErrs) == 0 {
 		return nil, nil
@@ -293,17 +228,12 @@ func (*AWSMachinePoolWebhook) ValidateUpdate(_ context.Context, oldObj, newObj r
 }
 
 // ValidateDelete allows you to add any extra validation when deleting.
-func (*AWSMachinePoolWebhook) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
+func (r *AWSMachinePool) ValidateDelete() (admission.Warnings, error) {
 	return nil, nil
 }
 
 // Default will set default values for the AWSMachinePool.
-func (*AWSMachinePoolWebhook) Default(ctx context.Context, obj runtime.Object) error {
-	r, ok := obj.(*AWSMachinePool)
-	if !ok {
-		return fmt.Errorf("expected an AWSMachinePool object but got %T", r)
-	}
-
+func (r *AWSMachinePool) Default() {
 	if int(r.Spec.DefaultCoolDown.Duration.Seconds()) == 0 {
 		log.Info("DefaultCoolDown is zero, setting 300 seconds as default")
 		r.Spec.DefaultCoolDown.Duration = 300 * time.Second
@@ -313,13 +243,4 @@ func (*AWSMachinePoolWebhook) Default(ctx context.Context, obj runtime.Object) e
 		log.Info("DefaultInstanceWarmup is zero, setting 300 seconds as default")
 		r.Spec.DefaultInstanceWarmup.Duration = 300 * time.Second
 	}
-
-	if r.ignitionEnabled() && r.Spec.Ignition.Version == "" {
-		r.Spec.Ignition.Version = infrav1.DefaultIgnitionVersion
-	}
-	if r.ignitionEnabled() && r.Spec.Ignition.StorageType == "" {
-		r.Spec.Ignition.StorageType = infrav1.DefaultMachinePoolIgnitionStorageType
-	}
-
-	return nil
 }

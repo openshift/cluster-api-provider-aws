@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalVersionInquiryResponseList(list []*VersionInquiryResponse, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteVersionInquiryResponseList(list, stream)
+	writeVersionInquiryResponseList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalVersionInquiryResponseList(list []*VersionInquiryResponse, writer io
 	return stream.Error
 }
 
-// WriteVersionInquiryResponseList writes a list of value of the 'version_inquiry_response' type to
+// writeVersionInquiryResponseList writes a list of value of the 'version_inquiry_response' type to
 // the given stream.
-func WriteVersionInquiryResponseList(list []*VersionInquiryResponse, stream *jsoniter.Stream) {
+func writeVersionInquiryResponseList(list []*VersionInquiryResponse, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteVersionInquiryResponse(value, stream)
+		writeVersionInquiryResponse(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalVersionInquiryResponseList(source interface{}) (items []*VersionIn
 	if err != nil {
 		return
 	}
-	items = ReadVersionInquiryResponseList(iterator)
+	items = readVersionInquiryResponseList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadVersionInquiryResponseList reads list of values of the ”version_inquiry_response' type from
+// readVersionInquiryResponseList reads list of values of the ”version_inquiry_response' type from
 // the given iterator.
-func ReadVersionInquiryResponseList(iterator *jsoniter.Iterator) []*VersionInquiryResponse {
+func readVersionInquiryResponseList(iterator *jsoniter.Iterator) []*VersionInquiryResponse {
 	list := []*VersionInquiryResponse{}
 	for iterator.ReadArray() {
-		item := ReadVersionInquiryResponse(iterator)
+		item := readVersionInquiryResponse(iterator)
 		list = append(list, item)
 	}
 	return list

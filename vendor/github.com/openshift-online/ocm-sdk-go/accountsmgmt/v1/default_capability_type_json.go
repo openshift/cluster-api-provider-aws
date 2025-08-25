@@ -29,7 +29,7 @@ import (
 // MarshalDefaultCapability writes a value of the 'default_capability' type to the given writer.
 func MarshalDefaultCapability(object *DefaultCapability, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteDefaultCapability(object, stream)
+	writeDefaultCapability(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalDefaultCapability(object *DefaultCapability, writer io.Writer) error
 	return stream.Error
 }
 
-// WriteDefaultCapability writes a value of the 'default_capability' type to the given stream.
-func WriteDefaultCapability(object *DefaultCapability, stream *jsoniter.Stream) {
+// writeDefaultCapability writes a value of the 'default_capability' type to the given stream.
+func writeDefaultCapability(object *DefaultCapability, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -69,13 +69,13 @@ func UnmarshalDefaultCapability(source interface{}) (object *DefaultCapability, 
 	if err != nil {
 		return
 	}
-	object = ReadDefaultCapability(iterator)
+	object = readDefaultCapability(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadDefaultCapability reads a value of the 'default_capability' type from the given iterator.
-func ReadDefaultCapability(iterator *jsoniter.Iterator) *DefaultCapability {
+// readDefaultCapability reads a value of the 'default_capability' type from the given iterator.
+func readDefaultCapability(iterator *jsoniter.Iterator) *DefaultCapability {
 	object := &DefaultCapability{}
 	for {
 		field := iterator.ReadObject()

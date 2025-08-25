@@ -29,7 +29,7 @@ import (
 // MarshalQuotaAuthorizationResponse writes a value of the 'quota_authorization_response' type to the given writer.
 func MarshalQuotaAuthorizationResponse(object *QuotaAuthorizationResponse, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteQuotaAuthorizationResponse(object, stream)
+	writeQuotaAuthorizationResponse(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalQuotaAuthorizationResponse(object *QuotaAuthorizationResponse, write
 	return stream.Error
 }
 
-// WriteQuotaAuthorizationResponse writes a value of the 'quota_authorization_response' type to the given stream.
-func WriteQuotaAuthorizationResponse(object *QuotaAuthorizationResponse, stream *jsoniter.Stream) {
+// writeQuotaAuthorizationResponse writes a value of the 'quota_authorization_response' type to the given stream.
+func writeQuotaAuthorizationResponse(object *QuotaAuthorizationResponse, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -57,7 +57,7 @@ func WriteQuotaAuthorizationResponse(object *QuotaAuthorizationResponse, stream 
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("excess_resources")
-		WriteReservedResourceList(object.excessResources, stream)
+		writeReservedResourceList(object.excessResources, stream)
 		count++
 	}
 	present_ = object.bitmap_&4 != 0 && object.subscription != nil
@@ -66,7 +66,7 @@ func WriteQuotaAuthorizationResponse(object *QuotaAuthorizationResponse, stream 
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("subscription")
-		WriteSubscription(object.subscription, stream)
+		writeSubscription(object.subscription, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -78,13 +78,13 @@ func UnmarshalQuotaAuthorizationResponse(source interface{}) (object *QuotaAutho
 	if err != nil {
 		return
 	}
-	object = ReadQuotaAuthorizationResponse(iterator)
+	object = readQuotaAuthorizationResponse(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadQuotaAuthorizationResponse reads a value of the 'quota_authorization_response' type from the given iterator.
-func ReadQuotaAuthorizationResponse(iterator *jsoniter.Iterator) *QuotaAuthorizationResponse {
+// readQuotaAuthorizationResponse reads a value of the 'quota_authorization_response' type from the given iterator.
+func readQuotaAuthorizationResponse(iterator *jsoniter.Iterator) *QuotaAuthorizationResponse {
 	object := &QuotaAuthorizationResponse{}
 	for {
 		field := iterator.ReadObject()
@@ -97,11 +97,11 @@ func ReadQuotaAuthorizationResponse(iterator *jsoniter.Iterator) *QuotaAuthoriza
 			object.allowed = value
 			object.bitmap_ |= 1
 		case "excess_resources":
-			value := ReadReservedResourceList(iterator)
+			value := readReservedResourceList(iterator)
 			object.excessResources = value
 			object.bitmap_ |= 2
 		case "subscription":
-			value := ReadSubscription(iterator)
+			value := readSubscription(iterator)
 			object.subscription = value
 			object.bitmap_ |= 4
 		default:

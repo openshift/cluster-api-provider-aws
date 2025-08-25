@@ -21,7 +21,6 @@ run:
   - addonsmgmt
   - authorizations
   - clustersmgmt
-  - arohcp
   - errors
   - helpers
   - jobqueue

@@ -29,7 +29,7 @@ import (
 // MarshalTokenClaimValidationRule writes a value of the 'token_claim_validation_rule' type to the given writer.
 func MarshalTokenClaimValidationRule(object *TokenClaimValidationRule, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteTokenClaimValidationRule(object, stream)
+	writeTokenClaimValidationRule(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalTokenClaimValidationRule(object *TokenClaimValidationRule, writer io
 	return stream.Error
 }
 
-// WriteTokenClaimValidationRule writes a value of the 'token_claim_validation_rule' type to the given stream.
-func WriteTokenClaimValidationRule(object *TokenClaimValidationRule, stream *jsoniter.Stream) {
+// writeTokenClaimValidationRule writes a value of the 'token_claim_validation_rule' type to the given stream.
+func writeTokenClaimValidationRule(object *TokenClaimValidationRule, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -69,13 +69,13 @@ func UnmarshalTokenClaimValidationRule(source interface{}) (object *TokenClaimVa
 	if err != nil {
 		return
 	}
-	object = ReadTokenClaimValidationRule(iterator)
+	object = readTokenClaimValidationRule(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadTokenClaimValidationRule reads a value of the 'token_claim_validation_rule' type from the given iterator.
-func ReadTokenClaimValidationRule(iterator *jsoniter.Iterator) *TokenClaimValidationRule {
+// readTokenClaimValidationRule reads a value of the 'token_claim_validation_rule' type from the given iterator.
+func readTokenClaimValidationRule(iterator *jsoniter.Iterator) *TokenClaimValidationRule {
 	object := &TokenClaimValidationRule{}
 	for {
 		field := iterator.ReadObject()

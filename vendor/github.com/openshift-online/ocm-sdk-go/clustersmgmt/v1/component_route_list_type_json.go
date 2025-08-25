@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalComponentRouteList(list []*ComponentRoute, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteComponentRouteList(list, stream)
+	writeComponentRouteList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalComponentRouteList(list []*ComponentRoute, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteComponentRouteList writes a list of value of the 'component_route' type to
+// writeComponentRouteList writes a list of value of the 'component_route' type to
 // the given stream.
-func WriteComponentRouteList(list []*ComponentRoute, stream *jsoniter.Stream) {
+func writeComponentRouteList(list []*ComponentRoute, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteComponentRoute(value, stream)
+		writeComponentRoute(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalComponentRouteList(source interface{}) (items []*ComponentRoute, e
 	if err != nil {
 		return
 	}
-	items = ReadComponentRouteList(iterator)
+	items = readComponentRouteList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadComponentRouteList reads list of values of the ”component_route' type from
+// readComponentRouteList reads list of values of the ”component_route' type from
 // the given iterator.
-func ReadComponentRouteList(iterator *jsoniter.Iterator) []*ComponentRoute {
+func readComponentRouteList(iterator *jsoniter.Iterator) []*ComponentRoute {
 	list := []*ComponentRoute{}
 	for iterator.ReadArray() {
-		item := ReadComponentRoute(iterator)
+		item := readComponentRoute(iterator)
 		list = append(list, item)
 	}
 	return list

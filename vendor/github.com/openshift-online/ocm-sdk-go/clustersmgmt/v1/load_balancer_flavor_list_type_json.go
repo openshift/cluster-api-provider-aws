@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalLoadBalancerFlavorList(list []LoadBalancerFlavor, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteLoadBalancerFlavorList(list, stream)
+	writeLoadBalancerFlavorList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,9 +38,9 @@ func MarshalLoadBalancerFlavorList(list []LoadBalancerFlavor, writer io.Writer) 
 	return stream.Error
 }
 
-// WriteLoadBalancerFlavorList writes a list of value of the 'load_balancer_flavor' type to
+// writeLoadBalancerFlavorList writes a list of value of the 'load_balancer_flavor' type to
 // the given stream.
-func WriteLoadBalancerFlavorList(list []LoadBalancerFlavor, stream *jsoniter.Stream) {
+func writeLoadBalancerFlavorList(list []LoadBalancerFlavor, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -58,14 +58,14 @@ func UnmarshalLoadBalancerFlavorList(source interface{}) (items []LoadBalancerFl
 	if err != nil {
 		return
 	}
-	items = ReadLoadBalancerFlavorList(iterator)
+	items = readLoadBalancerFlavorList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadLoadBalancerFlavorList reads list of values of the ”load_balancer_flavor' type from
+// readLoadBalancerFlavorList reads list of values of the ”load_balancer_flavor' type from
 // the given iterator.
-func ReadLoadBalancerFlavorList(iterator *jsoniter.Iterator) []LoadBalancerFlavor {
+func readLoadBalancerFlavorList(iterator *jsoniter.Iterator) []LoadBalancerFlavor {
 	list := []LoadBalancerFlavor{}
 	for iterator.ReadArray() {
 		text := iterator.ReadString()

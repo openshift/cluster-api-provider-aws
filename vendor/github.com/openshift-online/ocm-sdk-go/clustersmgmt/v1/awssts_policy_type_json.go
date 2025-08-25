@@ -29,7 +29,7 @@ import (
 // MarshalAWSSTSPolicy writes a value of the 'AWSSTS_policy' type to the given writer.
 func MarshalAWSSTSPolicy(object *AWSSTSPolicy, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAWSSTSPolicy(object, stream)
+	writeAWSSTSPolicy(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAWSSTSPolicy(object *AWSSTSPolicy, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteAWSSTSPolicy writes a value of the 'AWSSTS_policy' type to the given stream.
-func WriteAWSSTSPolicy(object *AWSSTSPolicy, stream *jsoniter.Stream) {
+// writeAWSSTSPolicy writes a value of the 'AWSSTS_policy' type to the given stream.
+func writeAWSSTSPolicy(object *AWSSTSPolicy, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -87,13 +87,13 @@ func UnmarshalAWSSTSPolicy(source interface{}) (object *AWSSTSPolicy, err error)
 	if err != nil {
 		return
 	}
-	object = ReadAWSSTSPolicy(iterator)
+	object = readAWSSTSPolicy(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAWSSTSPolicy reads a value of the 'AWSSTS_policy' type from the given iterator.
-func ReadAWSSTSPolicy(iterator *jsoniter.Iterator) *AWSSTSPolicy {
+// readAWSSTSPolicy reads a value of the 'AWSSTS_policy' type from the given iterator.
+func readAWSSTSPolicy(iterator *jsoniter.Iterator) *AWSSTSPolicy {
 	object := &AWSSTSPolicy{}
 	for {
 		field := iterator.ReadObject()

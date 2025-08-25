@@ -29,7 +29,7 @@ import (
 // MarshalWifIdentityProvider writes a value of the 'wif_identity_provider' type to the given writer.
 func MarshalWifIdentityProvider(object *WifIdentityProvider, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteWifIdentityProvider(object, stream)
+	writeWifIdentityProvider(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalWifIdentityProvider(object *WifIdentityProvider, writer io.Writer) e
 	return stream.Error
 }
 
-// WriteWifIdentityProvider writes a value of the 'wif_identity_provider' type to the given stream.
-func WriteWifIdentityProvider(object *WifIdentityProvider, stream *jsoniter.Stream) {
+// writeWifIdentityProvider writes a value of the 'wif_identity_provider' type to the given stream.
+func writeWifIdentityProvider(object *WifIdentityProvider, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -48,7 +48,7 @@ func WriteWifIdentityProvider(object *WifIdentityProvider, stream *jsoniter.Stre
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("allowed_audiences")
-		WriteStringList(object.allowedAudiences, stream)
+		writeStringList(object.allowedAudiences, stream)
 		count++
 	}
 	present_ = object.bitmap_&2 != 0
@@ -87,13 +87,13 @@ func UnmarshalWifIdentityProvider(source interface{}) (object *WifIdentityProvid
 	if err != nil {
 		return
 	}
-	object = ReadWifIdentityProvider(iterator)
+	object = readWifIdentityProvider(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadWifIdentityProvider reads a value of the 'wif_identity_provider' type from the given iterator.
-func ReadWifIdentityProvider(iterator *jsoniter.Iterator) *WifIdentityProvider {
+// readWifIdentityProvider reads a value of the 'wif_identity_provider' type from the given iterator.
+func readWifIdentityProvider(iterator *jsoniter.Iterator) *WifIdentityProvider {
 	object := &WifIdentityProvider{}
 	for {
 		field := iterator.ReadObject()
@@ -102,7 +102,7 @@ func ReadWifIdentityProvider(iterator *jsoniter.Iterator) *WifIdentityProvider {
 		}
 		switch field {
 		case "allowed_audiences":
-			value := ReadStringList(iterator)
+			value := readStringList(iterator)
 			object.allowedAudiences = value
 			object.bitmap_ |= 1
 		case "identity_provider_id":

@@ -57,7 +57,7 @@ func readRolesListResponse(response *RolesListResponse, reader io.Reader) error 
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadRoleList(iterator)
+			items := readRoleList(iterator)
 			response.items = &RoleList{
 				items: items,
 			}

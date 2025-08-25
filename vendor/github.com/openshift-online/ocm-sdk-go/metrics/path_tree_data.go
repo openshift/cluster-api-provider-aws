@@ -151,23 +151,6 @@ var pathTreeData = `{
         }
       }
     },
-    "aro_hcp": {
-      "v1alpha1": {
-        "clusters": {
-          "-": {
-            "inflight_checks": {
-              "-": null
-            },
-            "node_pools": {
-              "-": {
-                "status": null
-              }
-            },
-            "status": null
-          }
-        }
-      }
-    },
     "authorizations": {
       "v1": {
         "access_review": null,
@@ -311,9 +294,6 @@ var pathTreeData = `{
               "nodes": null,
               "socket_total_by_node_roles_os": null
             },
-            "migrations": {
-              "-": null
-            },
             "node_pools": {
               "-": {
                 "upgrade_policies": {
@@ -352,9 +332,7 @@ var pathTreeData = `{
         },
         "gcp": {
           "wif_configs": {
-            "-": {
-              "status": null
-            }
+            "-": null
           }
         },
         "gcp_inquiries": {

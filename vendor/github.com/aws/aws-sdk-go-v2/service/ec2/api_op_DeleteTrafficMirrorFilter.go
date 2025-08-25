@@ -10,10 +10,8 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Deletes the specified Traffic Mirror filter.
-//
-// You cannot delete a Traffic Mirror filter that is in use by a Traffic Mirror
-// session.
+// Deletes the specified Traffic Mirror filter. You cannot delete a Traffic Mirror
+// filter that is in use by a Traffic Mirror session.
 func (c *Client) DeleteTrafficMirrorFilter(ctx context.Context, params *DeleteTrafficMirrorFilterInput, optFns ...func(*Options)) (*DeleteTrafficMirrorFilterOutput, error) {
 	if params == nil {
 		params = &DeleteTrafficMirrorFilterInput{}
@@ -99,9 +97,6 @@ func (c *Client) addOperationDeleteTrafficMirrorFilterMiddlewares(stack *middlew
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -112,15 +107,6 @@ func (c *Client) addOperationDeleteTrafficMirrorFilterMiddlewares(stack *middlew
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeleteTrafficMirrorFilterValidationMiddleware(stack); err != nil {
@@ -142,18 +128,6 @@ func (c *Client) addOperationDeleteTrafficMirrorFilterMiddlewares(stack *middlew
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

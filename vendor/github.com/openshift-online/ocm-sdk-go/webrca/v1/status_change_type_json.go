@@ -30,7 +30,7 @@ import (
 // MarshalStatusChange writes a value of the 'status_change' type to the given writer.
 func MarshalStatusChange(object *StatusChange, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteStatusChange(object, stream)
+	writeStatusChange(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalStatusChange(object *StatusChange, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteStatusChange writes a value of the 'status_change' type to the given stream.
-func WriteStatusChange(object *StatusChange, stream *jsoniter.Stream) {
+// writeStatusChange writes a value of the 'status_change' type to the given stream.
+func writeStatusChange(object *StatusChange, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -120,13 +120,13 @@ func UnmarshalStatusChange(source interface{}) (object *StatusChange, err error)
 	if err != nil {
 		return
 	}
-	object = ReadStatusChange(iterator)
+	object = readStatusChange(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadStatusChange reads a value of the 'status_change' type from the given iterator.
-func ReadStatusChange(iterator *jsoniter.Iterator) *StatusChange {
+// readStatusChange reads a value of the 'status_change' type from the given iterator.
+func readStatusChange(iterator *jsoniter.Iterator) *StatusChange {
 	object := &StatusChange{}
 	for {
 		field := iterator.ReadObject()

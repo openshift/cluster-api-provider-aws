@@ -12,10 +12,8 @@ import (
 
 // Uploads a client certificate revocation list to the specified Client VPN
 // endpoint. Uploading a client certificate revocation list overwrites the existing
-// client certificate revocation list.
-//
-// Uploading a client certificate revocation list resets existing client
-// connections.
+// client certificate revocation list. Uploading a client certificate revocation
+// list resets existing client connections.
 func (c *Client) ImportClientVpnClientCertificateRevocationList(ctx context.Context, params *ImportClientVpnClientCertificateRevocationListInput, optFns ...func(*Options)) (*ImportClientVpnClientCertificateRevocationListOutput, error) {
 	if params == nil {
 		params = &ImportClientVpnClientCertificateRevocationListInput{}
@@ -33,10 +31,9 @@ func (c *Client) ImportClientVpnClientCertificateRevocationList(ctx context.Cont
 
 type ImportClientVpnClientCertificateRevocationListInput struct {
 
-	// The client certificate revocation list file. For more information, see [Generate a Client Certificate Revocation List] in the
-	// Client VPN Administrator Guide.
-	//
-	// [Generate a Client Certificate Revocation List]: https://docs.aws.amazon.com/vpn/latest/clientvpn-admin/cvpn-working-certificates.html#cvpn-working-certificates-generate
+	// The client certificate revocation list file. For more information, see Generate
+	// a Client Certificate Revocation List (https://docs.aws.amazon.com/vpn/latest/clientvpn-admin/cvpn-working-certificates.html#cvpn-working-certificates-generate)
+	// in the Client VPN Administrator Guide.
 	//
 	// This member is required.
 	CertificateRevocationList *string
@@ -110,9 +107,6 @@ func (c *Client) addOperationImportClientVpnClientCertificateRevocationListMiddl
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -123,15 +117,6 @@ func (c *Client) addOperationImportClientVpnClientCertificateRevocationListMiddl
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpImportClientVpnClientCertificateRevocationListValidationMiddleware(stack); err != nil {
@@ -153,18 +138,6 @@ func (c *Client) addOperationImportClientVpnClientCertificateRevocationListMiddl
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

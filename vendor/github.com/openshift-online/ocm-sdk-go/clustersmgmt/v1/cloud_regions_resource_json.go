@@ -57,7 +57,7 @@ func readCloudRegionsListResponse(response *CloudRegionsListResponse, reader io.
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadCloudRegionList(iterator)
+			items := readCloudRegionList(iterator)
 			response.items = &CloudRegionList{
 				items: items,
 			}

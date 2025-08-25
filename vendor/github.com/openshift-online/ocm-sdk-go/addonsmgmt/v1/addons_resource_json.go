@@ -57,7 +57,7 @@ func readAddonsListResponse(response *AddonsListResponse, reader io.Reader) erro
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadAddonList(iterator)
+			items := readAddonList(iterator)
 			response.items = &AddonList{
 				items: items,
 			}

@@ -29,7 +29,7 @@ import (
 // MarshalResourceReview writes a value of the 'resource_review' type to the given writer.
 func MarshalResourceReview(object *ResourceReview, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteResourceReview(object, stream)
+	writeResourceReview(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalResourceReview(object *ResourceReview, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteResourceReview writes a value of the 'resource_review' type to the given stream.
-func WriteResourceReview(object *ResourceReview, stream *jsoniter.Stream) {
+// writeResourceReview writes a value of the 'resource_review' type to the given stream.
+func writeResourceReview(object *ResourceReview, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -66,7 +66,7 @@ func WriteResourceReview(object *ResourceReview, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("cluster_ids")
-		WriteStringList(object.clusterIDs, stream)
+		writeStringList(object.clusterIDs, stream)
 		count++
 	}
 	present_ = object.bitmap_&8 != 0 && object.clusterUUIDs != nil
@@ -75,7 +75,7 @@ func WriteResourceReview(object *ResourceReview, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("cluster_uuids")
-		WriteStringList(object.clusterUUIDs, stream)
+		writeStringList(object.clusterUUIDs, stream)
 		count++
 	}
 	present_ = object.bitmap_&16 != 0 && object.organizationIDs != nil
@@ -84,7 +84,7 @@ func WriteResourceReview(object *ResourceReview, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("organization_ids")
-		WriteStringList(object.organizationIDs, stream)
+		writeStringList(object.organizationIDs, stream)
 		count++
 	}
 	present_ = object.bitmap_&32 != 0
@@ -102,7 +102,7 @@ func WriteResourceReview(object *ResourceReview, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("subscription_ids")
-		WriteStringList(object.subscriptionIDs, stream)
+		writeStringList(object.subscriptionIDs, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -114,13 +114,13 @@ func UnmarshalResourceReview(source interface{}) (object *ResourceReview, err er
 	if err != nil {
 		return
 	}
-	object = ReadResourceReview(iterator)
+	object = readResourceReview(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadResourceReview reads a value of the 'resource_review' type from the given iterator.
-func ReadResourceReview(iterator *jsoniter.Iterator) *ResourceReview {
+// readResourceReview reads a value of the 'resource_review' type from the given iterator.
+func readResourceReview(iterator *jsoniter.Iterator) *ResourceReview {
 	object := &ResourceReview{}
 	for {
 		field := iterator.ReadObject()
@@ -137,15 +137,15 @@ func ReadResourceReview(iterator *jsoniter.Iterator) *ResourceReview {
 			object.action = value
 			object.bitmap_ |= 2
 		case "cluster_ids":
-			value := ReadStringList(iterator)
+			value := readStringList(iterator)
 			object.clusterIDs = value
 			object.bitmap_ |= 4
 		case "cluster_uuids":
-			value := ReadStringList(iterator)
+			value := readStringList(iterator)
 			object.clusterUUIDs = value
 			object.bitmap_ |= 8
 		case "organization_ids":
-			value := ReadStringList(iterator)
+			value := readStringList(iterator)
 			object.organizationIDs = value
 			object.bitmap_ |= 16
 		case "resource_type":
@@ -153,7 +153,7 @@ func ReadResourceReview(iterator *jsoniter.Iterator) *ResourceReview {
 			object.resourceType = value
 			object.bitmap_ |= 32
 		case "subscription_ids":
-			value := ReadStringList(iterator)
+			value := readStringList(iterator)
 			object.subscriptionIDs = value
 			object.bitmap_ |= 64
 		default:

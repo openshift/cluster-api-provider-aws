@@ -19,7 +19,7 @@ package scope
 import (
 	"context"
 
-	awsv2 "github.com/aws/aws-sdk-go-v2/aws"
+	awsclient "github.com/aws/aws-sdk-go/aws/client"
 	"github.com/pkg/errors"
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -45,6 +45,8 @@ type RosaMachinePoolScopeParams struct {
 	RosaMachinePool *expinfrav1.ROSAMachinePool
 	MachinePool     *expclusterv1.MachinePool
 	ControllerName  string
+
+	Endpoints []ServiceEndpoint
 }
 
 // NewRosaMachinePoolScope creates a new Scope from the supplied parameters.
@@ -86,17 +88,18 @@ func NewRosaMachinePoolScope(params RosaMachinePoolScopeParams) (*RosaMachinePoo
 		controllerName:  params.ControllerName,
 	}
 
-	session, serviceLimiters, err := sessionForClusterWithRegion(params.Client, scope, params.ControlPlane.Spec.Region, params.Logger)
+	session, serviceLimiters, err := sessionForClusterWithRegion(params.Client, scope, params.ControlPlane.Spec.Region, params.Endpoints, params.Logger)
 	if err != nil {
-		return nil, errors.Errorf("failed to create aws V2 session: %v", err)
+		return nil, errors.Errorf("failed to create aws session: %v", err)
 	}
 
-	scope.session = *session
+	scope.session = session
 	scope.serviceLimiters = serviceLimiters
 
 	return scope, nil
 }
 
+var _ cloud.Session = &RosaMachinePoolScope{}
 var _ cloud.SessionMetadata = &RosaMachinePoolScope{}
 
 // RosaMachinePoolScope defines the basic context for an actuator to operate upon.
@@ -111,7 +114,7 @@ type RosaMachinePoolScope struct {
 	RosaMachinePool *expinfrav1.ROSAMachinePool
 	MachinePool     *expclusterv1.MachinePool
 
-	session         awsv2.Config
+	session         awsclient.ConfigProvider
 	serviceLimiters throttle.ServiceLimiters
 
 	controllerName string
@@ -166,8 +169,8 @@ func (s *RosaMachinePoolScope) ServiceLimiter(service string) *throttle.ServiceL
 	return nil
 }
 
-// Session implements cloud.Session for AWS SDK V2.
-func (s *RosaMachinePoolScope) Session() awsv2.Config {
+// Session implements cloud.Session.
+func (s *RosaMachinePoolScope) Session() awsclient.ConfigProvider {
 	return s.session
 }
 

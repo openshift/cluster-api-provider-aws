@@ -30,7 +30,7 @@ import (
 // MarshalEvent writes a value of the 'event' type to the given writer.
 func MarshalEvent(object *Event, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteEvent(object, stream)
+	writeEvent(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalEvent(object *Event, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteEvent writes a value of the 'event' type to the given stream.
-func WriteEvent(object *Event, stream *jsoniter.Stream) {
+// writeEvent writes a value of the 'event' type to the given stream.
+func writeEvent(object *Event, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -81,7 +81,7 @@ func WriteEvent(object *Event, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("creator")
-		WriteUser(object.creator, stream)
+		writeUser(object.creator, stream)
 		count++
 	}
 	present_ = object.bitmap_&32 != 0
@@ -99,7 +99,7 @@ func WriteEvent(object *Event, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("escalation")
-		WriteEscalation(object.escalation, stream)
+		writeEscalation(object.escalation, stream)
 		count++
 	}
 	present_ = object.bitmap_&128 != 0
@@ -126,7 +126,7 @@ func WriteEvent(object *Event, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("follow_up")
-		WriteFollowUp(object.followUp, stream)
+		writeFollowUp(object.followUp, stream)
 		count++
 	}
 	present_ = object.bitmap_&1024 != 0 && object.followUpChange != nil
@@ -135,7 +135,7 @@ func WriteEvent(object *Event, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("follow_up_change")
-		WriteFollowUpChange(object.followUpChange, stream)
+		writeFollowUpChange(object.followUpChange, stream)
 		count++
 	}
 	present_ = object.bitmap_&2048 != 0 && object.handoff != nil
@@ -144,7 +144,7 @@ func WriteEvent(object *Event, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("handoff")
-		WriteHandoff(object.handoff, stream)
+		writeHandoff(object.handoff, stream)
 		count++
 	}
 	present_ = object.bitmap_&4096 != 0 && object.incident != nil
@@ -153,7 +153,7 @@ func WriteEvent(object *Event, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("incident")
-		WriteIncident(object.incident, stream)
+		writeIncident(object.incident, stream)
 		count++
 	}
 	present_ = object.bitmap_&8192 != 0
@@ -171,7 +171,7 @@ func WriteEvent(object *Event, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("status_change")
-		WriteStatusChange(object.statusChange, stream)
+		writeStatusChange(object.statusChange, stream)
 		count++
 	}
 	present_ = object.bitmap_&32768 != 0
@@ -192,13 +192,13 @@ func UnmarshalEvent(source interface{}) (object *Event, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadEvent(iterator)
+	object = readEvent(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadEvent reads a value of the 'event' type from the given iterator.
-func ReadEvent(iterator *jsoniter.Iterator) *Event {
+// readEvent reads a value of the 'event' type from the given iterator.
+func readEvent(iterator *jsoniter.Iterator) *Event {
 	object := &Event{}
 	for {
 		field := iterator.ReadObject()
@@ -226,7 +226,7 @@ func ReadEvent(iterator *jsoniter.Iterator) *Event {
 			object.createdAt = value
 			object.bitmap_ |= 8
 		case "creator":
-			value := ReadUser(iterator)
+			value := readUser(iterator)
 			object.creator = value
 			object.bitmap_ |= 16
 		case "deleted_at":
@@ -238,7 +238,7 @@ func ReadEvent(iterator *jsoniter.Iterator) *Event {
 			object.deletedAt = value
 			object.bitmap_ |= 32
 		case "escalation":
-			value := ReadEscalation(iterator)
+			value := readEscalation(iterator)
 			object.escalation = value
 			object.bitmap_ |= 64
 		case "event_type":
@@ -250,19 +250,19 @@ func ReadEvent(iterator *jsoniter.Iterator) *Event {
 			object.externalReferenceUrl = value
 			object.bitmap_ |= 256
 		case "follow_up":
-			value := ReadFollowUp(iterator)
+			value := readFollowUp(iterator)
 			object.followUp = value
 			object.bitmap_ |= 512
 		case "follow_up_change":
-			value := ReadFollowUpChange(iterator)
+			value := readFollowUpChange(iterator)
 			object.followUpChange = value
 			object.bitmap_ |= 1024
 		case "handoff":
-			value := ReadHandoff(iterator)
+			value := readHandoff(iterator)
 			object.handoff = value
 			object.bitmap_ |= 2048
 		case "incident":
-			value := ReadIncident(iterator)
+			value := readIncident(iterator)
 			object.incident = value
 			object.bitmap_ |= 4096
 		case "note":
@@ -270,7 +270,7 @@ func ReadEvent(iterator *jsoniter.Iterator) *Event {
 			object.note = value
 			object.bitmap_ |= 8192
 		case "status_change":
-			value := ReadStatusChange(iterator)
+			value := readStatusChange(iterator)
 			object.statusChange = value
 			object.bitmap_ |= 16384
 		case "updated_at":

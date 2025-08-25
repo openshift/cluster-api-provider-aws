@@ -20,11 +20,14 @@ import (
 	"bytes"
 	"net/mail"
 	"testing"
+
+	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/scope"
 )
 
 func TestUserData(t *testing.T) {
 	service := Service{}
-	doc, _ := service.UserData("secretARN", 1, "eu-west-1")
+	endpoints := []scope.ServiceEndpoint{}
+	doc, _ := service.UserData("secretARN", 1, "eu-west-1", endpoints)
 
 	if _, err := mail.ReadMessage(bytes.NewBuffer(doc)); err != nil {
 		t.Fatalf("Cannot parse MIME doc: %+v\n%s", err, string(doc))
@@ -33,7 +36,14 @@ func TestUserData(t *testing.T) {
 
 func TestUserDataEndpoints(t *testing.T) {
 	service := Service{}
-	doc, _ := service.UserData("secretARN", 1, "eu-west-1")
+	endpoints := []scope.ServiceEndpoint{
+		{
+			URL:           "localhost",
+			SigningRegion: "localhost",
+			ServiceID:     "ssm",
+		},
+	}
+	doc, _ := service.UserData("secretARN", 1, "eu-west-1", endpoints)
 
 	if _, err := mail.ReadMessage(bytes.NewBuffer(doc)); err != nil {
 		t.Fatalf("Cannot parse MIME doc: %+v\n%s", err, string(doc))

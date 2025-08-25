@@ -11,10 +11,8 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Cancels one or more Spot Instance requests.
-//
-// Canceling a Spot Instance request does not terminate running Spot Instances
-// associated with the request.
+// Cancels one or more Spot Instance requests. Canceling a Spot Instance request
+// does not terminate running Spot Instances associated with the request.
 func (c *Client) CancelSpotInstanceRequests(ctx context.Context, params *CancelSpotInstanceRequestsInput, optFns ...func(*Options)) (*CancelSpotInstanceRequestsOutput, error) {
 	if params == nil {
 		params = &CancelSpotInstanceRequestsInput{}
@@ -102,9 +100,6 @@ func (c *Client) addOperationCancelSpotInstanceRequestsMiddlewares(stack *middle
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -115,15 +110,6 @@ func (c *Client) addOperationCancelSpotInstanceRequestsMiddlewares(stack *middle
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpCancelSpotInstanceRequestsValidationMiddleware(stack); err != nil {
@@ -145,18 +131,6 @@ func (c *Client) addOperationCancelSpotInstanceRequestsMiddlewares(stack *middle
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

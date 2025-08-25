@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalMachinePoolSecurityGroupFilterList(list []*MachinePoolSecurityGroupFilter, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteMachinePoolSecurityGroupFilterList(list, stream)
+	writeMachinePoolSecurityGroupFilterList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalMachinePoolSecurityGroupFilterList(list []*MachinePoolSecurityGroupF
 	return stream.Error
 }
 
-// WriteMachinePoolSecurityGroupFilterList writes a list of value of the 'machine_pool_security_group_filter' type to
+// writeMachinePoolSecurityGroupFilterList writes a list of value of the 'machine_pool_security_group_filter' type to
 // the given stream.
-func WriteMachinePoolSecurityGroupFilterList(list []*MachinePoolSecurityGroupFilter, stream *jsoniter.Stream) {
+func writeMachinePoolSecurityGroupFilterList(list []*MachinePoolSecurityGroupFilter, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteMachinePoolSecurityGroupFilter(value, stream)
+		writeMachinePoolSecurityGroupFilter(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalMachinePoolSecurityGroupFilterList(source interface{}) (items []*M
 	if err != nil {
 		return
 	}
-	items = ReadMachinePoolSecurityGroupFilterList(iterator)
+	items = readMachinePoolSecurityGroupFilterList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadMachinePoolSecurityGroupFilterList reads list of values of the ”machine_pool_security_group_filter' type from
+// readMachinePoolSecurityGroupFilterList reads list of values of the ”machine_pool_security_group_filter' type from
 // the given iterator.
-func ReadMachinePoolSecurityGroupFilterList(iterator *jsoniter.Iterator) []*MachinePoolSecurityGroupFilter {
+func readMachinePoolSecurityGroupFilterList(iterator *jsoniter.Iterator) []*MachinePoolSecurityGroupFilter {
 	list := []*MachinePoolSecurityGroupFilter{}
 	for iterator.ReadArray() {
-		item := ReadMachinePoolSecurityGroupFilter(iterator)
+		item := readMachinePoolSecurityGroupFilter(iterator)
 		list = append(list, item)
 	}
 	return list

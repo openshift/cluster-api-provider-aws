@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAzureOperatorsAuthenticationManagedIdentitiesList(list []*AzureOperatorsAuthenticationManagedIdentities, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAzureOperatorsAuthenticationManagedIdentitiesList(list, stream)
+	writeAzureOperatorsAuthenticationManagedIdentitiesList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAzureOperatorsAuthenticationManagedIdentitiesList(list []*AzureOpera
 	return stream.Error
 }
 
-// WriteAzureOperatorsAuthenticationManagedIdentitiesList writes a list of value of the 'azure_operators_authentication_managed_identities' type to
+// writeAzureOperatorsAuthenticationManagedIdentitiesList writes a list of value of the 'azure_operators_authentication_managed_identities' type to
 // the given stream.
-func WriteAzureOperatorsAuthenticationManagedIdentitiesList(list []*AzureOperatorsAuthenticationManagedIdentities, stream *jsoniter.Stream) {
+func writeAzureOperatorsAuthenticationManagedIdentitiesList(list []*AzureOperatorsAuthenticationManagedIdentities, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteAzureOperatorsAuthenticationManagedIdentities(value, stream)
+		writeAzureOperatorsAuthenticationManagedIdentities(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAzureOperatorsAuthenticationManagedIdentitiesList(source interface
 	if err != nil {
 		return
 	}
-	items = ReadAzureOperatorsAuthenticationManagedIdentitiesList(iterator)
+	items = readAzureOperatorsAuthenticationManagedIdentitiesList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAzureOperatorsAuthenticationManagedIdentitiesList reads list of values of the ”azure_operators_authentication_managed_identities' type from
+// readAzureOperatorsAuthenticationManagedIdentitiesList reads list of values of the ”azure_operators_authentication_managed_identities' type from
 // the given iterator.
-func ReadAzureOperatorsAuthenticationManagedIdentitiesList(iterator *jsoniter.Iterator) []*AzureOperatorsAuthenticationManagedIdentities {
+func readAzureOperatorsAuthenticationManagedIdentitiesList(iterator *jsoniter.Iterator) []*AzureOperatorsAuthenticationManagedIdentities {
 	list := []*AzureOperatorsAuthenticationManagedIdentities{}
 	for iterator.ReadArray() {
-		item := ReadAzureOperatorsAuthenticationManagedIdentities(iterator)
+		item := readAzureOperatorsAuthenticationManagedIdentities(iterator)
 		list = append(list, item)
 	}
 	return list

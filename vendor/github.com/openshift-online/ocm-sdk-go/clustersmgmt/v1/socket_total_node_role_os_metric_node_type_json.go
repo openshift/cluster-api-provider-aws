@@ -30,7 +30,7 @@ import (
 // MarshalSocketTotalNodeRoleOSMetricNode writes a value of the 'socket_total_node_role_OS_metric_node' type to the given writer.
 func MarshalSocketTotalNodeRoleOSMetricNode(object *SocketTotalNodeRoleOSMetricNode, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteSocketTotalNodeRoleOSMetricNode(object, stream)
+	writeSocketTotalNodeRoleOSMetricNode(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalSocketTotalNodeRoleOSMetricNode(object *SocketTotalNodeRoleOSMetricN
 	return stream.Error
 }
 
-// WriteSocketTotalNodeRoleOSMetricNode writes a value of the 'socket_total_node_role_OS_metric_node' type to the given stream.
-func WriteSocketTotalNodeRoleOSMetricNode(object *SocketTotalNodeRoleOSMetricNode, stream *jsoniter.Stream) {
+// writeSocketTotalNodeRoleOSMetricNode writes a value of the 'socket_total_node_role_OS_metric_node' type to the given stream.
+func writeSocketTotalNodeRoleOSMetricNode(object *SocketTotalNodeRoleOSMetricNode, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -49,7 +49,7 @@ func WriteSocketTotalNodeRoleOSMetricNode(object *SocketTotalNodeRoleOSMetricNod
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("node_roles")
-		WriteStringList(object.nodeRoles, stream)
+		writeStringList(object.nodeRoles, stream)
 		count++
 	}
 	present_ = object.bitmap_&2 != 0
@@ -88,13 +88,13 @@ func UnmarshalSocketTotalNodeRoleOSMetricNode(source interface{}) (object *Socke
 	if err != nil {
 		return
 	}
-	object = ReadSocketTotalNodeRoleOSMetricNode(iterator)
+	object = readSocketTotalNodeRoleOSMetricNode(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadSocketTotalNodeRoleOSMetricNode reads a value of the 'socket_total_node_role_OS_metric_node' type from the given iterator.
-func ReadSocketTotalNodeRoleOSMetricNode(iterator *jsoniter.Iterator) *SocketTotalNodeRoleOSMetricNode {
+// readSocketTotalNodeRoleOSMetricNode reads a value of the 'socket_total_node_role_OS_metric_node' type from the given iterator.
+func readSocketTotalNodeRoleOSMetricNode(iterator *jsoniter.Iterator) *SocketTotalNodeRoleOSMetricNode {
 	object := &SocketTotalNodeRoleOSMetricNode{}
 	for {
 		field := iterator.ReadObject()
@@ -103,7 +103,7 @@ func ReadSocketTotalNodeRoleOSMetricNode(iterator *jsoniter.Iterator) *SocketTot
 		}
 		switch field {
 		case "node_roles":
-			value := ReadStringList(iterator)
+			value := readStringList(iterator)
 			object.nodeRoles = value
 			object.bitmap_ |= 1
 		case "operating_system":

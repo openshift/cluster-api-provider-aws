@@ -33,18 +33,15 @@ type DescribeIamInstanceProfileAssociationsInput struct {
 	AssociationIds []string
 
 	// The filters.
-	//
 	//   - instance-id - The ID of the instance.
-	//
 	//   - state - The state of the association ( associating | associated |
 	//   disassociating ).
 	Filters []types.Filter
 
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. For more
-	// information, see [Pagination].
-	//
-	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
+	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
+	// .
 	MaxResults *int32
 
 	// The token returned from a previous paginated request. Pagination continues from
@@ -112,9 +109,6 @@ func (c *Client) addOperationDescribeIamInstanceProfileAssociationsMiddlewares(s
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -125,15 +119,6 @@ func (c *Client) addOperationDescribeIamInstanceProfileAssociationsMiddlewares(s
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeIamInstanceProfileAssociations(options.Region), middleware.Before); err != nil {
@@ -154,29 +139,24 @@ func (c *Client) addOperationDescribeIamInstanceProfileAssociationsMiddlewares(s
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
-		return err
-	}
 	return nil
 }
+
+// DescribeIamInstanceProfileAssociationsAPIClient is a client that implements the
+// DescribeIamInstanceProfileAssociations operation.
+type DescribeIamInstanceProfileAssociationsAPIClient interface {
+	DescribeIamInstanceProfileAssociations(context.Context, *DescribeIamInstanceProfileAssociationsInput, ...func(*Options)) (*DescribeIamInstanceProfileAssociationsOutput, error)
+}
+
+var _ DescribeIamInstanceProfileAssociationsAPIClient = (*Client)(nil)
 
 // DescribeIamInstanceProfileAssociationsPaginatorOptions is the paginator options
 // for DescribeIamInstanceProfileAssociations
 type DescribeIamInstanceProfileAssociationsPaginatorOptions struct {
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. For more
-	// information, see [Pagination].
-	//
-	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
+	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
+	// .
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token
@@ -239,9 +219,6 @@ func (p *DescribeIamInstanceProfileAssociationsPaginator) NextPage(ctx context.C
 	}
 	params.MaxResults = limit
 
-	optFns = append([]func(*Options){
-		addIsPaginatorUserAgent,
-	}, optFns...)
 	result, err := p.client.DescribeIamInstanceProfileAssociations(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -260,14 +237,6 @@ func (p *DescribeIamInstanceProfileAssociationsPaginator) NextPage(ctx context.C
 
 	return result, nil
 }
-
-// DescribeIamInstanceProfileAssociationsAPIClient is a client that implements the
-// DescribeIamInstanceProfileAssociations operation.
-type DescribeIamInstanceProfileAssociationsAPIClient interface {
-	DescribeIamInstanceProfileAssociations(context.Context, *DescribeIamInstanceProfileAssociationsInput, ...func(*Options)) (*DescribeIamInstanceProfileAssociationsOutput, error)
-}
-
-var _ DescribeIamInstanceProfileAssociationsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeIamInstanceProfileAssociations(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

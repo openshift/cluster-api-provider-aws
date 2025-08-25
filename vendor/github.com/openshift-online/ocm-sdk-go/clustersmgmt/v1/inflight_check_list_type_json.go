@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalInflightCheckList(list []*InflightCheck, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteInflightCheckList(list, stream)
+	writeInflightCheckList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalInflightCheckList(list []*InflightCheck, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteInflightCheckList writes a list of value of the 'inflight_check' type to
+// writeInflightCheckList writes a list of value of the 'inflight_check' type to
 // the given stream.
-func WriteInflightCheckList(list []*InflightCheck, stream *jsoniter.Stream) {
+func writeInflightCheckList(list []*InflightCheck, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteInflightCheck(value, stream)
+		writeInflightCheck(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalInflightCheckList(source interface{}) (items []*InflightCheck, err
 	if err != nil {
 		return
 	}
-	items = ReadInflightCheckList(iterator)
+	items = readInflightCheckList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadInflightCheckList reads list of values of the ”inflight_check' type from
+// readInflightCheckList reads list of values of the ”inflight_check' type from
 // the given iterator.
-func ReadInflightCheckList(iterator *jsoniter.Iterator) []*InflightCheck {
+func readInflightCheckList(iterator *jsoniter.Iterator) []*InflightCheck {
 	list := []*InflightCheck{}
 	for iterator.ReadArray() {
-		item := ReadInflightCheck(iterator)
+		item := readInflightCheck(iterator)
 		list = append(list, item)
 	}
 	return list

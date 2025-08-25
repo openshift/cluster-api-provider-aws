@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalClusterLinkList(list []*ClusterLink, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteClusterLinkList(list, stream)
+	writeClusterLinkList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalClusterLinkList(list []*ClusterLink, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteClusterLinkList writes a list of value of the 'cluster_link' type to
+// writeClusterLinkList writes a list of value of the 'cluster_link' type to
 // the given stream.
-func WriteClusterLinkList(list []*ClusterLink, stream *jsoniter.Stream) {
+func writeClusterLinkList(list []*ClusterLink, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteClusterLink(value, stream)
+		writeClusterLink(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalClusterLinkList(source interface{}) (items []*ClusterLink, err err
 	if err != nil {
 		return
 	}
-	items = ReadClusterLinkList(iterator)
+	items = readClusterLinkList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadClusterLinkList reads list of values of the ”cluster_link' type from
+// readClusterLinkList reads list of values of the ”cluster_link' type from
 // the given iterator.
-func ReadClusterLinkList(iterator *jsoniter.Iterator) []*ClusterLink {
+func readClusterLinkList(iterator *jsoniter.Iterator) []*ClusterLink {
 	list := []*ClusterLink{}
 	for iterator.ReadArray() {
-		item := ReadClusterLink(iterator)
+		item := readClusterLink(iterator)
 		list = append(list, item)
 	}
 	return list

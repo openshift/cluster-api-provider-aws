@@ -11,12 +11,10 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Creates a multicast domain using the specified transit gateway.
-//
-// The transit gateway must be in the available state before you create a domain.
-// Use [DescribeTransitGateways]to see the state of transit gateway.
-//
-// [DescribeTransitGateways]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeTransitGateways.html
+// Creates a multicast domain using the specified transit gateway. The transit
+// gateway must be in the available state before you create a domain. Use
+// DescribeTransitGateways (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeTransitGateways.html)
+// to see the state of transit gateway.
 func (c *Client) CreateTransitGatewayMulticastDomain(ctx context.Context, params *CreateTransitGatewayMulticastDomainInput, optFns ...func(*Options)) (*CreateTransitGatewayMulticastDomainOutput, error) {
 	if params == nil {
 		params = &CreateTransitGatewayMulticastDomainInput{}
@@ -108,9 +106,6 @@ func (c *Client) addOperationCreateTransitGatewayMulticastDomainMiddlewares(stac
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -121,15 +116,6 @@ func (c *Client) addOperationCreateTransitGatewayMulticastDomainMiddlewares(stac
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpCreateTransitGatewayMulticastDomainValidationMiddleware(stack); err != nil {
@@ -151,18 +137,6 @@ func (c *Client) addOperationCreateTransitGatewayMulticastDomainMiddlewares(stac
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

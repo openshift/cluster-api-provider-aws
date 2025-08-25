@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalServiceClusterList(list []*ServiceCluster, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteServiceClusterList(list, stream)
+	writeServiceClusterList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalServiceClusterList(list []*ServiceCluster, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteServiceClusterList writes a list of value of the 'service_cluster' type to
+// writeServiceClusterList writes a list of value of the 'service_cluster' type to
 // the given stream.
-func WriteServiceClusterList(list []*ServiceCluster, stream *jsoniter.Stream) {
+func writeServiceClusterList(list []*ServiceCluster, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteServiceCluster(value, stream)
+		writeServiceCluster(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalServiceClusterList(source interface{}) (items []*ServiceCluster, e
 	if err != nil {
 		return
 	}
-	items = ReadServiceClusterList(iterator)
+	items = readServiceClusterList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadServiceClusterList reads list of values of the ”service_cluster' type from
+// readServiceClusterList reads list of values of the ”service_cluster' type from
 // the given iterator.
-func ReadServiceClusterList(iterator *jsoniter.Iterator) []*ServiceCluster {
+func readServiceClusterList(iterator *jsoniter.Iterator) []*ServiceCluster {
 	list := []*ServiceCluster{}
 	for iterator.ReadArray() {
-		item := ReadServiceCluster(iterator)
+		item := readServiceCluster(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -17,7 +17,6 @@ limitations under the License.
 package v1beta2
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/google/go-cmp/cmp"
@@ -35,31 +34,21 @@ import (
 var _ = ctrl.Log.WithName("awsclustercontrolleridentity-resource")
 
 func (r *AWSClusterControllerIdentity) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	w := new(awsClusterControllerIdentityWebhook)
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
-		WithValidator(w).
-		WithDefaulter(w).
 		Complete()
 }
 
 // +kubebuilder:webhook:verbs=create;update,path=/validate-infrastructure-cluster-x-k8s-io-v1beta2-awsclustercontrolleridentity,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=awsclustercontrolleridentities,versions=v1beta2,name=validation.awsclustercontrolleridentity.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 // +kubebuilder:webhook:verbs=create;update,path=/mutate-infrastructure-cluster-x-k8s-io-v1beta2-awsclustercontrolleridentity,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=awsclustercontrolleridentities,versions=v1beta2,name=default.awsclustercontrolleridentity.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 
-type awsClusterControllerIdentityWebhook struct{}
-
 var (
-	_ webhook.CustomValidator = &awsClusterControllerIdentityWebhook{}
-	_ webhook.CustomDefaulter = &awsClusterControllerIdentityWebhook{}
+	_ webhook.Validator = &AWSClusterControllerIdentity{}
+	_ webhook.Defaulter = &AWSClusterControllerIdentity{}
 )
 
 // ValidateCreate will do any extra validation when creating an AWSClusterControllerIdentity.
-func (*awsClusterControllerIdentityWebhook) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
-	r, ok := obj.(*AWSClusterControllerIdentity)
-	if !ok {
-		return nil, fmt.Errorf("expected an AWSClusterControllerIdentity object but got %T", r)
-	}
-
+func (r *AWSClusterControllerIdentity) ValidateCreate() (admission.Warnings, error) {
 	// Ensures AWSClusterControllerIdentity being singleton by only allowing "default" as name
 	if r.Name != AWSClusterControllerIdentityName {
 		return nil, field.Invalid(field.NewPath("name"),
@@ -78,20 +67,15 @@ func (*awsClusterControllerIdentityWebhook) ValidateCreate(_ context.Context, ob
 }
 
 // ValidateDelete allows you to add any extra validation when deleting an AWSClusterControllerIdentity.
-func (*awsClusterControllerIdentityWebhook) ValidateDelete(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (r *AWSClusterControllerIdentity) ValidateDelete() (admission.Warnings, error) {
 	return nil, nil
 }
 
 // ValidateUpdate will do any extra validation when updating an AWSClusterControllerIdentity.
-func (*awsClusterControllerIdentityWebhook) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
-	r, ok := newObj.(*AWSClusterControllerIdentity)
+func (r *AWSClusterControllerIdentity) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
+	oldP, ok := old.(*AWSClusterControllerIdentity)
 	if !ok {
-		return nil, fmt.Errorf("expected an AWSClusterControllerIdentity object but got %T", r)
-	}
-
-	oldP, ok := oldObj.(*AWSClusterControllerIdentity)
-	if !ok {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected an AWSClusterControllerIdentity but got a %T", oldObj))
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected an AWSClusterControllerIdentity but got a %T", old))
 	}
 
 	if !cmp.Equal(r.Spec, oldP.Spec) {
@@ -115,12 +99,6 @@ func (*awsClusterControllerIdentityWebhook) ValidateUpdate(_ context.Context, ol
 }
 
 // Default will set default values for the AWSClusterControllerIdentity.
-func (*awsClusterControllerIdentityWebhook) Default(_ context.Context, obj runtime.Object) error {
-	r, ok := obj.(*AWSClusterControllerIdentity)
-	if !ok {
-		return fmt.Errorf("expected an AWSClusterControllerIdentity object but got %T", r)
-	}
-
+func (r *AWSClusterControllerIdentity) Default() {
 	SetDefaults_Labels(&r.ObjectMeta)
-	return nil
 }

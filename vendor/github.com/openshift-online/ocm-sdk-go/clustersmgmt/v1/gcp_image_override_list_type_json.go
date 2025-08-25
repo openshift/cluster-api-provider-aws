@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalGCPImageOverrideList(list []*GCPImageOverride, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteGCPImageOverrideList(list, stream)
+	writeGCPImageOverrideList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalGCPImageOverrideList(list []*GCPImageOverride, writer io.Writer) err
 	return stream.Error
 }
 
-// WriteGCPImageOverrideList writes a list of value of the 'GCP_image_override' type to
+// writeGCPImageOverrideList writes a list of value of the 'GCP_image_override' type to
 // the given stream.
-func WriteGCPImageOverrideList(list []*GCPImageOverride, stream *jsoniter.Stream) {
+func writeGCPImageOverrideList(list []*GCPImageOverride, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteGCPImageOverride(value, stream)
+		writeGCPImageOverride(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalGCPImageOverrideList(source interface{}) (items []*GCPImageOverrid
 	if err != nil {
 		return
 	}
-	items = ReadGCPImageOverrideList(iterator)
+	items = readGCPImageOverrideList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadGCPImageOverrideList reads list of values of the ”GCP_image_override' type from
+// readGCPImageOverrideList reads list of values of the ”GCP_image_override' type from
 // the given iterator.
-func ReadGCPImageOverrideList(iterator *jsoniter.Iterator) []*GCPImageOverride {
+func readGCPImageOverrideList(iterator *jsoniter.Iterator) []*GCPImageOverride {
 	list := []*GCPImageOverride{}
 	for iterator.ReadArray() {
-		item := ReadGCPImageOverride(iterator)
+		item := readGCPImageOverride(iterator)
 		list = append(list, item)
 	}
 	return list

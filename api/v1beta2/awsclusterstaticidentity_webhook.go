@@ -17,7 +17,6 @@ limitations under the License.
 package v1beta2
 
 import (
-	"context"
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -33,31 +32,21 @@ import (
 var _ = ctrl.Log.WithName("awsclusterstaticidentity-resource")
 
 func (r *AWSClusterStaticIdentity) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	w := new(awsClusterStaticIdentityWebhook)
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
-		WithValidator(w).
-		WithDefaulter(w).
 		Complete()
 }
 
 // +kubebuilder:webhook:verbs=create;update,path=/validate-infrastructure-cluster-x-k8s-io-v1beta2-awsclusterstaticidentity,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=awsclusterstaticidentities,versions=v1beta2,name=validation.awsclusterstaticidentity.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 // +kubebuilder:webhook:verbs=create;update,path=/mutate-infrastructure-cluster-x-k8s-io-v1beta2-awsclusterstaticidentity,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=awsclusterstaticidentities,versions=v1beta2,name=default.awsclusterstaticidentity.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 
-type awsClusterStaticIdentityWebhook struct{}
-
 var (
-	_ webhook.CustomValidator = &awsClusterStaticIdentityWebhook{}
-	_ webhook.CustomDefaulter = &awsClusterStaticIdentityWebhook{}
+	_ webhook.Validator = &AWSClusterStaticIdentity{}
+	_ webhook.Defaulter = &AWSClusterStaticIdentity{}
 )
 
-// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type.
-func (*awsClusterStaticIdentityWebhook) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
-	r, ok := obj.(*AWSClusterStaticIdentity)
-	if !ok {
-		return nil, fmt.Errorf("expected an AWSClusterStaticIdentity object but got %T", r)
-	}
-
+// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
+func (r *AWSClusterStaticIdentity) ValidateCreate() (admission.Warnings, error) {
 	// Validate selector parses as Selector
 	if r.Spec.AllowedNamespaces != nil {
 		_, err := metav1.LabelSelectorAsSelector(&r.Spec.AllowedNamespaces.Selector)
@@ -69,21 +58,16 @@ func (*awsClusterStaticIdentityWebhook) ValidateCreate(_ context.Context, obj ru
 	return nil, nil
 }
 
-// ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type.
-func (*awsClusterStaticIdentityWebhook) ValidateDelete(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
+func (r *AWSClusterStaticIdentity) ValidateDelete() (admission.Warnings, error) {
 	return nil, nil
 }
 
-// ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type.
-func (*awsClusterStaticIdentityWebhook) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
-	r, ok := newObj.(*AWSClusterStaticIdentity)
+// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
+func (r *AWSClusterStaticIdentity) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
+	oldP, ok := old.(*AWSClusterStaticIdentity)
 	if !ok {
-		return nil, fmt.Errorf("expected an AWSClusterStaticIdentity object but got %T", r)
-	}
-
-	oldP, ok := oldObj.(*AWSClusterStaticIdentity)
-	if !ok {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected an AWSClusterStaticIdentity but got a %T", oldObj))
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected an AWSClusterStaticIdentity but got a %T", old))
 	}
 
 	if oldP.Spec.SecretRef != r.Spec.SecretRef {
@@ -103,11 +87,6 @@ func (*awsClusterStaticIdentityWebhook) ValidateUpdate(_ context.Context, oldObj
 }
 
 // Default should return the default AWSClusterStaticIdentity.
-func (*awsClusterStaticIdentityWebhook) Default(_ context.Context, obj runtime.Object) error {
-	r, ok := obj.(*AWSClusterStaticIdentity)
-	if !ok {
-		return fmt.Errorf("expected an AWSClusterStaticIdentity object but got %T", r)
-	}
+func (r *AWSClusterStaticIdentity) Default() {
 	SetDefaults_Labels(&r.ObjectMeta)
-	return nil
 }

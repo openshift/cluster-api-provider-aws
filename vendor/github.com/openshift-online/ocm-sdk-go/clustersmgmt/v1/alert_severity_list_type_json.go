@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAlertSeverityList(list []AlertSeverity, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAlertSeverityList(list, stream)
+	writeAlertSeverityList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,9 +38,9 @@ func MarshalAlertSeverityList(list []AlertSeverity, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteAlertSeverityList writes a list of value of the 'alert_severity' type to
+// writeAlertSeverityList writes a list of value of the 'alert_severity' type to
 // the given stream.
-func WriteAlertSeverityList(list []AlertSeverity, stream *jsoniter.Stream) {
+func writeAlertSeverityList(list []AlertSeverity, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -58,14 +58,14 @@ func UnmarshalAlertSeverityList(source interface{}) (items []AlertSeverity, err 
 	if err != nil {
 		return
 	}
-	items = ReadAlertSeverityList(iterator)
+	items = readAlertSeverityList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAlertSeverityList reads list of values of the ”alert_severity' type from
+// readAlertSeverityList reads list of values of the ”alert_severity' type from
 // the given iterator.
-func ReadAlertSeverityList(iterator *jsoniter.Iterator) []AlertSeverity {
+func readAlertSeverityList(iterator *jsoniter.Iterator) []AlertSeverity {
 	list := []AlertSeverity{}
 	for iterator.ReadArray() {
 		text := iterator.ReadString()

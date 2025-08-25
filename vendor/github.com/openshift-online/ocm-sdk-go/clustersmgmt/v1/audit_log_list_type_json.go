@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAuditLogList(list []*AuditLog, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAuditLogList(list, stream)
+	writeAuditLogList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAuditLogList(list []*AuditLog, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteAuditLogList writes a list of value of the 'audit_log' type to
+// writeAuditLogList writes a list of value of the 'audit_log' type to
 // the given stream.
-func WriteAuditLogList(list []*AuditLog, stream *jsoniter.Stream) {
+func writeAuditLogList(list []*AuditLog, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteAuditLog(value, stream)
+		writeAuditLog(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAuditLogList(source interface{}) (items []*AuditLog, err error) {
 	if err != nil {
 		return
 	}
-	items = ReadAuditLogList(iterator)
+	items = readAuditLogList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAuditLogList reads list of values of the ”audit_log' type from
+// readAuditLogList reads list of values of the ”audit_log' type from
 // the given iterator.
-func ReadAuditLogList(iterator *jsoniter.Iterator) []*AuditLog {
+func readAuditLogList(iterator *jsoniter.Iterator) []*AuditLog {
 	list := []*AuditLog{}
 	for iterator.ReadArray() {
-		item := ReadAuditLog(iterator)
+		item := readAuditLog(iterator)
 		list = append(list, item)
 	}
 	return list

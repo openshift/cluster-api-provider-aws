@@ -30,7 +30,7 @@ import (
 // MarshalInflightCheck writes a value of the 'inflight_check' type to the given writer.
 func MarshalInflightCheck(object *InflightCheck, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteInflightCheck(object, stream)
+	writeInflightCheck(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalInflightCheck(object *InflightCheck, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteInflightCheck writes a value of the 'inflight_check' type to the given stream.
-func WriteInflightCheck(object *InflightCheck, stream *jsoniter.Stream) {
+// writeInflightCheck writes a value of the 'inflight_check' type to the given stream.
+func writeInflightCheck(object *InflightCheck, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -129,13 +129,13 @@ func UnmarshalInflightCheck(source interface{}) (object *InflightCheck, err erro
 	if err != nil {
 		return
 	}
-	object = ReadInflightCheck(iterator)
+	object = readInflightCheck(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadInflightCheck reads a value of the 'inflight_check' type from the given iterator.
-func ReadInflightCheck(iterator *jsoniter.Iterator) *InflightCheck {
+// readInflightCheck reads a value of the 'inflight_check' type from the given iterator.
+func readInflightCheck(iterator *jsoniter.Iterator) *InflightCheck {
 	object := &InflightCheck{}
 	for {
 		field := iterator.ReadObject()

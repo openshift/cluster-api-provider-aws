@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalNotificationDetailsResponseList(list []*NotificationDetailsResponse, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteNotificationDetailsResponseList(list, stream)
+	writeNotificationDetailsResponseList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalNotificationDetailsResponseList(list []*NotificationDetailsResponse,
 	return stream.Error
 }
 
-// WriteNotificationDetailsResponseList writes a list of value of the 'notification_details_response' type to
+// writeNotificationDetailsResponseList writes a list of value of the 'notification_details_response' type to
 // the given stream.
-func WriteNotificationDetailsResponseList(list []*NotificationDetailsResponse, stream *jsoniter.Stream) {
+func writeNotificationDetailsResponseList(list []*NotificationDetailsResponse, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteNotificationDetailsResponse(value, stream)
+		writeNotificationDetailsResponse(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalNotificationDetailsResponseList(source interface{}) (items []*Noti
 	if err != nil {
 		return
 	}
-	items = ReadNotificationDetailsResponseList(iterator)
+	items = readNotificationDetailsResponseList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadNotificationDetailsResponseList reads list of values of the ”notification_details_response' type from
+// readNotificationDetailsResponseList reads list of values of the ”notification_details_response' type from
 // the given iterator.
-func ReadNotificationDetailsResponseList(iterator *jsoniter.Iterator) []*NotificationDetailsResponse {
+func readNotificationDetailsResponseList(iterator *jsoniter.Iterator) []*NotificationDetailsResponse {
 	list := []*NotificationDetailsResponse{}
 	for iterator.ReadArray() {
-		item := ReadNotificationDetailsResponse(iterator)
+		item := readNotificationDetailsResponse(iterator)
 		list = append(list, item)
 	}
 	return list

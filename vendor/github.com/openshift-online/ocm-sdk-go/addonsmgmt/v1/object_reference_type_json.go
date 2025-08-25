@@ -29,7 +29,7 @@ import (
 // MarshalObjectReference writes a value of the 'object_reference' type to the given writer.
 func MarshalObjectReference(object *ObjectReference, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteObjectReference(object, stream)
+	writeObjectReference(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalObjectReference(object *ObjectReference, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteObjectReference writes a value of the 'object_reference' type to the given stream.
-func WriteObjectReference(object *ObjectReference, stream *jsoniter.Stream) {
+// writeObjectReference writes a value of the 'object_reference' type to the given stream.
+func writeObjectReference(object *ObjectReference, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -78,13 +78,13 @@ func UnmarshalObjectReference(source interface{}) (object *ObjectReference, err 
 	if err != nil {
 		return
 	}
-	object = ReadObjectReference(iterator)
+	object = readObjectReference(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadObjectReference reads a value of the 'object_reference' type from the given iterator.
-func ReadObjectReference(iterator *jsoniter.Iterator) *ObjectReference {
+// readObjectReference reads a value of the 'object_reference' type from the given iterator.
+func readObjectReference(iterator *jsoniter.Iterator) *ObjectReference {
 	object := &ObjectReference{}
 	for {
 		field := iterator.ReadObject()

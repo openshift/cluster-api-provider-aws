@@ -11,13 +11,11 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Associates a branch network interface with a trunk network interface.
-//
-// Before you create the association, use [CreateNetworkInterface] command and set the interface type to
-// trunk . You must also create a network interface for each branch network
-// interface that you want to associate with the trunk network interface.
-//
-// [CreateNetworkInterface]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateNetworkInterface.html
+// Associates a branch network interface with a trunk network interface. Before
+// you create the association, run the create-network-interface (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateNetworkInterface.html)
+// command and set --interface-type to trunk . You must also create a network
+// interface for each branch network interface that you want to associate with the
+// trunk network interface.
 func (c *Client) AssociateTrunkInterface(ctx context.Context, params *AssociateTrunkInterfaceInput, optFns ...func(*Options)) (*AssociateTrunkInterfaceOutput, error) {
 	if params == nil {
 		params = &AssociateTrunkInterfaceInput{}
@@ -46,9 +44,8 @@ type AssociateTrunkInterfaceInput struct {
 	TrunkInterfaceId *string
 
 	// Unique, case-sensitive identifier that you provide to ensure the idempotency of
-	// the request. For more information, see [Ensuring idempotency].
-	//
-	// [Ensuring idempotency]: https://docs.aws.amazon.com/ec2/latest/devguide/ec2-api-idempotency.html
+	// the request. For more information, see How to Ensure Idempotency (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Run_Instance_Idempotency.html)
+	// .
 	ClientToken *string
 
 	// Checks whether you have the required permissions for the action, without
@@ -69,9 +66,8 @@ type AssociateTrunkInterfaceInput struct {
 type AssociateTrunkInterfaceOutput struct {
 
 	// Unique, case-sensitive identifier that you provide to ensure the idempotency of
-	// the request. For more information, see [Ensuring idempotency].
-	//
-	// [Ensuring idempotency]: https://docs.aws.amazon.com/ec2/latest/devguide/ec2-api-idempotency.html
+	// the request. For more information, see How to Ensure Idempotency (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Run_Instance_Idempotency.html)
+	// .
 	ClientToken *string
 
 	// Information about the association between the trunk network interface and
@@ -127,9 +123,6 @@ func (c *Client) addOperationAssociateTrunkInterfaceMiddlewares(stack *middlewar
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -140,15 +133,6 @@ func (c *Client) addOperationAssociateTrunkInterfaceMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addIdempotencyToken_opAssociateTrunkInterfaceMiddleware(stack, options); err != nil {
@@ -173,18 +157,6 @@ func (c *Client) addOperationAssociateTrunkInterfaceMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

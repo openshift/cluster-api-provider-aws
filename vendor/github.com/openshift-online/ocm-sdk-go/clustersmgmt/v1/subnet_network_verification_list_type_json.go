@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalSubnetNetworkVerificationList(list []*SubnetNetworkVerification, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteSubnetNetworkVerificationList(list, stream)
+	writeSubnetNetworkVerificationList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalSubnetNetworkVerificationList(list []*SubnetNetworkVerification, wri
 	return stream.Error
 }
 
-// WriteSubnetNetworkVerificationList writes a list of value of the 'subnet_network_verification' type to
+// writeSubnetNetworkVerificationList writes a list of value of the 'subnet_network_verification' type to
 // the given stream.
-func WriteSubnetNetworkVerificationList(list []*SubnetNetworkVerification, stream *jsoniter.Stream) {
+func writeSubnetNetworkVerificationList(list []*SubnetNetworkVerification, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteSubnetNetworkVerification(value, stream)
+		writeSubnetNetworkVerification(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalSubnetNetworkVerificationList(source interface{}) (items []*Subnet
 	if err != nil {
 		return
 	}
-	items = ReadSubnetNetworkVerificationList(iterator)
+	items = readSubnetNetworkVerificationList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadSubnetNetworkVerificationList reads list of values of the ”subnet_network_verification' type from
+// readSubnetNetworkVerificationList reads list of values of the ”subnet_network_verification' type from
 // the given iterator.
-func ReadSubnetNetworkVerificationList(iterator *jsoniter.Iterator) []*SubnetNetworkVerification {
+func readSubnetNetworkVerificationList(iterator *jsoniter.Iterator) []*SubnetNetworkVerification {
 	list := []*SubnetNetworkVerification{}
 	for iterator.ReadArray() {
-		item := ReadSubnetNetworkVerification(iterator)
+		item := readSubnetNetworkVerification(iterator)
 		list = append(list, item)
 	}
 	return list

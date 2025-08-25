@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalManagementClusterRequestPayloadList(list []*ManagementClusterRequestPayload, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteManagementClusterRequestPayloadList(list, stream)
+	writeManagementClusterRequestPayloadList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalManagementClusterRequestPayloadList(list []*ManagementClusterRequest
 	return stream.Error
 }
 
-// WriteManagementClusterRequestPayloadList writes a list of value of the 'management_cluster_request_payload' type to
+// writeManagementClusterRequestPayloadList writes a list of value of the 'management_cluster_request_payload' type to
 // the given stream.
-func WriteManagementClusterRequestPayloadList(list []*ManagementClusterRequestPayload, stream *jsoniter.Stream) {
+func writeManagementClusterRequestPayloadList(list []*ManagementClusterRequestPayload, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteManagementClusterRequestPayload(value, stream)
+		writeManagementClusterRequestPayload(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalManagementClusterRequestPayloadList(source interface{}) (items []*
 	if err != nil {
 		return
 	}
-	items = ReadManagementClusterRequestPayloadList(iterator)
+	items = readManagementClusterRequestPayloadList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadManagementClusterRequestPayloadList reads list of values of the ”management_cluster_request_payload' type from
+// readManagementClusterRequestPayloadList reads list of values of the ”management_cluster_request_payload' type from
 // the given iterator.
-func ReadManagementClusterRequestPayloadList(iterator *jsoniter.Iterator) []*ManagementClusterRequestPayload {
+func readManagementClusterRequestPayloadList(iterator *jsoniter.Iterator) []*ManagementClusterRequestPayload {
 	list := []*ManagementClusterRequestPayload{}
 	for iterator.ReadArray() {
-		item := ReadManagementClusterRequestPayload(iterator)
+		item := readManagementClusterRequestPayload(iterator)
 		list = append(list, item)
 	}
 	return list

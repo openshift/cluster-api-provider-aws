@@ -30,7 +30,7 @@ import (
 // MarshalAddOnInstallation writes a value of the 'add_on_installation' type to the given writer.
 func MarshalAddOnInstallation(object *AddOnInstallation, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAddOnInstallation(object, stream)
+	writeAddOnInstallation(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalAddOnInstallation(object *AddOnInstallation, writer io.Writer) error
 	return stream.Error
 }
 
-// WriteAddOnInstallation writes a value of the 'add_on_installation' type to the given stream.
-func WriteAddOnInstallation(object *AddOnInstallation, stream *jsoniter.Stream) {
+// writeAddOnInstallation writes a value of the 'add_on_installation' type to the given stream.
+func writeAddOnInstallation(object *AddOnInstallation, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -72,7 +72,7 @@ func WriteAddOnInstallation(object *AddOnInstallation, stream *jsoniter.Stream) 
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("addon")
-		WriteAddOn(object.addon, stream)
+		writeAddOn(object.addon, stream)
 		count++
 	}
 	present_ = object.bitmap_&16 != 0 && object.addonVersion != nil
@@ -81,7 +81,7 @@ func WriteAddOnInstallation(object *AddOnInstallation, stream *jsoniter.Stream) 
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("addon_version")
-		WriteAddOnVersion(object.addonVersion, stream)
+		writeAddOnVersion(object.addonVersion, stream)
 		count++
 	}
 	present_ = object.bitmap_&32 != 0 && object.billing != nil
@@ -90,7 +90,7 @@ func WriteAddOnInstallation(object *AddOnInstallation, stream *jsoniter.Stream) 
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("billing")
-		WriteAddOnInstallationBilling(object.billing, stream)
+		writeAddOnInstallationBilling(object.billing, stream)
 		count++
 	}
 	present_ = object.bitmap_&64 != 0
@@ -119,7 +119,7 @@ func WriteAddOnInstallation(object *AddOnInstallation, stream *jsoniter.Stream) 
 		stream.WriteObjectField("parameters")
 		stream.WriteObjectStart()
 		stream.WriteObjectField("items")
-		WriteAddOnInstallationParameterList(object.parameters.Items(), stream)
+		writeAddOnInstallationParameterList(object.parameters.items, stream)
 		stream.WriteObjectEnd()
 		count++
 	}
@@ -159,13 +159,13 @@ func UnmarshalAddOnInstallation(source interface{}) (object *AddOnInstallation, 
 	if err != nil {
 		return
 	}
-	object = ReadAddOnInstallation(iterator)
+	object = readAddOnInstallation(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAddOnInstallation reads a value of the 'add_on_installation' type from the given iterator.
-func ReadAddOnInstallation(iterator *jsoniter.Iterator) *AddOnInstallation {
+// readAddOnInstallation reads a value of the 'add_on_installation' type from the given iterator.
+func readAddOnInstallation(iterator *jsoniter.Iterator) *AddOnInstallation {
 	object := &AddOnInstallation{}
 	for {
 		field := iterator.ReadObject()
@@ -185,15 +185,15 @@ func ReadAddOnInstallation(iterator *jsoniter.Iterator) *AddOnInstallation {
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
 		case "addon":
-			value := ReadAddOn(iterator)
+			value := readAddOn(iterator)
 			object.addon = value
 			object.bitmap_ |= 8
 		case "addon_version":
-			value := ReadAddOnVersion(iterator)
+			value := readAddOnVersion(iterator)
 			object.addonVersion = value
 			object.bitmap_ |= 16
 		case "billing":
-			value := ReadAddOnInstallationBilling(iterator)
+			value := readAddOnInstallationBilling(iterator)
 			object.billing = value
 			object.bitmap_ |= 32
 		case "creation_timestamp":
@@ -218,11 +218,11 @@ func ReadAddOnInstallation(iterator *jsoniter.Iterator) *AddOnInstallation {
 				switch field {
 				case "kind":
 					text := iterator.ReadString()
-					value.SetLink(text == AddOnInstallationParameterListLinkKind)
+					value.link = text == AddOnInstallationParameterListLinkKind
 				case "href":
-					value.SetHREF(iterator.ReadString())
+					value.href = iterator.ReadString()
 				case "items":
-					value.SetItems(ReadAddOnInstallationParameterList(iterator))
+					value.items = readAddOnInstallationParameterList(iterator)
 				default:
 					iterator.ReadAny()
 				}

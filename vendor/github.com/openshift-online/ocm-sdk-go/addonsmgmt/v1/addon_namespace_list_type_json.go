@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAddonNamespaceList(list []*AddonNamespace, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAddonNamespaceList(list, stream)
+	writeAddonNamespaceList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAddonNamespaceList(list []*AddonNamespace, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteAddonNamespaceList writes a list of value of the 'addon_namespace' type to
+// writeAddonNamespaceList writes a list of value of the 'addon_namespace' type to
 // the given stream.
-func WriteAddonNamespaceList(list []*AddonNamespace, stream *jsoniter.Stream) {
+func writeAddonNamespaceList(list []*AddonNamespace, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteAddonNamespace(value, stream)
+		writeAddonNamespace(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAddonNamespaceList(source interface{}) (items []*AddonNamespace, e
 	if err != nil {
 		return
 	}
-	items = ReadAddonNamespaceList(iterator)
+	items = readAddonNamespaceList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAddonNamespaceList reads list of values of the ”addon_namespace' type from
+// readAddonNamespaceList reads list of values of the ”addon_namespace' type from
 // the given iterator.
-func ReadAddonNamespaceList(iterator *jsoniter.Iterator) []*AddonNamespace {
+func readAddonNamespaceList(iterator *jsoniter.Iterator) []*AddonNamespace {
 	list := []*AddonNamespace{}
 	for iterator.ReadArray() {
-		item := ReadAddonNamespace(iterator)
+		item := readAddonNamespace(iterator)
 		list = append(list, item)
 	}
 	return list

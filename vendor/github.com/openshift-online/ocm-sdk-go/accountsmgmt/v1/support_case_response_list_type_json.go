@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalSupportCaseResponseList(list []*SupportCaseResponse, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteSupportCaseResponseList(list, stream)
+	writeSupportCaseResponseList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalSupportCaseResponseList(list []*SupportCaseResponse, writer io.Write
 	return stream.Error
 }
 
-// WriteSupportCaseResponseList writes a list of value of the 'support_case_response' type to
+// writeSupportCaseResponseList writes a list of value of the 'support_case_response' type to
 // the given stream.
-func WriteSupportCaseResponseList(list []*SupportCaseResponse, stream *jsoniter.Stream) {
+func writeSupportCaseResponseList(list []*SupportCaseResponse, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteSupportCaseResponse(value, stream)
+		writeSupportCaseResponse(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalSupportCaseResponseList(source interface{}) (items []*SupportCaseR
 	if err != nil {
 		return
 	}
-	items = ReadSupportCaseResponseList(iterator)
+	items = readSupportCaseResponseList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadSupportCaseResponseList reads list of values of the ”support_case_response' type from
+// readSupportCaseResponseList reads list of values of the ”support_case_response' type from
 // the given iterator.
-func ReadSupportCaseResponseList(iterator *jsoniter.Iterator) []*SupportCaseResponse {
+func readSupportCaseResponseList(iterator *jsoniter.Iterator) []*SupportCaseResponse {
 	list := []*SupportCaseResponse{}
 	for iterator.ReadArray() {
-		item := ReadSupportCaseResponse(iterator)
+		item := readSupportCaseResponse(iterator)
 		list = append(list, item)
 	}
 	return list

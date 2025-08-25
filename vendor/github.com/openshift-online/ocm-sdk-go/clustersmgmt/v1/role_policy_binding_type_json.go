@@ -30,7 +30,7 @@ import (
 // MarshalRolePolicyBinding writes a value of the 'role_policy_binding' type to the given writer.
 func MarshalRolePolicyBinding(object *RolePolicyBinding, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteRolePolicyBinding(object, stream)
+	writeRolePolicyBinding(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalRolePolicyBinding(object *RolePolicyBinding, writer io.Writer) error
 	return stream.Error
 }
 
-// WriteRolePolicyBinding writes a value of the 'role_policy_binding' type to the given stream.
-func WriteRolePolicyBinding(object *RolePolicyBinding, stream *jsoniter.Stream) {
+// writeRolePolicyBinding writes a value of the 'role_policy_binding' type to the given stream.
+func writeRolePolicyBinding(object *RolePolicyBinding, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -85,7 +85,7 @@ func WriteRolePolicyBinding(object *RolePolicyBinding, stream *jsoniter.Stream) 
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("policies")
-		WriteRolePolicyList(object.policies, stream)
+		writeRolePolicyList(object.policies, stream)
 		count++
 	}
 	present_ = object.bitmap_&32 != 0 && object.status != nil
@@ -94,7 +94,7 @@ func WriteRolePolicyBinding(object *RolePolicyBinding, stream *jsoniter.Stream) 
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("status")
-		WriteRolePolicyBindingStatus(object.status, stream)
+		writeRolePolicyBindingStatus(object.status, stream)
 		count++
 	}
 	present_ = object.bitmap_&64 != 0
@@ -115,13 +115,13 @@ func UnmarshalRolePolicyBinding(source interface{}) (object *RolePolicyBinding, 
 	if err != nil {
 		return
 	}
-	object = ReadRolePolicyBinding(iterator)
+	object = readRolePolicyBinding(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadRolePolicyBinding reads a value of the 'role_policy_binding' type from the given iterator.
-func ReadRolePolicyBinding(iterator *jsoniter.Iterator) *RolePolicyBinding {
+// readRolePolicyBinding reads a value of the 'role_policy_binding' type from the given iterator.
+func readRolePolicyBinding(iterator *jsoniter.Iterator) *RolePolicyBinding {
 	object := &RolePolicyBinding{}
 	for {
 		field := iterator.ReadObject()
@@ -154,11 +154,11 @@ func ReadRolePolicyBinding(iterator *jsoniter.Iterator) *RolePolicyBinding {
 			object.name = value
 			object.bitmap_ |= 8
 		case "policies":
-			value := ReadRolePolicyList(iterator)
+			value := readRolePolicyList(iterator)
 			object.policies = value
 			object.bitmap_ |= 16
 		case "status":
-			value := ReadRolePolicyBindingStatus(iterator)
+			value := readRolePolicyBindingStatus(iterator)
 			object.status = value
 			object.bitmap_ |= 32
 		case "type":

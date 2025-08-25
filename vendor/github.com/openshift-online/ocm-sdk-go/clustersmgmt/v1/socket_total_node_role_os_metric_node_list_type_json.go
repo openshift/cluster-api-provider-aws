@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalSocketTotalNodeRoleOSMetricNodeList(list []*SocketTotalNodeRoleOSMetricNode, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteSocketTotalNodeRoleOSMetricNodeList(list, stream)
+	writeSocketTotalNodeRoleOSMetricNodeList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalSocketTotalNodeRoleOSMetricNodeList(list []*SocketTotalNodeRoleOSMet
 	return stream.Error
 }
 
-// WriteSocketTotalNodeRoleOSMetricNodeList writes a list of value of the 'socket_total_node_role_OS_metric_node' type to
+// writeSocketTotalNodeRoleOSMetricNodeList writes a list of value of the 'socket_total_node_role_OS_metric_node' type to
 // the given stream.
-func WriteSocketTotalNodeRoleOSMetricNodeList(list []*SocketTotalNodeRoleOSMetricNode, stream *jsoniter.Stream) {
+func writeSocketTotalNodeRoleOSMetricNodeList(list []*SocketTotalNodeRoleOSMetricNode, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteSocketTotalNodeRoleOSMetricNode(value, stream)
+		writeSocketTotalNodeRoleOSMetricNode(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalSocketTotalNodeRoleOSMetricNodeList(source interface{}) (items []*
 	if err != nil {
 		return
 	}
-	items = ReadSocketTotalNodeRoleOSMetricNodeList(iterator)
+	items = readSocketTotalNodeRoleOSMetricNodeList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadSocketTotalNodeRoleOSMetricNodeList reads list of values of the ”socket_total_node_role_OS_metric_node' type from
+// readSocketTotalNodeRoleOSMetricNodeList reads list of values of the ”socket_total_node_role_OS_metric_node' type from
 // the given iterator.
-func ReadSocketTotalNodeRoleOSMetricNodeList(iterator *jsoniter.Iterator) []*SocketTotalNodeRoleOSMetricNode {
+func readSocketTotalNodeRoleOSMetricNodeList(iterator *jsoniter.Iterator) []*SocketTotalNodeRoleOSMetricNode {
 	list := []*SocketTotalNodeRoleOSMetricNode{}
 	for iterator.ReadArray() {
-		item := ReadSocketTotalNodeRoleOSMetricNode(iterator)
+		item := readSocketTotalNodeRoleOSMetricNode(iterator)
 		list = append(list, item)
 	}
 	return list

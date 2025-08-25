@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalObjectReferenceList(list []*ObjectReference, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteObjectReferenceList(list, stream)
+	writeObjectReferenceList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalObjectReferenceList(list []*ObjectReference, writer io.Writer) error
 	return stream.Error
 }
 
-// WriteObjectReferenceList writes a list of value of the 'object_reference' type to
+// writeObjectReferenceList writes a list of value of the 'object_reference' type to
 // the given stream.
-func WriteObjectReferenceList(list []*ObjectReference, stream *jsoniter.Stream) {
+func writeObjectReferenceList(list []*ObjectReference, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteObjectReference(value, stream)
+		writeObjectReference(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalObjectReferenceList(source interface{}) (items []*ObjectReference,
 	if err != nil {
 		return
 	}
-	items = ReadObjectReferenceList(iterator)
+	items = readObjectReferenceList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadObjectReferenceList reads list of values of the ”object_reference' type from
+// readObjectReferenceList reads list of values of the ”object_reference' type from
 // the given iterator.
-func ReadObjectReferenceList(iterator *jsoniter.Iterator) []*ObjectReference {
+func readObjectReferenceList(iterator *jsoniter.Iterator) []*ObjectReference {
 	list := []*ObjectReference{}
 	for iterator.ReadArray() {
-		item := ReadObjectReference(iterator)
+		item := readObjectReference(iterator)
 		list = append(list, item)
 	}
 	return list

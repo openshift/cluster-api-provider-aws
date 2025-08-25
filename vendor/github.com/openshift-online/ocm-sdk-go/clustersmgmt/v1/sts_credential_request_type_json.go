@@ -29,7 +29,7 @@ import (
 // MarshalSTSCredentialRequest writes a value of the 'STS_credential_request' type to the given writer.
 func MarshalSTSCredentialRequest(object *STSCredentialRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteSTSCredentialRequest(object, stream)
+	writeSTSCredentialRequest(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalSTSCredentialRequest(object *STSCredentialRequest, writer io.Writer)
 	return stream.Error
 }
 
-// WriteSTSCredentialRequest writes a value of the 'STS_credential_request' type to the given stream.
-func WriteSTSCredentialRequest(object *STSCredentialRequest, stream *jsoniter.Stream) {
+// writeSTSCredentialRequest writes a value of the 'STS_credential_request' type to the given stream.
+func writeSTSCredentialRequest(object *STSCredentialRequest, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -57,7 +57,7 @@ func WriteSTSCredentialRequest(object *STSCredentialRequest, stream *jsoniter.St
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("operator")
-		WriteSTSOperator(object.operator, stream)
+		writeSTSOperator(object.operator, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -69,13 +69,13 @@ func UnmarshalSTSCredentialRequest(source interface{}) (object *STSCredentialReq
 	if err != nil {
 		return
 	}
-	object = ReadSTSCredentialRequest(iterator)
+	object = readSTSCredentialRequest(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadSTSCredentialRequest reads a value of the 'STS_credential_request' type from the given iterator.
-func ReadSTSCredentialRequest(iterator *jsoniter.Iterator) *STSCredentialRequest {
+// readSTSCredentialRequest reads a value of the 'STS_credential_request' type from the given iterator.
+func readSTSCredentialRequest(iterator *jsoniter.Iterator) *STSCredentialRequest {
 	object := &STSCredentialRequest{}
 	for {
 		field := iterator.ReadObject()
@@ -88,7 +88,7 @@ func ReadSTSCredentialRequest(iterator *jsoniter.Iterator) *STSCredentialRequest
 			object.name = value
 			object.bitmap_ |= 1
 		case "operator":
-			value := ReadSTSOperator(iterator)
+			value := readSTSOperator(iterator)
 			object.operator = value
 			object.bitmap_ |= 2
 		default:

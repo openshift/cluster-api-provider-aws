@@ -30,7 +30,7 @@ import (
 // MarshalLabel writes a value of the 'label' type to the given writer.
 func MarshalLabel(object *Label, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteLabel(object, stream)
+	writeLabel(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalLabel(object *Label, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteLabel writes a value of the 'label' type to the given stream.
-func WriteLabel(object *Label, stream *jsoniter.Stream) {
+// writeLabel writes a value of the 'label' type to the given stream.
+func writeLabel(object *Label, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -165,13 +165,13 @@ func UnmarshalLabel(source interface{}) (object *Label, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadLabel(iterator)
+	object = readLabel(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadLabel reads a value of the 'label' type from the given iterator.
-func ReadLabel(iterator *jsoniter.Iterator) *Label {
+// readLabel reads a value of the 'label' type from the given iterator.
+func readLabel(iterator *jsoniter.Iterator) *Label {
 	object := &Label{}
 	for {
 		field := iterator.ReadObject()

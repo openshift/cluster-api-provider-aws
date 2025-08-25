@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalRegistryLocationList(list []*RegistryLocation, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteRegistryLocationList(list, stream)
+	writeRegistryLocationList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalRegistryLocationList(list []*RegistryLocation, writer io.Writer) err
 	return stream.Error
 }
 
-// WriteRegistryLocationList writes a list of value of the 'registry_location' type to
+// writeRegistryLocationList writes a list of value of the 'registry_location' type to
 // the given stream.
-func WriteRegistryLocationList(list []*RegistryLocation, stream *jsoniter.Stream) {
+func writeRegistryLocationList(list []*RegistryLocation, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteRegistryLocation(value, stream)
+		writeRegistryLocation(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalRegistryLocationList(source interface{}) (items []*RegistryLocatio
 	if err != nil {
 		return
 	}
-	items = ReadRegistryLocationList(iterator)
+	items = readRegistryLocationList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadRegistryLocationList reads list of values of the ”registry_location' type from
+// readRegistryLocationList reads list of values of the ”registry_location' type from
 // the given iterator.
-func ReadRegistryLocationList(iterator *jsoniter.Iterator) []*RegistryLocation {
+func readRegistryLocationList(iterator *jsoniter.Iterator) []*RegistryLocation {
 	list := []*RegistryLocation{}
 	for iterator.ReadArray() {
-		item := ReadRegistryLocation(iterator)
+		item := readRegistryLocation(iterator)
 		list = append(list, item)
 	}
 	return list

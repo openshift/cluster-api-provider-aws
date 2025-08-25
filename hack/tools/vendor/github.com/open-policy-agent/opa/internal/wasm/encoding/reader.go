@@ -7,7 +7,6 @@ package encoding
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"io"
 
@@ -106,7 +105,7 @@ func readMagic(r io.Reader) error {
 	if err := binary.Read(r, binary.LittleEndian, &v); err != nil {
 		return err
 	} else if v != constant.Magic {
-		return errors.New("illegal magic value")
+		return fmt.Errorf("illegal magic value")
 	}
 	return nil
 }
@@ -116,7 +115,7 @@ func readVersion(r io.Reader) error {
 	if err := binary.Read(r, binary.LittleEndian, &v); err != nil {
 		return err
 	} else if v != constant.Version {
-		return errors.New("illegal wasm version")
+		return fmt.Errorf("illegal wasm version")
 	}
 	return nil
 }
@@ -200,7 +199,7 @@ func readSections(r io.Reader, m *module.Module) error {
 				return fmt.Errorf("code section: %w", err)
 			}
 		default:
-			return errors.New("illegal section id")
+			return fmt.Errorf("illegal section id")
 		}
 	}
 }
@@ -270,7 +269,7 @@ func readNameMap(r io.Reader) ([]module.NameMap, error) {
 		return nil, err
 	}
 	nm := make([]module.NameMap, n)
-	for i := range n {
+	for i := uint32(0); i < n; i++ {
 		var name string
 		id, err := leb128.ReadVarUint32(r)
 		if err != nil {
@@ -290,7 +289,7 @@ func readNameSectionLocals(r io.Reader, s *module.NameSection) error {
 	if err != nil {
 		return err
 	}
-	for range n {
+	for i := uint32(0); i < n; i++ {
 		id, err := leb128.ReadVarUint32(r) // func index
 		if err != nil {
 			return err
@@ -327,7 +326,7 @@ func readTypeSection(r io.Reader, s *module.TypeSection) error {
 		return err
 	}
 
-	for range n {
+	for i := uint32(0); i < n; i++ {
 
 		var ftype module.FunctionType
 		if err := readFunctionType(r, &ftype); err != nil {
@@ -347,7 +346,7 @@ func readImportSection(r io.Reader, s *module.ImportSection) error {
 		return err
 	}
 
-	for range n {
+	for i := uint32(0); i < n; i++ {
 
 		var imp module.Import
 
@@ -368,14 +367,14 @@ func readTableSection(r io.Reader, s *module.TableSection) error {
 		return err
 	}
 
-	for range n {
+	for i := uint32(0); i < n; i++ {
 
 		var table module.Table
 
 		if elem, err := readByte(r); err != nil {
 			return err
 		} else if elem != constant.ElementTypeAnyFunc {
-			return errors.New("illegal element type")
+			return fmt.Errorf("illegal element type")
 		}
 
 		table.Type = types.Anyfunc
@@ -397,7 +396,7 @@ func readMemorySection(r io.Reader, s *module.MemorySection) error {
 		return err
 	}
 
-	for range n {
+	for i := uint32(0); i < n; i++ {
 
 		var mem module.Memory
 
@@ -418,7 +417,7 @@ func readGlobalSection(r io.Reader, s *module.GlobalSection) error {
 		return err
 	}
 
-	for range n {
+	for i := uint32(0); i < n; i++ {
 
 		var global module.Global
 
@@ -443,7 +442,7 @@ func readExportSection(r io.Reader, s *module.ExportSection) error {
 		return err
 	}
 
-	for range n {
+	for i := uint32(0); i < n; i++ {
 
 		var exp module.Export
 
@@ -464,7 +463,7 @@ func readElementSection(r io.Reader, s *module.ElementSection) error {
 		return err
 	}
 
-	for range n {
+	for i := uint32(0); i < n; i++ {
 
 		var seg module.ElementSegment
 
@@ -485,7 +484,7 @@ func readDataSection(r io.Reader, s *module.DataSection) error {
 		return err
 	}
 
-	for range n {
+	for i := uint32(0); i < n; i++ {
 
 		var seg module.DataSegment
 
@@ -506,7 +505,7 @@ func readRawCodeSection(r io.Reader, s *module.RawCodeSection) error {
 		return err
 	}
 
-	for range n {
+	for i := uint32(0); i < n; i++ {
 		var seg module.RawCodeSegment
 
 		if err := readRawCodeSegment(r, &seg); err != nil {
@@ -548,7 +547,7 @@ func readGlobal(r io.Reader, global *module.Global) error {
 	if b == 1 {
 		global.Mutable = true
 	} else if b != 0 {
-		return errors.New("illegal mutability flag")
+		return fmt.Errorf("illegal mutability flag")
 	}
 
 	return readConstantExpr(r, &global.Init)
@@ -585,7 +584,7 @@ func readImport(r io.Reader, imp *module.Import) error {
 		if elem, err := readByte(r); err != nil {
 			return err
 		} else if elem != constant.ElementTypeAnyFunc {
-			return errors.New("illegal element type")
+			return fmt.Errorf("illegal element type")
 		}
 		desc := module.TableImport{
 			Type: types.Anyfunc,
@@ -618,12 +617,12 @@ func readImport(r io.Reader, imp *module.Import) error {
 		if b == 1 {
 			desc.Mutable = true
 		} else if b != 0 {
-			return errors.New("illegal mutability flag")
+			return fmt.Errorf("illegal mutability flag")
 		}
 		return nil
 	}
 
-	return errors.New("illegal import descriptor type")
+	return fmt.Errorf("illegal import descriptor type")
 }
 
 func readExport(r io.Reader, exp *module.Export) error {
@@ -647,7 +646,7 @@ func readExport(r io.Reader, exp *module.Export) error {
 	case constant.ExportDescGlobal:
 		exp.Descriptor.Type = module.GlobalExportType
 	default:
-		return errors.New("illegal export descriptor type")
+		return fmt.Errorf("illegal export descriptor type")
 	}
 
 	exp.Descriptor.Index, err = leb128.ReadVarUint32(r)
@@ -728,7 +727,7 @@ func readExpr(r io.Reader, expr *module.Expr) (err error) {
 			case error:
 				err = r
 			default:
-				err = errors.New("unknown panic")
+				err = fmt.Errorf("unknown panic")
 			}
 		}
 	}()
@@ -810,21 +809,21 @@ func readLimits(r io.Reader, l *module.Limit) error {
 		return err
 	}
 
-	minLim, err := leb128.ReadVarUint32(r)
+	min, err := leb128.ReadVarUint32(r)
 	if err != nil {
 		return err
 	}
 
-	l.Min = minLim
+	l.Min = min
 
 	if b == 1 {
-		maxLim, err := leb128.ReadVarUint32(r)
+		max, err := leb128.ReadVarUint32(r)
 		if err != nil {
 			return err
 		}
-		l.Max = &maxLim
+		l.Max = &max
 	} else if b != 0 {
-		return errors.New("illegal limit flag")
+		return fmt.Errorf("illegal limit flag")
 	}
 
 	return nil
@@ -839,7 +838,7 @@ func readLocals(r io.Reader, locals *[]module.LocalDeclaration) error {
 
 	ret := make([]module.LocalDeclaration, n)
 
-	for i := range n {
+	for i := uint32(0); i < n; i++ {
 		if err := readVarUint32(r, &ret[i].Count); err != nil {
 			return err
 		}
@@ -889,7 +888,7 @@ func readVarUint32Vector(r io.Reader, v *[]uint32) error {
 
 	ret := make([]uint32, n)
 
-	for i := range n {
+	for i := uint32(0); i < n; i++ {
 		if err := readVarUint32(r, &ret[i]); err != nil {
 			return err
 		}
@@ -908,7 +907,7 @@ func readValueTypeVector(r io.Reader, v *[]types.ValueType) error {
 
 	ret := make([]types.ValueType, n)
 
-	for i := range n {
+	for i := uint32(0); i < n; i++ {
 		if err := readValueType(r, &ret[i]); err != nil {
 			return err
 		}

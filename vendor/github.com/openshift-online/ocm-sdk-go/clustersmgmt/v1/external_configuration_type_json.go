@@ -29,7 +29,7 @@ import (
 // MarshalExternalConfiguration writes a value of the 'external_configuration' type to the given writer.
 func MarshalExternalConfiguration(object *ExternalConfiguration, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteExternalConfiguration(object, stream)
+	writeExternalConfiguration(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalExternalConfiguration(object *ExternalConfiguration, writer io.Write
 	return stream.Error
 }
 
-// WriteExternalConfiguration writes a value of the 'external_configuration' type to the given stream.
-func WriteExternalConfiguration(object *ExternalConfiguration, stream *jsoniter.Stream) {
+// writeExternalConfiguration writes a value of the 'external_configuration' type to the given stream.
+func writeExternalConfiguration(object *ExternalConfiguration, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -50,7 +50,7 @@ func WriteExternalConfiguration(object *ExternalConfiguration, stream *jsoniter.
 		stream.WriteObjectField("labels")
 		stream.WriteObjectStart()
 		stream.WriteObjectField("items")
-		WriteLabelList(object.labels.Items(), stream)
+		writeLabelList(object.labels.items, stream)
 		stream.WriteObjectEnd()
 		count++
 	}
@@ -62,7 +62,7 @@ func WriteExternalConfiguration(object *ExternalConfiguration, stream *jsoniter.
 		stream.WriteObjectField("manifests")
 		stream.WriteObjectStart()
 		stream.WriteObjectField("items")
-		WriteManifestList(object.manifests.Items(), stream)
+		writeManifestList(object.manifests.items, stream)
 		stream.WriteObjectEnd()
 		count++
 	}
@@ -74,7 +74,7 @@ func WriteExternalConfiguration(object *ExternalConfiguration, stream *jsoniter.
 		stream.WriteObjectField("syncsets")
 		stream.WriteObjectStart()
 		stream.WriteObjectField("items")
-		WriteSyncsetList(object.syncsets.Items(), stream)
+		writeSyncsetList(object.syncsets.items, stream)
 		stream.WriteObjectEnd()
 	}
 	stream.WriteObjectEnd()
@@ -87,13 +87,13 @@ func UnmarshalExternalConfiguration(source interface{}) (object *ExternalConfigu
 	if err != nil {
 		return
 	}
-	object = ReadExternalConfiguration(iterator)
+	object = readExternalConfiguration(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadExternalConfiguration reads a value of the 'external_configuration' type from the given iterator.
-func ReadExternalConfiguration(iterator *jsoniter.Iterator) *ExternalConfiguration {
+// readExternalConfiguration reads a value of the 'external_configuration' type from the given iterator.
+func readExternalConfiguration(iterator *jsoniter.Iterator) *ExternalConfiguration {
 	object := &ExternalConfiguration{}
 	for {
 		field := iterator.ReadObject()
@@ -111,11 +111,11 @@ func ReadExternalConfiguration(iterator *jsoniter.Iterator) *ExternalConfigurati
 				switch field {
 				case "kind":
 					text := iterator.ReadString()
-					value.SetLink(text == LabelListLinkKind)
+					value.link = text == LabelListLinkKind
 				case "href":
-					value.SetHREF(iterator.ReadString())
+					value.href = iterator.ReadString()
 				case "items":
-					value.SetItems(ReadLabelList(iterator))
+					value.items = readLabelList(iterator)
 				default:
 					iterator.ReadAny()
 				}
@@ -132,11 +132,11 @@ func ReadExternalConfiguration(iterator *jsoniter.Iterator) *ExternalConfigurati
 				switch field {
 				case "kind":
 					text := iterator.ReadString()
-					value.SetLink(text == ManifestListLinkKind)
+					value.link = text == ManifestListLinkKind
 				case "href":
-					value.SetHREF(iterator.ReadString())
+					value.href = iterator.ReadString()
 				case "items":
-					value.SetItems(ReadManifestList(iterator))
+					value.items = readManifestList(iterator)
 				default:
 					iterator.ReadAny()
 				}
@@ -153,11 +153,11 @@ func ReadExternalConfiguration(iterator *jsoniter.Iterator) *ExternalConfigurati
 				switch field {
 				case "kind":
 					text := iterator.ReadString()
-					value.SetLink(text == SyncsetListLinkKind)
+					value.link = text == SyncsetListLinkKind
 				case "href":
-					value.SetHREF(iterator.ReadString())
+					value.href = iterator.ReadString()
 				case "items":
-					value.SetItems(ReadSyncsetList(iterator))
+					value.items = readSyncsetList(iterator)
 				default:
 					iterator.ReadAny()
 				}

@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalCPUTotalsNodeRoleOSMetricNodeList(list []*CPUTotalsNodeRoleOSMetricNode, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteCPUTotalsNodeRoleOSMetricNodeList(list, stream)
+	writeCPUTotalsNodeRoleOSMetricNodeList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalCPUTotalsNodeRoleOSMetricNodeList(list []*CPUTotalsNodeRoleOSMetricN
 	return stream.Error
 }
 
-// WriteCPUTotalsNodeRoleOSMetricNodeList writes a list of value of the 'CPU_totals_node_role_OS_metric_node' type to
+// writeCPUTotalsNodeRoleOSMetricNodeList writes a list of value of the 'CPU_totals_node_role_OS_metric_node' type to
 // the given stream.
-func WriteCPUTotalsNodeRoleOSMetricNodeList(list []*CPUTotalsNodeRoleOSMetricNode, stream *jsoniter.Stream) {
+func writeCPUTotalsNodeRoleOSMetricNodeList(list []*CPUTotalsNodeRoleOSMetricNode, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteCPUTotalsNodeRoleOSMetricNode(value, stream)
+		writeCPUTotalsNodeRoleOSMetricNode(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalCPUTotalsNodeRoleOSMetricNodeList(source interface{}) (items []*CP
 	if err != nil {
 		return
 	}
-	items = ReadCPUTotalsNodeRoleOSMetricNodeList(iterator)
+	items = readCPUTotalsNodeRoleOSMetricNodeList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadCPUTotalsNodeRoleOSMetricNodeList reads list of values of the ”CPU_totals_node_role_OS_metric_node' type from
+// readCPUTotalsNodeRoleOSMetricNodeList reads list of values of the ”CPU_totals_node_role_OS_metric_node' type from
 // the given iterator.
-func ReadCPUTotalsNodeRoleOSMetricNodeList(iterator *jsoniter.Iterator) []*CPUTotalsNodeRoleOSMetricNode {
+func readCPUTotalsNodeRoleOSMetricNodeList(iterator *jsoniter.Iterator) []*CPUTotalsNodeRoleOSMetricNode {
 	list := []*CPUTotalsNodeRoleOSMetricNode{}
 	for iterator.ReadArray() {
-		item := ReadCPUTotalsNodeRoleOSMetricNode(iterator)
+		item := readCPUTotalsNodeRoleOSMetricNode(iterator)
 		list = append(list, item)
 	}
 	return list

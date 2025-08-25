@@ -29,7 +29,7 @@ import (
 // MarshalProvisionShardReference writes a value of the 'provision_shard_reference' type to the given writer.
 func MarshalProvisionShardReference(object *ProvisionShardReference, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteProvisionShardReference(object, stream)
+	writeProvisionShardReference(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalProvisionShardReference(object *ProvisionShardReference, writer io.W
 	return stream.Error
 }
 
-// WriteProvisionShardReference writes a value of the 'provision_shard_reference' type to the given stream.
-func WriteProvisionShardReference(object *ProvisionShardReference, stream *jsoniter.Stream) {
+// writeProvisionShardReference writes a value of the 'provision_shard_reference' type to the given stream.
+func writeProvisionShardReference(object *ProvisionShardReference, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -69,13 +69,13 @@ func UnmarshalProvisionShardReference(source interface{}) (object *ProvisionShar
 	if err != nil {
 		return
 	}
-	object = ReadProvisionShardReference(iterator)
+	object = readProvisionShardReference(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadProvisionShardReference reads a value of the 'provision_shard_reference' type from the given iterator.
-func ReadProvisionShardReference(iterator *jsoniter.Iterator) *ProvisionShardReference {
+// readProvisionShardReference reads a value of the 'provision_shard_reference' type from the given iterator.
+func readProvisionShardReference(iterator *jsoniter.Iterator) *ProvisionShardReference {
 	object := &ProvisionShardReference{}
 	for {
 		field := iterator.ReadObject()

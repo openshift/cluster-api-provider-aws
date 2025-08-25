@@ -29,7 +29,7 @@ import (
 // MarshalByoOidc writes a value of the 'byo_oidc' type to the given writer.
 func MarshalByoOidc(object *ByoOidc, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteByoOidc(object, stream)
+	writeByoOidc(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalByoOidc(object *ByoOidc, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteByoOidc writes a value of the 'byo_oidc' type to the given stream.
-func WriteByoOidc(object *ByoOidc, stream *jsoniter.Stream) {
+// writeByoOidc writes a value of the 'byo_oidc' type to the given stream.
+func writeByoOidc(object *ByoOidc, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -60,13 +60,13 @@ func UnmarshalByoOidc(source interface{}) (object *ByoOidc, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadByoOidc(iterator)
+	object = readByoOidc(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadByoOidc reads a value of the 'byo_oidc' type from the given iterator.
-func ReadByoOidc(iterator *jsoniter.Iterator) *ByoOidc {
+// readByoOidc reads a value of the 'byo_oidc' type from the given iterator.
+func readByoOidc(iterator *jsoniter.Iterator) *ByoOidc {
 	object := &ByoOidc{}
 	for {
 		field := iterator.ReadObject()

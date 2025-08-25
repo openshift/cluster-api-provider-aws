@@ -57,7 +57,7 @@ func readKubeletConfigsListResponse(response *KubeletConfigsListResponse, reader
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadKubeletConfigList(iterator)
+			items := readKubeletConfigList(iterator)
 			response.items = &KubeletConfigList{
 				items: items,
 			}

@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalProvisionShardList(list []*ProvisionShard, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteProvisionShardList(list, stream)
+	writeProvisionShardList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalProvisionShardList(list []*ProvisionShard, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteProvisionShardList writes a list of value of the 'provision_shard' type to
+// writeProvisionShardList writes a list of value of the 'provision_shard' type to
 // the given stream.
-func WriteProvisionShardList(list []*ProvisionShard, stream *jsoniter.Stream) {
+func writeProvisionShardList(list []*ProvisionShard, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteProvisionShard(value, stream)
+		writeProvisionShard(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalProvisionShardList(source interface{}) (items []*ProvisionShard, e
 	if err != nil {
 		return
 	}
-	items = ReadProvisionShardList(iterator)
+	items = readProvisionShardList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadProvisionShardList reads list of values of the ”provision_shard' type from
+// readProvisionShardList reads list of values of the ”provision_shard' type from
 // the given iterator.
-func ReadProvisionShardList(iterator *jsoniter.Iterator) []*ProvisionShard {
+func readProvisionShardList(iterator *jsoniter.Iterator) []*ProvisionShard {
 	list := []*ProvisionShard{}
 	for iterator.ReadArray() {
-		item := ReadProvisionShard(iterator)
+		item := readProvisionShard(iterator)
 		list = append(list, item)
 	}
 	return list

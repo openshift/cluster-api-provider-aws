@@ -29,7 +29,7 @@ import (
 // MarshalCloudVPC writes a value of the 'cloud_VPC' type to the given writer.
 func MarshalCloudVPC(object *CloudVPC, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteCloudVPC(object, stream)
+	writeCloudVPC(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalCloudVPC(object *CloudVPC, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteCloudVPC writes a value of the 'cloud_VPC' type to the given stream.
-func WriteCloudVPC(object *CloudVPC, stream *jsoniter.Stream) {
+// writeCloudVPC writes a value of the 'cloud_VPC' type to the given stream.
+func writeCloudVPC(object *CloudVPC, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -48,7 +48,7 @@ func WriteCloudVPC(object *CloudVPC, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("aws_security_groups")
-		WriteSecurityGroupList(object.awsSecurityGroups, stream)
+		writeSecurityGroupList(object.awsSecurityGroups, stream)
 		count++
 	}
 	present_ = object.bitmap_&2 != 0 && object.awsSubnets != nil
@@ -57,7 +57,7 @@ func WriteCloudVPC(object *CloudVPC, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("aws_subnets")
-		WriteSubnetworkList(object.awsSubnets, stream)
+		writeSubnetworkList(object.awsSubnets, stream)
 		count++
 	}
 	present_ = object.bitmap_&4 != 0
@@ -102,7 +102,7 @@ func WriteCloudVPC(object *CloudVPC, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("subnets")
-		WriteStringList(object.subnets, stream)
+		writeStringList(object.subnets, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -114,13 +114,13 @@ func UnmarshalCloudVPC(source interface{}) (object *CloudVPC, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadCloudVPC(iterator)
+	object = readCloudVPC(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadCloudVPC reads a value of the 'cloud_VPC' type from the given iterator.
-func ReadCloudVPC(iterator *jsoniter.Iterator) *CloudVPC {
+// readCloudVPC reads a value of the 'cloud_VPC' type from the given iterator.
+func readCloudVPC(iterator *jsoniter.Iterator) *CloudVPC {
 	object := &CloudVPC{}
 	for {
 		field := iterator.ReadObject()
@@ -129,11 +129,11 @@ func ReadCloudVPC(iterator *jsoniter.Iterator) *CloudVPC {
 		}
 		switch field {
 		case "aws_security_groups":
-			value := ReadSecurityGroupList(iterator)
+			value := readSecurityGroupList(iterator)
 			object.awsSecurityGroups = value
 			object.bitmap_ |= 1
 		case "aws_subnets":
-			value := ReadSubnetworkList(iterator)
+			value := readSubnetworkList(iterator)
 			object.awsSubnets = value
 			object.bitmap_ |= 2
 		case "cidr_block":
@@ -153,7 +153,7 @@ func ReadCloudVPC(iterator *jsoniter.Iterator) *CloudVPC {
 			object.redHatManaged = value
 			object.bitmap_ |= 32
 		case "subnets":
-			value := ReadStringList(iterator)
+			value := readStringList(iterator)
 			object.subnets = value
 			object.bitmap_ |= 64
 		default:

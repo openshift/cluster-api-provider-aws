@@ -20,9 +20,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/ec2"
-	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/pkg/errors"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
@@ -54,7 +53,7 @@ func (s *Service) reconcileInternetGateways() error {
 		if err != nil {
 			return err
 		}
-		igs = []types.InternetGateway{*ig}
+		igs = []*ec2.InternetGateway{ig}
 	} else if err != nil {
 		return err
 	}
@@ -97,7 +96,7 @@ func (s *Service) deleteInternetGateways() error {
 			VpcId:             aws.String(s.scope.VPC().ID),
 		}
 
-		if _, err := s.EC2Client.DetachInternetGateway(context.TODO(), detachReq); err != nil {
+		if _, err := s.EC2Client.DetachInternetGatewayWithContext(context.TODO(), detachReq); err != nil {
 			record.Warnf(s.scope.InfraCluster(), "FailedDetachInternetGateway", "Failed to detach Internet Gateway %q from VPC %q: %v", *ig.InternetGatewayId, s.scope.VPC().ID, err)
 			return errors.Wrapf(err, "failed to detach internet gateway %q", *ig.InternetGatewayId)
 		}
@@ -109,7 +108,7 @@ func (s *Service) deleteInternetGateways() error {
 			InternetGatewayId: ig.InternetGatewayId,
 		}
 
-		if _, err = s.EC2Client.DeleteInternetGateway(context.TODO(), deleteReq); err != nil {
+		if _, err = s.EC2Client.DeleteInternetGatewayWithContext(context.TODO(), deleteReq); err != nil {
 			record.Warnf(s.scope.InfraCluster(), "FailedDeleteInternetGateway", "Failed to delete Internet Gateway %q previously attached to VPC %q: %v", *ig.InternetGatewayId, s.scope.VPC().ID, err)
 			return errors.Wrapf(err, "failed to delete internet gateway %q", *ig.InternetGatewayId)
 		}
@@ -121,10 +120,10 @@ func (s *Service) deleteInternetGateways() error {
 	return nil
 }
 
-func (s *Service) createInternetGateway() (*types.InternetGateway, error) {
-	ig, err := s.EC2Client.CreateInternetGateway(context.TODO(), &ec2.CreateInternetGatewayInput{
-		TagSpecifications: []types.TagSpecification{
-			tags.BuildParamsToTagSpecification(types.ResourceTypeInternetGateway, s.getGatewayTagParams(services.TemporaryResourceID)),
+func (s *Service) createInternetGateway() (*ec2.InternetGateway, error) {
+	ig, err := s.EC2Client.CreateInternetGatewayWithContext(context.TODO(), &ec2.CreateInternetGatewayInput{
+		TagSpecifications: []*ec2.TagSpecification{
+			tags.BuildParamsToTagSpecification(ec2.ResourceTypeInternetGateway, s.getGatewayTagParams(services.TemporaryResourceID)),
 		},
 	})
 	if err != nil {
@@ -135,7 +134,7 @@ func (s *Service) createInternetGateway() (*types.InternetGateway, error) {
 	s.scope.Info("Created Internet gateway for VPC", "internet-gateway-id", *ig.InternetGateway.InternetGatewayId, "vpc-id", s.scope.VPC().ID)
 
 	if err := wait.WaitForWithRetryable(wait.NewBackoff(), func() (bool, error) {
-		if _, err := s.EC2Client.AttachInternetGateway(context.TODO(), &ec2.AttachInternetGatewayInput{
+		if _, err := s.EC2Client.AttachInternetGatewayWithContext(context.TODO(), &ec2.AttachInternetGatewayInput{
 			InternetGatewayId: ig.InternetGateway.InternetGatewayId,
 			VpcId:             aws.String(s.scope.VPC().ID),
 		}); err != nil {
@@ -152,9 +151,9 @@ func (s *Service) createInternetGateway() (*types.InternetGateway, error) {
 	return ig.InternetGateway, nil
 }
 
-func (s *Service) describeVpcInternetGateways() ([]types.InternetGateway, error) {
-	out, err := s.EC2Client.DescribeInternetGateways(context.TODO(), &ec2.DescribeInternetGatewaysInput{
-		Filters: []types.Filter{
+func (s *Service) describeVpcInternetGateways() ([]*ec2.InternetGateway, error) {
+	out, err := s.EC2Client.DescribeInternetGatewaysWithContext(context.TODO(), &ec2.DescribeInternetGatewaysInput{
+		Filters: []*ec2.Filter{
 			filter.EC2.VPCAttachment(s.scope.VPC().ID),
 		},
 	})

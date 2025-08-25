@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalSubscriptionRegistrationList(list []*SubscriptionRegistration, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteSubscriptionRegistrationList(list, stream)
+	writeSubscriptionRegistrationList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalSubscriptionRegistrationList(list []*SubscriptionRegistration, write
 	return stream.Error
 }
 
-// WriteSubscriptionRegistrationList writes a list of value of the 'subscription_registration' type to
+// writeSubscriptionRegistrationList writes a list of value of the 'subscription_registration' type to
 // the given stream.
-func WriteSubscriptionRegistrationList(list []*SubscriptionRegistration, stream *jsoniter.Stream) {
+func writeSubscriptionRegistrationList(list []*SubscriptionRegistration, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteSubscriptionRegistration(value, stream)
+		writeSubscriptionRegistration(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalSubscriptionRegistrationList(source interface{}) (items []*Subscri
 	if err != nil {
 		return
 	}
-	items = ReadSubscriptionRegistrationList(iterator)
+	items = readSubscriptionRegistrationList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadSubscriptionRegistrationList reads list of values of the ”subscription_registration' type from
+// readSubscriptionRegistrationList reads list of values of the ”subscription_registration' type from
 // the given iterator.
-func ReadSubscriptionRegistrationList(iterator *jsoniter.Iterator) []*SubscriptionRegistration {
+func readSubscriptionRegistrationList(iterator *jsoniter.Iterator) []*SubscriptionRegistration {
 	list := []*SubscriptionRegistration{}
 	for iterator.ReadArray() {
-		item := ReadSubscriptionRegistration(iterator)
+		item := readSubscriptionRegistration(iterator)
 		list = append(list, item)
 	}
 	return list

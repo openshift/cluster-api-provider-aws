@@ -29,7 +29,7 @@ import (
 // MarshalProxy writes a value of the 'proxy' type to the given writer.
 func MarshalProxy(object *Proxy, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteProxy(object, stream)
+	writeProxy(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalProxy(object *Proxy, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteProxy writes a value of the 'proxy' type to the given stream.
-func WriteProxy(object *Proxy, stream *jsoniter.Stream) {
+// writeProxy writes a value of the 'proxy' type to the given stream.
+func writeProxy(object *Proxy, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -78,13 +78,13 @@ func UnmarshalProxy(source interface{}) (object *Proxy, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadProxy(iterator)
+	object = readProxy(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadProxy reads a value of the 'proxy' type from the given iterator.
-func ReadProxy(iterator *jsoniter.Iterator) *Proxy {
+// readProxy reads a value of the 'proxy' type from the given iterator.
+func readProxy(iterator *jsoniter.Iterator) *Proxy {
 	object := &Proxy{}
 	for {
 		field := iterator.ReadObject()

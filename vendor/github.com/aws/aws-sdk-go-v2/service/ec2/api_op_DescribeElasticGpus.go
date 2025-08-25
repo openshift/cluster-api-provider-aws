@@ -11,9 +11,12 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Amazon Elastic Graphics reached end of life on January 8, 2024.
-//
-// Describes the Elastic Graphics accelerator associated with your instances.
+// Amazon Elastic Graphics reached end of life on January 8, 2024. For workloads
+// that require graphics acceleration, we recommend that you use Amazon EC2 G4ad,
+// G4dn, or G5 instances. Describes the Elastic Graphics accelerator associated
+// with your instances. For more information about Elastic Graphics, see Amazon
+// Elastic Graphics (https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/elastic-graphics.html)
+// .
 func (c *Client) DescribeElasticGpus(ctx context.Context, params *DescribeElasticGpusInput, optFns ...func(*Options)) (*DescribeElasticGpusOutput, error) {
 	if params == nil {
 		params = &DescribeElasticGpusInput{}
@@ -41,19 +44,14 @@ type DescribeElasticGpusInput struct {
 	ElasticGpuIds []string
 
 	// The filters.
-	//
 	//   - availability-zone - The Availability Zone in which the Elastic Graphics
 	//   accelerator resides.
-	//
 	//   - elastic-gpu-health - The status of the Elastic Graphics accelerator ( OK |
 	//   IMPAIRED ).
-	//
 	//   - elastic-gpu-state - The state of the Elastic Graphics accelerator ( ATTACHED
 	//   ).
-	//
 	//   - elastic-gpu-type - The type of Elastic Graphics accelerator; for example,
 	//   eg1.medium .
-	//
 	//   - instance-id - The ID of the instance to which the Elastic Graphics
 	//   accelerator is associated.
 	Filters []types.Filter
@@ -132,9 +130,6 @@ func (c *Client) addOperationDescribeElasticGpusMiddlewares(stack *middleware.St
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -145,15 +140,6 @@ func (c *Client) addOperationDescribeElasticGpusMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeElasticGpus(options.Region), middleware.Before); err != nil {
@@ -172,18 +158,6 @@ func (c *Client) addOperationDescribeElasticGpusMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalMachineTypeSizeList(list []MachineTypeSize, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteMachineTypeSizeList(list, stream)
+	writeMachineTypeSizeList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,9 +38,9 @@ func MarshalMachineTypeSizeList(list []MachineTypeSize, writer io.Writer) error 
 	return stream.Error
 }
 
-// WriteMachineTypeSizeList writes a list of value of the 'machine_type_size' type to
+// writeMachineTypeSizeList writes a list of value of the 'machine_type_size' type to
 // the given stream.
-func WriteMachineTypeSizeList(list []MachineTypeSize, stream *jsoniter.Stream) {
+func writeMachineTypeSizeList(list []MachineTypeSize, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -58,14 +58,14 @@ func UnmarshalMachineTypeSizeList(source interface{}) (items []MachineTypeSize, 
 	if err != nil {
 		return
 	}
-	items = ReadMachineTypeSizeList(iterator)
+	items = readMachineTypeSizeList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadMachineTypeSizeList reads list of values of the ”machine_type_size' type from
+// readMachineTypeSizeList reads list of values of the ”machine_type_size' type from
 // the given iterator.
-func ReadMachineTypeSizeList(iterator *jsoniter.Iterator) []MachineTypeSize {
+func readMachineTypeSizeList(iterator *jsoniter.Iterator) []MachineTypeSize {
 	list := []MachineTypeSize{}
 	for iterator.ReadArray() {
 		text := iterator.ReadString()

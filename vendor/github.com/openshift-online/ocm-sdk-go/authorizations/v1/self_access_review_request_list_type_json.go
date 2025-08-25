@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalSelfAccessReviewRequestList(list []*SelfAccessReviewRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteSelfAccessReviewRequestList(list, stream)
+	writeSelfAccessReviewRequestList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalSelfAccessReviewRequestList(list []*SelfAccessReviewRequest, writer 
 	return stream.Error
 }
 
-// WriteSelfAccessReviewRequestList writes a list of value of the 'self_access_review_request' type to
+// writeSelfAccessReviewRequestList writes a list of value of the 'self_access_review_request' type to
 // the given stream.
-func WriteSelfAccessReviewRequestList(list []*SelfAccessReviewRequest, stream *jsoniter.Stream) {
+func writeSelfAccessReviewRequestList(list []*SelfAccessReviewRequest, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteSelfAccessReviewRequest(value, stream)
+		writeSelfAccessReviewRequest(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalSelfAccessReviewRequestList(source interface{}) (items []*SelfAcce
 	if err != nil {
 		return
 	}
-	items = ReadSelfAccessReviewRequestList(iterator)
+	items = readSelfAccessReviewRequestList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadSelfAccessReviewRequestList reads list of values of the ”self_access_review_request' type from
+// readSelfAccessReviewRequestList reads list of values of the ”self_access_review_request' type from
 // the given iterator.
-func ReadSelfAccessReviewRequestList(iterator *jsoniter.Iterator) []*SelfAccessReviewRequest {
+func readSelfAccessReviewRequestList(iterator *jsoniter.Iterator) []*SelfAccessReviewRequest {
 	list := []*SelfAccessReviewRequest{}
 	for iterator.ReadArray() {
-		item := ReadSelfAccessReviewRequest(iterator)
+		item := readSelfAccessReviewRequest(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -29,7 +29,7 @@ import (
 // MarshalHypershift writes a value of the 'hypershift' type to the given writer.
 func MarshalHypershift(object *Hypershift, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteHypershift(object, stream)
+	writeHypershift(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalHypershift(object *Hypershift, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteHypershift writes a value of the 'hypershift' type to the given stream.
-func WriteHypershift(object *Hypershift, stream *jsoniter.Stream) {
+// writeHypershift writes a value of the 'hypershift' type to the given stream.
+func writeHypershift(object *Hypershift, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -60,13 +60,13 @@ func UnmarshalHypershift(source interface{}) (object *Hypershift, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadHypershift(iterator)
+	object = readHypershift(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadHypershift reads a value of the 'hypershift' type from the given iterator.
-func ReadHypershift(iterator *jsoniter.Iterator) *Hypershift {
+// readHypershift reads a value of the 'hypershift' type from the given iterator.
+func readHypershift(iterator *jsoniter.Iterator) *Hypershift {
 	object := &Hypershift{}
 	for {
 		field := iterator.ReadObject()

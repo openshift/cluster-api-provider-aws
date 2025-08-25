@@ -29,7 +29,7 @@ import (
 // MarshalAddonParameters writes a value of the 'addon_parameters' type to the given writer.
 func MarshalAddonParameters(object *AddonParameters, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAddonParameters(object, stream)
+	writeAddonParameters(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAddonParameters(object *AddonParameters, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteAddonParameters writes a value of the 'addon_parameters' type to the given stream.
-func WriteAddonParameters(object *AddonParameters, stream *jsoniter.Stream) {
+// writeAddonParameters writes a value of the 'addon_parameters' type to the given stream.
+func writeAddonParameters(object *AddonParameters, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -48,7 +48,7 @@ func WriteAddonParameters(object *AddonParameters, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("items")
-		WriteAddonParameterList(object.items, stream)
+		writeAddonParameterList(object.items, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -60,13 +60,13 @@ func UnmarshalAddonParameters(source interface{}) (object *AddonParameters, err 
 	if err != nil {
 		return
 	}
-	object = ReadAddonParameters(iterator)
+	object = readAddonParameters(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAddonParameters reads a value of the 'addon_parameters' type from the given iterator.
-func ReadAddonParameters(iterator *jsoniter.Iterator) *AddonParameters {
+// readAddonParameters reads a value of the 'addon_parameters' type from the given iterator.
+func readAddonParameters(iterator *jsoniter.Iterator) *AddonParameters {
 	object := &AddonParameters{}
 	for {
 		field := iterator.ReadObject()
@@ -75,7 +75,7 @@ func ReadAddonParameters(iterator *jsoniter.Iterator) *AddonParameters {
 		}
 		switch field {
 		case "items":
-			value := ReadAddonParameterList(iterator)
+			value := readAddonParameterList(iterator)
 			object.items = value
 			object.bitmap_ |= 1
 		default:

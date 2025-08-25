@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalRegistryAllowlistList(list []*RegistryAllowlist, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteRegistryAllowlistList(list, stream)
+	writeRegistryAllowlistList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalRegistryAllowlistList(list []*RegistryAllowlist, writer io.Writer) e
 	return stream.Error
 }
 
-// WriteRegistryAllowlistList writes a list of value of the 'registry_allowlist' type to
+// writeRegistryAllowlistList writes a list of value of the 'registry_allowlist' type to
 // the given stream.
-func WriteRegistryAllowlistList(list []*RegistryAllowlist, stream *jsoniter.Stream) {
+func writeRegistryAllowlistList(list []*RegistryAllowlist, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteRegistryAllowlist(value, stream)
+		writeRegistryAllowlist(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalRegistryAllowlistList(source interface{}) (items []*RegistryAllowl
 	if err != nil {
 		return
 	}
-	items = ReadRegistryAllowlistList(iterator)
+	items = readRegistryAllowlistList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadRegistryAllowlistList reads list of values of the ”registry_allowlist' type from
+// readRegistryAllowlistList reads list of values of the ”registry_allowlist' type from
 // the given iterator.
-func ReadRegistryAllowlistList(iterator *jsoniter.Iterator) []*RegistryAllowlist {
+func readRegistryAllowlistList(iterator *jsoniter.Iterator) []*RegistryAllowlist {
 	list := []*RegistryAllowlist{}
 	for iterator.ReadArray() {
-		item := ReadRegistryAllowlist(iterator)
+		item := readRegistryAllowlist(iterator)
 		list = append(list, item)
 	}
 	return list

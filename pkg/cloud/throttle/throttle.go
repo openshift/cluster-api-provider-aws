@@ -18,12 +18,10 @@ limitations under the License.
 package throttle
 
 import (
-	"context"
 	"regexp"
 	"strings"
 
-	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	"github.com/aws/smithy-go/middleware"
+	"github.com/aws/aws-sdk-go/aws/request"
 
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/awserrors"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/internal/rate"
@@ -49,13 +47,13 @@ type OperationLimiter struct {
 	limiter    *rate.Limiter
 }
 
-// Wait will wait on a request for AWS SDK V2.
-func (o *OperationLimiter) Wait(ctx context.Context) error {
-	return o.getLimiter().Wait(ctx)
+// Wait will wait on a request.
+func (o *OperationLimiter) Wait(r *request.Request) error {
+	return o.getLimiter().Wait(r.Context())
 }
 
-// Match will match a request for AWS SDK V2.
-func (o *OperationLimiter) Match(ctx context.Context) (bool, error) {
+// Match will match a request.
+func (o *OperationLimiter) Match(r *request.Request) (bool, error) {
 	if o.regexp == nil {
 		var err error
 		o.regexp, err = regexp.Compile("^" + o.Operation)
@@ -63,14 +61,13 @@ func (o *OperationLimiter) Match(ctx context.Context) (bool, error) {
 			return false, err
 		}
 	}
-	opName := awsmiddleware.GetOperationName(ctx)
-	return o.regexp.MatchString(opName), nil
+	return o.regexp.MatchString(r.Operation.Name), nil
 }
 
-// LimitRequest will limit a request for AWS SDK V2.
-func (s ServiceLimiter) LimitRequest(ctx context.Context) {
-	if ol, ok := s.matchRequest(ctx); ok {
-		_ = ol.Wait(ctx)
+// LimitRequest will limit a request.
+func (s ServiceLimiter) LimitRequest(r *request.Request) {
+	if ol, ok := s.matchRequest(r); ok {
+		_ = ol.Wait(r)
 	}
 }
 
@@ -81,20 +78,23 @@ func (o *OperationLimiter) getLimiter() *rate.Limiter {
 	return o.limiter
 }
 
-// ReviewResponse will review the limits of a Request's response for AWS SDK V2.
-func (s ServiceLimiter) ReviewResponse(ctx context.Context, errorCode string) {
-	switch errorCode {
-	case "Throttling", "RequestLimitExceeded":
-		if ol, ok := s.matchRequest(ctx); ok {
-			ol.limiter.ResetTokens()
+// ReviewResponse will review the limits of a Request's response.
+func (s ServiceLimiter) ReviewResponse(r *request.Request) {
+	if r.Error != nil {
+		if errorCode, ok := awserrors.Code(r.Error); ok {
+			switch errorCode {
+			case "Throttling", "RequestLimitExceeded":
+				if ol, ok := s.matchRequest(r); ok {
+					ol.limiter.ResetTokens()
+				}
+			}
 		}
 	}
 }
 
-// matchRequest is used for matching request for AWS SDK V2.
-func (s ServiceLimiter) matchRequest(ctx context.Context) (*OperationLimiter, bool) {
+func (s ServiceLimiter) matchRequest(r *request.Request) (*OperationLimiter, bool) {
 	for _, ol := range s {
-		match, err := ol.Match(ctx)
+		match, err := ol.Match(r)
 		if err != nil {
 			return nil, false
 		}
@@ -103,29 +103,4 @@ func (s ServiceLimiter) matchRequest(ctx context.Context) (*OperationLimiter, bo
 		}
 	}
 	return nil, false
-}
-
-// WithServiceLimiterMiddleware returns ServiceLimiter middleware stack for specified service name.
-func WithServiceLimiterMiddleware(limiter *ServiceLimiter) func(stack *middleware.Stack) error {
-	return func(stack *middleware.Stack) error {
-		// Inserts service Limiter middleware after RequestContext initialization.
-		return stack.Finalize.Insert(getServiceLimiterMiddleware(limiter), "capa/RequestMetricContextMiddleware", middleware.After)
-	}
-}
-
-// getServiceLimiterMiddleware implements serviceLimiter middleware.
-func getServiceLimiterMiddleware(limiter *ServiceLimiter) middleware.FinalizeMiddleware {
-	return middleware.FinalizeMiddlewareFunc("capa/ServiceLimiterMiddleware", func(ctx context.Context, input middleware.FinalizeInput, handler middleware.FinalizeHandler) (middleware.FinalizeOutput, middleware.Metadata, error) {
-		limiter.LimitRequest(ctx)
-
-		out, metadata, err := handler.HandleFinalize(ctx, input)
-		smithyErr := awserrors.ParseSmithyError(err)
-
-		if smithyErr != nil {
-			limiter.ReviewResponse(ctx, smithyErr.ErrorCode())
-			return out, metadata, err
-		}
-
-		return out, metadata, err
-	})
 }

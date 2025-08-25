@@ -29,7 +29,7 @@ import (
 // MarshalAddOnRequirementStatus writes a value of the 'add_on_requirement_status' type to the given writer.
 func MarshalAddOnRequirementStatus(object *AddOnRequirementStatus, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAddOnRequirementStatus(object, stream)
+	writeAddOnRequirementStatus(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAddOnRequirementStatus(object *AddOnRequirementStatus, writer io.Wri
 	return stream.Error
 }
 
-// WriteAddOnRequirementStatus writes a value of the 'add_on_requirement_status' type to the given stream.
-func WriteAddOnRequirementStatus(object *AddOnRequirementStatus, stream *jsoniter.Stream) {
+// writeAddOnRequirementStatus writes a value of the 'add_on_requirement_status' type to the given stream.
+func writeAddOnRequirementStatus(object *AddOnRequirementStatus, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -48,7 +48,7 @@ func WriteAddOnRequirementStatus(object *AddOnRequirementStatus, stream *jsonite
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("error_msgs")
-		WriteStringList(object.errorMsgs, stream)
+		writeStringList(object.errorMsgs, stream)
 		count++
 	}
 	present_ = object.bitmap_&2 != 0
@@ -69,13 +69,13 @@ func UnmarshalAddOnRequirementStatus(source interface{}) (object *AddOnRequireme
 	if err != nil {
 		return
 	}
-	object = ReadAddOnRequirementStatus(iterator)
+	object = readAddOnRequirementStatus(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAddOnRequirementStatus reads a value of the 'add_on_requirement_status' type from the given iterator.
-func ReadAddOnRequirementStatus(iterator *jsoniter.Iterator) *AddOnRequirementStatus {
+// readAddOnRequirementStatus reads a value of the 'add_on_requirement_status' type from the given iterator.
+func readAddOnRequirementStatus(iterator *jsoniter.Iterator) *AddOnRequirementStatus {
 	object := &AddOnRequirementStatus{}
 	for {
 		field := iterator.ReadObject()
@@ -84,7 +84,7 @@ func ReadAddOnRequirementStatus(iterator *jsoniter.Iterator) *AddOnRequirementSt
 		}
 		switch field {
 		case "error_msgs":
-			value := ReadStringList(iterator)
+			value := readStringList(iterator)
 			object.errorMsgs = value
 			object.bitmap_ |= 1
 		case "fulfilled":

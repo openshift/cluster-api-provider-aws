@@ -29,7 +29,7 @@ import (
 // MarshalTokenAuthorizationResponse writes a value of the 'token_authorization_response' type to the given writer.
 func MarshalTokenAuthorizationResponse(object *TokenAuthorizationResponse, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteTokenAuthorizationResponse(object, stream)
+	writeTokenAuthorizationResponse(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalTokenAuthorizationResponse(object *TokenAuthorizationResponse, write
 	return stream.Error
 }
 
-// WriteTokenAuthorizationResponse writes a value of the 'token_authorization_response' type to the given stream.
-func WriteTokenAuthorizationResponse(object *TokenAuthorizationResponse, stream *jsoniter.Stream) {
+// writeTokenAuthorizationResponse writes a value of the 'token_authorization_response' type to the given stream.
+func writeTokenAuthorizationResponse(object *TokenAuthorizationResponse, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -48,7 +48,7 @@ func WriteTokenAuthorizationResponse(object *TokenAuthorizationResponse, stream 
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("account")
-		WriteAccount(object.account, stream)
+		writeAccount(object.account, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -60,13 +60,13 @@ func UnmarshalTokenAuthorizationResponse(source interface{}) (object *TokenAutho
 	if err != nil {
 		return
 	}
-	object = ReadTokenAuthorizationResponse(iterator)
+	object = readTokenAuthorizationResponse(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadTokenAuthorizationResponse reads a value of the 'token_authorization_response' type from the given iterator.
-func ReadTokenAuthorizationResponse(iterator *jsoniter.Iterator) *TokenAuthorizationResponse {
+// readTokenAuthorizationResponse reads a value of the 'token_authorization_response' type from the given iterator.
+func readTokenAuthorizationResponse(iterator *jsoniter.Iterator) *TokenAuthorizationResponse {
 	object := &TokenAuthorizationResponse{}
 	for {
 		field := iterator.ReadObject()
@@ -75,7 +75,7 @@ func ReadTokenAuthorizationResponse(iterator *jsoniter.Iterator) *TokenAuthoriza
 		}
 		switch field {
 		case "account":
-			value := ReadAccount(iterator)
+			value := readAccount(iterator)
 			object.account = value
 			object.bitmap_ |= 1
 		default:

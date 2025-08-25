@@ -37,10 +37,8 @@ type DescribeCoipPoolsInput struct {
 	DryRun *bool
 
 	// One or more filters.
-	//
 	//   - coip-pool.local-gateway-route-table-id - The ID of the local gateway route
 	//   table.
-	//
 	//   - coip-pool.pool-id - The ID of the address pool.
 	Filters []types.Filter
 
@@ -115,9 +113,6 @@ func (c *Client) addOperationDescribeCoipPoolsMiddlewares(stack *middleware.Stac
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -128,15 +123,6 @@ func (c *Client) addOperationDescribeCoipPoolsMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeCoipPools(options.Region), middleware.Before); err != nil {
@@ -157,20 +143,16 @@ func (c *Client) addOperationDescribeCoipPoolsMiddlewares(stack *middleware.Stac
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
-		return err
-	}
 	return nil
 }
+
+// DescribeCoipPoolsAPIClient is a client that implements the DescribeCoipPools
+// operation.
+type DescribeCoipPoolsAPIClient interface {
+	DescribeCoipPools(context.Context, *DescribeCoipPoolsInput, ...func(*Options)) (*DescribeCoipPoolsOutput, error)
+}
+
+var _ DescribeCoipPoolsAPIClient = (*Client)(nil)
 
 // DescribeCoipPoolsPaginatorOptions is the paginator options for DescribeCoipPools
 type DescribeCoipPoolsPaginatorOptions struct {
@@ -236,9 +218,6 @@ func (p *DescribeCoipPoolsPaginator) NextPage(ctx context.Context, optFns ...fun
 	}
 	params.MaxResults = limit
 
-	optFns = append([]func(*Options){
-		addIsPaginatorUserAgent,
-	}, optFns...)
 	result, err := p.client.DescribeCoipPools(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -257,14 +236,6 @@ func (p *DescribeCoipPoolsPaginator) NextPage(ctx context.Context, optFns ...fun
 
 	return result, nil
 }
-
-// DescribeCoipPoolsAPIClient is a client that implements the DescribeCoipPools
-// operation.
-type DescribeCoipPoolsAPIClient interface {
-	DescribeCoipPools(context.Context, *DescribeCoipPoolsInput, ...func(*Options)) (*DescribeCoipPoolsOutput, error)
-}
-
-var _ DescribeCoipPoolsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeCoipPools(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

@@ -29,7 +29,7 @@ import (
 // MarshalAuditLog writes a value of the 'audit_log' type to the given writer.
 func MarshalAuditLog(object *AuditLog, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAuditLog(object, stream)
+	writeAuditLog(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAuditLog(object *AuditLog, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteAuditLog writes a value of the 'audit_log' type to the given stream.
-func WriteAuditLog(object *AuditLog, stream *jsoniter.Stream) {
+// writeAuditLog writes a value of the 'audit_log' type to the given stream.
+func writeAuditLog(object *AuditLog, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -60,13 +60,13 @@ func UnmarshalAuditLog(source interface{}) (object *AuditLog, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadAuditLog(iterator)
+	object = readAuditLog(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAuditLog reads a value of the 'audit_log' type from the given iterator.
-func ReadAuditLog(iterator *jsoniter.Iterator) *AuditLog {
+// readAuditLog reads a value of the 'audit_log' type from the given iterator.
+func readAuditLog(iterator *jsoniter.Iterator) *AuditLog {
 	object := &AuditLog{}
 	for {
 		field := iterator.ReadObject()

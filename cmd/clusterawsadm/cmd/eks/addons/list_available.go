@@ -17,15 +17,13 @@ limitations under the License.
 package addons
 
 import (
-	"context"
 	"fmt"
 	"os"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/eks"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/eks"
 	"github.com/spf13/cobra"
-	"k8s.io/utils/ptr"
 
 	cmdout "sigs.k8s.io/cluster-api-provider-aws/v2/cmd/clusterawsadm/printers"
 )
@@ -53,24 +51,26 @@ func listAvailableCmd() *cobra.Command {
 }
 
 func listAvailableAddons(region, clusterName, printerType *string) error {
-	ctx := context.TODO()
-
-	optFns := []func(*config.LoadOptions) error{
-		config.WithRegion(ptr.Deref(region, "")),
+	cfg := aws.Config{}
+	if *region != "" {
+		cfg.Region = region
 	}
 
-	cfg, err := config.LoadDefaultConfig(context.Background(), optFns...)
-
+	sess, err := session.NewSessionWithOptions(session.Options{
+		SharedConfigState: session.SharedConfigEnable,
+		Config:            cfg,
+	})
 	if err != nil {
+		fmt.Printf("Error: %v\n", err)
 		return err
 	}
 
-	eksClient := eks.NewFromConfig(cfg)
+	eksClient := eks.New(sess)
 
 	input := &eks.ListAddonsInput{
 		ClusterName: clusterName,
 	}
-	output, err := eksClient.ListAddons(ctx, input)
+	output, err := eksClient.ListAddons(input)
 	if err != nil {
 		return fmt.Errorf("list addons: %w", err)
 	}
@@ -86,11 +86,11 @@ func listAvailableAddons(region, clusterName, printerType *string) error {
 	}
 	for _, addon := range output.Addons {
 		describeInput := &eks.DescribeAddonVersionsInput{
-			AddonName: aws.String(addon),
+			AddonName: addon,
 		}
-		describeOutput, err := eksClient.DescribeAddonVersions(ctx, describeInput)
+		describeOutput, err := eksClient.DescribeAddonVersions(describeInput)
 		if err != nil {
-			return fmt.Errorf("describing addon versions %s: %w", addon, err)
+			return fmt.Errorf("describing addon versions %s: %w", *addon, err)
 		}
 
 		for _, info := range describeOutput.Addons {
@@ -102,15 +102,18 @@ func listAvailableAddons(region, clusterName, printerType *string) error {
 					Architecture:    []string{},
 					Compatibilities: []compatibility{},
 				}
-				newAddon.Architecture = append(newAddon.Architecture, version.Architecture...)
-
+				for _, architecture := range version.Architecture {
+					newAddon.Architecture = append(newAddon.Architecture, *architecture)
+				}
 				for _, compat := range version.Compatibilities {
 					compatibility := compatibility{
 						ClusterVersion:   *compat.ClusterVersion,
-						DefaultVersion:   compat.DefaultVersion,
+						DefaultVersion:   *compat.DefaultVersion,
 						PlatformVersions: []string{},
 					}
-					compatibility.PlatformVersions = append(compatibility.PlatformVersions, compat.PlatformVersions...)
+					for _, platformVersion := range compat.PlatformVersions {
+						compatibility.PlatformVersions = append(compatibility.PlatformVersions, *platformVersion)
+					}
 					newAddon.Compatibilities = append(newAddon.Compatibilities, compatibility)
 				}
 				addonsList.Addons = append(addonsList.Addons, newAddon)

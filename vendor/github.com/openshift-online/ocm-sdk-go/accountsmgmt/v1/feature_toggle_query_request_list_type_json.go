@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalFeatureToggleQueryRequestList(list []*FeatureToggleQueryRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteFeatureToggleQueryRequestList(list, stream)
+	writeFeatureToggleQueryRequestList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalFeatureToggleQueryRequestList(list []*FeatureToggleQueryRequest, wri
 	return stream.Error
 }
 
-// WriteFeatureToggleQueryRequestList writes a list of value of the 'feature_toggle_query_request' type to
+// writeFeatureToggleQueryRequestList writes a list of value of the 'feature_toggle_query_request' type to
 // the given stream.
-func WriteFeatureToggleQueryRequestList(list []*FeatureToggleQueryRequest, stream *jsoniter.Stream) {
+func writeFeatureToggleQueryRequestList(list []*FeatureToggleQueryRequest, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteFeatureToggleQueryRequest(value, stream)
+		writeFeatureToggleQueryRequest(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalFeatureToggleQueryRequestList(source interface{}) (items []*Featur
 	if err != nil {
 		return
 	}
-	items = ReadFeatureToggleQueryRequestList(iterator)
+	items = readFeatureToggleQueryRequestList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadFeatureToggleQueryRequestList reads list of values of the ”feature_toggle_query_request' type from
+// readFeatureToggleQueryRequestList reads list of values of the ”feature_toggle_query_request' type from
 // the given iterator.
-func ReadFeatureToggleQueryRequestList(iterator *jsoniter.Iterator) []*FeatureToggleQueryRequest {
+func readFeatureToggleQueryRequestList(iterator *jsoniter.Iterator) []*FeatureToggleQueryRequest {
 	list := []*FeatureToggleQueryRequest{}
 	for iterator.ReadArray() {
-		item := ReadFeatureToggleQueryRequest(iterator)
+		item := readFeatureToggleQueryRequest(iterator)
 		list = append(list, item)
 	}
 	return list

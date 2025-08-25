@@ -17,47 +17,50 @@ limitations under the License.
 package resource
 
 import (
-	"context"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/aws/arn"
-	"github.com/aws/aws-sdk-go-v2/config"
-	rgapi "github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi"
-	rgapitypes "github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi/types"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/arn"
+	"github.com/aws/aws-sdk-go/aws/session"
+	rgapi "github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 )
 
 // ListAWSResource fetches all AWS resources created by CAPA.
-func ListAWSResource(region, clusterName string) (AWSResourceList, error) {
+func ListAWSResource(region, clusterName *string) (AWSResourceList, error) {
 	var resourceList AWSResourceList
-	ctx := context.TODO()
+	cfg := aws.Config{}
+	if *region != "" {
+		cfg.Region = region
+	}
 
-	sess, err := config.LoadDefaultConfig(ctx, config.WithRegion(region))
+	sess, err := session.NewSessionWithOptions(session.Options{
+		SharedConfigState: session.SharedConfigEnable,
+		Config:            cfg,
+	})
 	if err != nil {
 		return resourceList, err
 	}
 
-	resourceClient := rgapi.NewFromConfig(sess)
+	resourceClient := rgapi.New(sess)
 	input := &rgapi.GetResourcesInput{
-		TagFilters: []rgapitypes.TagFilter{},
+		TagFilters: []*rgapi.TagFilter{},
 	}
 
 	awsResourceTags := infrav1.Build(infrav1.BuildParams{
-		ClusterName: clusterName,
+		ClusterName: *clusterName,
 		Lifecycle:   infrav1.ResourceLifecycleOwned,
 	})
 
 	for tagKey, tagValue := range awsResourceTags {
-		tagFilter := rgapitypes.TagFilter{
-			Key:    aws.String(tagKey),
-			Values: []string{tagValue},
-		}
+		tagFilter := &rgapi.TagFilter{}
+		tagFilter.SetKey(tagKey)
+		tagFilter.SetValues([]*string{aws.String(tagValue)})
 		input.TagFilters = append(input.TagFilters, tagFilter)
 	}
 
-	output, err := resourceClient.GetResources(ctx, input)
+	output, err := resourceClient.GetResources(input)
 	if err != nil {
 		return resourceList, err
 	}
@@ -68,7 +71,7 @@ func ListAWSResource(region, clusterName string) (AWSResourceList, error) {
 	}
 
 	resourceList = AWSResourceList{
-		ClusterName:  clusterName,
+		ClusterName:  *clusterName,
 		AWSResources: []AWSResource{},
 	}
 

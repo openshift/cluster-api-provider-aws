@@ -29,7 +29,7 @@ import (
 // MarshalAzureOperatorsAuthentication writes a value of the 'azure_operators_authentication' type to the given writer.
 func MarshalAzureOperatorsAuthentication(object *AzureOperatorsAuthentication, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAzureOperatorsAuthentication(object, stream)
+	writeAzureOperatorsAuthentication(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAzureOperatorsAuthentication(object *AzureOperatorsAuthentication, w
 	return stream.Error
 }
 
-// WriteAzureOperatorsAuthentication writes a value of the 'azure_operators_authentication' type to the given stream.
-func WriteAzureOperatorsAuthentication(object *AzureOperatorsAuthentication, stream *jsoniter.Stream) {
+// writeAzureOperatorsAuthentication writes a value of the 'azure_operators_authentication' type to the given stream.
+func writeAzureOperatorsAuthentication(object *AzureOperatorsAuthentication, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -48,7 +48,7 @@ func WriteAzureOperatorsAuthentication(object *AzureOperatorsAuthentication, str
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("managed_identities")
-		WriteAzureOperatorsAuthenticationManagedIdentities(object.managedIdentities, stream)
+		writeAzureOperatorsAuthenticationManagedIdentities(object.managedIdentities, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -60,13 +60,13 @@ func UnmarshalAzureOperatorsAuthentication(source interface{}) (object *AzureOpe
 	if err != nil {
 		return
 	}
-	object = ReadAzureOperatorsAuthentication(iterator)
+	object = readAzureOperatorsAuthentication(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAzureOperatorsAuthentication reads a value of the 'azure_operators_authentication' type from the given iterator.
-func ReadAzureOperatorsAuthentication(iterator *jsoniter.Iterator) *AzureOperatorsAuthentication {
+// readAzureOperatorsAuthentication reads a value of the 'azure_operators_authentication' type from the given iterator.
+func readAzureOperatorsAuthentication(iterator *jsoniter.Iterator) *AzureOperatorsAuthentication {
 	object := &AzureOperatorsAuthentication{}
 	for {
 		field := iterator.ReadObject()
@@ -75,7 +75,7 @@ func ReadAzureOperatorsAuthentication(iterator *jsoniter.Iterator) *AzureOperato
 		}
 		switch field {
 		case "managed_identities":
-			value := ReadAzureOperatorsAuthenticationManagedIdentities(iterator)
+			value := readAzureOperatorsAuthenticationManagedIdentities(iterator)
 			object.managedIdentities = value
 			object.bitmap_ |= 1
 		default:

@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalFollowUpChangeList(list []*FollowUpChange, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteFollowUpChangeList(list, stream)
+	writeFollowUpChangeList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalFollowUpChangeList(list []*FollowUpChange, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteFollowUpChangeList writes a list of value of the 'follow_up_change' type to
+// writeFollowUpChangeList writes a list of value of the 'follow_up_change' type to
 // the given stream.
-func WriteFollowUpChangeList(list []*FollowUpChange, stream *jsoniter.Stream) {
+func writeFollowUpChangeList(list []*FollowUpChange, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteFollowUpChange(value, stream)
+		writeFollowUpChange(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalFollowUpChangeList(source interface{}) (items []*FollowUpChange, e
 	if err != nil {
 		return
 	}
-	items = ReadFollowUpChangeList(iterator)
+	items = readFollowUpChangeList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadFollowUpChangeList reads list of values of the ”follow_up_change' type from
+// readFollowUpChangeList reads list of values of the ”follow_up_change' type from
 // the given iterator.
-func ReadFollowUpChangeList(iterator *jsoniter.Iterator) []*FollowUpChange {
+func readFollowUpChangeList(iterator *jsoniter.Iterator) []*FollowUpChange {
 	list := []*FollowUpChange{}
 	for iterator.ReadArray() {
-		item := ReadFollowUpChange(iterator)
+		item := readFollowUpChange(iterator)
 		list = append(list, item)
 	}
 	return list

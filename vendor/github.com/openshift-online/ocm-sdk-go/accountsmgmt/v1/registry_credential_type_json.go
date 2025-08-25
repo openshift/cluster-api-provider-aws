@@ -30,7 +30,7 @@ import (
 // MarshalRegistryCredential writes a value of the 'registry_credential' type to the given writer.
 func MarshalRegistryCredential(object *RegistryCredential, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteRegistryCredential(object, stream)
+	writeRegistryCredential(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalRegistryCredential(object *RegistryCredential, writer io.Writer) err
 	return stream.Error
 }
 
-// WriteRegistryCredential writes a value of the 'registry_credential' type to the given stream.
-func WriteRegistryCredential(object *RegistryCredential, stream *jsoniter.Stream) {
+// writeRegistryCredential writes a value of the 'registry_credential' type to the given stream.
+func writeRegistryCredential(object *RegistryCredential, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -72,7 +72,7 @@ func WriteRegistryCredential(object *RegistryCredential, stream *jsoniter.Stream
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("account")
-		WriteAccount(object.account, stream)
+		writeAccount(object.account, stream)
 		count++
 	}
 	present_ = object.bitmap_&16 != 0
@@ -99,7 +99,7 @@ func WriteRegistryCredential(object *RegistryCredential, stream *jsoniter.Stream
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("registry")
-		WriteRegistry(object.registry, stream)
+		writeRegistry(object.registry, stream)
 		count++
 	}
 	present_ = object.bitmap_&128 != 0
@@ -138,13 +138,13 @@ func UnmarshalRegistryCredential(source interface{}) (object *RegistryCredential
 	if err != nil {
 		return
 	}
-	object = ReadRegistryCredential(iterator)
+	object = readRegistryCredential(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadRegistryCredential reads a value of the 'registry_credential' type from the given iterator.
-func ReadRegistryCredential(iterator *jsoniter.Iterator) *RegistryCredential {
+// readRegistryCredential reads a value of the 'registry_credential' type from the given iterator.
+func readRegistryCredential(iterator *jsoniter.Iterator) *RegistryCredential {
 	object := &RegistryCredential{}
 	for {
 		field := iterator.ReadObject()
@@ -164,7 +164,7 @@ func ReadRegistryCredential(iterator *jsoniter.Iterator) *RegistryCredential {
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
 		case "account":
-			value := ReadAccount(iterator)
+			value := readAccount(iterator)
 			object.account = value
 			object.bitmap_ |= 8
 		case "created_at":
@@ -180,7 +180,7 @@ func ReadRegistryCredential(iterator *jsoniter.Iterator) *RegistryCredential {
 			object.externalResourceID = value
 			object.bitmap_ |= 32
 		case "registry":
-			value := ReadRegistry(iterator)
+			value := readRegistry(iterator)
 			object.registry = value
 			object.bitmap_ |= 64
 		case "token":

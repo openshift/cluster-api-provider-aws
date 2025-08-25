@@ -29,7 +29,7 @@ import (
 // MarshalSummaryDashboard writes a value of the 'summary_dashboard' type to the given writer.
 func MarshalSummaryDashboard(object *SummaryDashboard, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteSummaryDashboard(object, stream)
+	writeSummaryDashboard(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalSummaryDashboard(object *SummaryDashboard, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteSummaryDashboard writes a value of the 'summary_dashboard' type to the given stream.
-func WriteSummaryDashboard(object *SummaryDashboard, stream *jsoniter.Stream) {
+// writeSummaryDashboard writes a value of the 'summary_dashboard' type to the given stream.
+func writeSummaryDashboard(object *SummaryDashboard, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -71,7 +71,7 @@ func WriteSummaryDashboard(object *SummaryDashboard, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("metrics")
-		WriteSummaryMetricsList(object.metrics, stream)
+		writeSummaryMetricsList(object.metrics, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -83,13 +83,13 @@ func UnmarshalSummaryDashboard(source interface{}) (object *SummaryDashboard, er
 	if err != nil {
 		return
 	}
-	object = ReadSummaryDashboard(iterator)
+	object = readSummaryDashboard(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadSummaryDashboard reads a value of the 'summary_dashboard' type from the given iterator.
-func ReadSummaryDashboard(iterator *jsoniter.Iterator) *SummaryDashboard {
+// readSummaryDashboard reads a value of the 'summary_dashboard' type from the given iterator.
+func readSummaryDashboard(iterator *jsoniter.Iterator) *SummaryDashboard {
 	object := &SummaryDashboard{}
 	for {
 		field := iterator.ReadObject()
@@ -109,7 +109,7 @@ func ReadSummaryDashboard(iterator *jsoniter.Iterator) *SummaryDashboard {
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
 		case "metrics":
-			value := ReadSummaryMetricsList(iterator)
+			value := readSummaryMetricsList(iterator)
 			object.metrics = value
 			object.bitmap_ |= 8
 		default:

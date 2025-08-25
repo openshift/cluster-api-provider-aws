@@ -30,7 +30,7 @@ import (
 // MarshalNodePoolUpgradePolicy writes a value of the 'node_pool_upgrade_policy' type to the given writer.
 func MarshalNodePoolUpgradePolicy(object *NodePoolUpgradePolicy, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteNodePoolUpgradePolicy(object, stream)
+	writeNodePoolUpgradePolicy(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalNodePoolUpgradePolicy(object *NodePoolUpgradePolicy, writer io.Write
 	return stream.Error
 }
 
-// WriteNodePoolUpgradePolicy writes a value of the 'node_pool_upgrade_policy' type to the given stream.
-func WriteNodePoolUpgradePolicy(object *NodePoolUpgradePolicy, stream *jsoniter.Stream) {
+// writeNodePoolUpgradePolicy writes a value of the 'node_pool_upgrade_policy' type to the given stream.
+func writeNodePoolUpgradePolicy(object *NodePoolUpgradePolicy, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -144,7 +144,7 @@ func WriteNodePoolUpgradePolicy(object *NodePoolUpgradePolicy, stream *jsoniter.
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("state")
-		WriteUpgradePolicyState(object.state, stream)
+		writeUpgradePolicyState(object.state, stream)
 		count++
 	}
 	present_ = object.bitmap_&4096 != 0
@@ -174,13 +174,13 @@ func UnmarshalNodePoolUpgradePolicy(source interface{}) (object *NodePoolUpgrade
 	if err != nil {
 		return
 	}
-	object = ReadNodePoolUpgradePolicy(iterator)
+	object = readNodePoolUpgradePolicy(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadNodePoolUpgradePolicy reads a value of the 'node_pool_upgrade_policy' type from the given iterator.
-func ReadNodePoolUpgradePolicy(iterator *jsoniter.Iterator) *NodePoolUpgradePolicy {
+// readNodePoolUpgradePolicy reads a value of the 'node_pool_upgrade_policy' type from the given iterator.
+func readNodePoolUpgradePolicy(iterator *jsoniter.Iterator) *NodePoolUpgradePolicy {
 	object := &NodePoolUpgradePolicy{}
 	for {
 		field := iterator.ReadObject()
@@ -245,7 +245,7 @@ func ReadNodePoolUpgradePolicy(iterator *jsoniter.Iterator) *NodePoolUpgradePoli
 			object.scheduleType = value
 			object.bitmap_ |= 1024
 		case "state":
-			value := ReadUpgradePolicyState(iterator)
+			value := readUpgradePolicyState(iterator)
 			object.state = value
 			object.bitmap_ |= 2048
 		case "upgrade_type":

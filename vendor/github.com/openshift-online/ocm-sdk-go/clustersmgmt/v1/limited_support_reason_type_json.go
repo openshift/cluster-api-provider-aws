@@ -30,7 +30,7 @@ import (
 // MarshalLimitedSupportReason writes a value of the 'limited_support_reason' type to the given writer.
 func MarshalLimitedSupportReason(object *LimitedSupportReason, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteLimitedSupportReason(object, stream)
+	writeLimitedSupportReason(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalLimitedSupportReason(object *LimitedSupportReason, writer io.Writer)
 	return stream.Error
 }
 
-// WriteLimitedSupportReason writes a value of the 'limited_support_reason' type to the given stream.
-func WriteLimitedSupportReason(object *LimitedSupportReason, stream *jsoniter.Stream) {
+// writeLimitedSupportReason writes a value of the 'limited_support_reason' type to the given stream.
+func writeLimitedSupportReason(object *LimitedSupportReason, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -99,7 +99,7 @@ func WriteLimitedSupportReason(object *LimitedSupportReason, stream *jsoniter.St
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("override")
-		WriteLimitedSupportReasonOverride(object.override, stream)
+		writeLimitedSupportReasonOverride(object.override, stream)
 		count++
 	}
 	present_ = object.bitmap_&128 != 0
@@ -117,7 +117,7 @@ func WriteLimitedSupportReason(object *LimitedSupportReason, stream *jsoniter.St
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("template")
-		WriteLimitedSupportReasonTemplate(object.template, stream)
+		writeLimitedSupportReasonTemplate(object.template, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -129,13 +129,13 @@ func UnmarshalLimitedSupportReason(source interface{}) (object *LimitedSupportRe
 	if err != nil {
 		return
 	}
-	object = ReadLimitedSupportReason(iterator)
+	object = readLimitedSupportReason(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadLimitedSupportReason reads a value of the 'limited_support_reason' type from the given iterator.
-func ReadLimitedSupportReason(iterator *jsoniter.Iterator) *LimitedSupportReason {
+// readLimitedSupportReason reads a value of the 'limited_support_reason' type from the given iterator.
+func readLimitedSupportReason(iterator *jsoniter.Iterator) *LimitedSupportReason {
 	object := &LimitedSupportReason{}
 	for {
 		field := iterator.ReadObject()
@@ -172,7 +172,7 @@ func ReadLimitedSupportReason(iterator *jsoniter.Iterator) *LimitedSupportReason
 			object.detectionType = value
 			object.bitmap_ |= 32
 		case "override":
-			value := ReadLimitedSupportReasonOverride(iterator)
+			value := readLimitedSupportReasonOverride(iterator)
 			object.override = value
 			object.bitmap_ |= 64
 		case "summary":
@@ -180,7 +180,7 @@ func ReadLimitedSupportReason(iterator *jsoniter.Iterator) *LimitedSupportReason
 			object.summary = value
 			object.bitmap_ |= 128
 		case "template":
-			value := ReadLimitedSupportReasonTemplate(iterator)
+			value := readLimitedSupportReasonTemplate(iterator)
 			object.template = value
 			object.bitmap_ |= 256
 		default:

@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalServiceDependencyList(list []*ServiceDependency, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteServiceDependencyList(list, stream)
+	writeServiceDependencyList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalServiceDependencyList(list []*ServiceDependency, writer io.Writer) e
 	return stream.Error
 }
 
-// WriteServiceDependencyList writes a list of value of the 'service_dependency' type to
+// writeServiceDependencyList writes a list of value of the 'service_dependency' type to
 // the given stream.
-func WriteServiceDependencyList(list []*ServiceDependency, stream *jsoniter.Stream) {
+func writeServiceDependencyList(list []*ServiceDependency, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteServiceDependency(value, stream)
+		writeServiceDependency(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalServiceDependencyList(source interface{}) (items []*ServiceDepende
 	if err != nil {
 		return
 	}
-	items = ReadServiceDependencyList(iterator)
+	items = readServiceDependencyList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadServiceDependencyList reads list of values of the ”service_dependency' type from
+// readServiceDependencyList reads list of values of the ”service_dependency' type from
 // the given iterator.
-func ReadServiceDependencyList(iterator *jsoniter.Iterator) []*ServiceDependency {
+func readServiceDependencyList(iterator *jsoniter.Iterator) []*ServiceDependency {
 	list := []*ServiceDependency{}
 	for iterator.ReadArray() {
-		item := ReadServiceDependency(iterator)
+		item := readServiceDependency(iterator)
 		list = append(list, item)
 	}
 	return list

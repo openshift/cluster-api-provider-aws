@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalRoleList(list []*Role, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteRoleList(list, stream)
+	writeRoleList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalRoleList(list []*Role, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteRoleList writes a list of value of the 'role' type to
+// writeRoleList writes a list of value of the 'role' type to
 // the given stream.
-func WriteRoleList(list []*Role, stream *jsoniter.Stream) {
+func writeRoleList(list []*Role, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteRole(value, stream)
+		writeRole(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalRoleList(source interface{}) (items []*Role, err error) {
 	if err != nil {
 		return
 	}
-	items = ReadRoleList(iterator)
+	items = readRoleList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadRoleList reads list of values of the ”role' type from
+// readRoleList reads list of values of the ”role' type from
 // the given iterator.
-func ReadRoleList(iterator *jsoniter.Iterator) []*Role {
+func readRoleList(iterator *jsoniter.Iterator) []*Role {
 	list := []*Role{}
 	for iterator.ReadArray() {
-		item := ReadRole(iterator)
+		item := readRole(iterator)
 		list = append(list, item)
 	}
 	return list

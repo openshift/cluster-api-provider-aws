@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalDNSList(list []*DNS, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteDNSList(list, stream)
+	writeDNSList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalDNSList(list []*DNS, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteDNSList writes a list of value of the 'DNS' type to
+// writeDNSList writes a list of value of the 'DNS' type to
 // the given stream.
-func WriteDNSList(list []*DNS, stream *jsoniter.Stream) {
+func writeDNSList(list []*DNS, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteDNS(value, stream)
+		writeDNS(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalDNSList(source interface{}) (items []*DNS, err error) {
 	if err != nil {
 		return
 	}
-	items = ReadDNSList(iterator)
+	items = readDNSList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadDNSList reads list of values of the ”DNS' type from
+// readDNSList reads list of values of the ”DNS' type from
 // the given iterator.
-func ReadDNSList(iterator *jsoniter.Iterator) []*DNS {
+func readDNSList(iterator *jsoniter.Iterator) []*DNS {
 	list := []*DNS{}
 	for iterator.ReadArray() {
-		item := ReadDNS(iterator)
+		item := readDNS(iterator)
 		list = append(list, item)
 	}
 	return list

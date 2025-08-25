@@ -30,7 +30,7 @@ import (
 // MarshalAddonInstallation writes a value of the 'addon_installation' type to the given writer.
 func MarshalAddonInstallation(object *AddonInstallation, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAddonInstallation(object, stream)
+	writeAddonInstallation(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalAddonInstallation(object *AddonInstallation, writer io.Writer) error
 	return stream.Error
 }
 
-// WriteAddonInstallation writes a value of the 'addon_installation' type to the given stream.
-func WriteAddonInstallation(object *AddonInstallation, stream *jsoniter.Stream) {
+// writeAddonInstallation writes a value of the 'addon_installation' type to the given stream.
+func writeAddonInstallation(object *AddonInstallation, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -72,7 +72,7 @@ func WriteAddonInstallation(object *AddonInstallation, stream *jsoniter.Stream) 
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("addon")
-		WriteAddon(object.addon, stream)
+		writeAddon(object.addon, stream)
 		count++
 	}
 	present_ = object.bitmap_&16 != 0 && object.addonVersion != nil
@@ -81,7 +81,7 @@ func WriteAddonInstallation(object *AddonInstallation, stream *jsoniter.Stream) 
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("addon_version")
-		WriteAddonVersion(object.addonVersion, stream)
+		writeAddonVersion(object.addonVersion, stream)
 		count++
 	}
 	present_ = object.bitmap_&32 != 0 && object.billing != nil
@@ -90,7 +90,7 @@ func WriteAddonInstallation(object *AddonInstallation, stream *jsoniter.Stream) 
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("billing")
-		WriteAddonInstallationBilling(object.billing, stream)
+		writeAddonInstallationBilling(object.billing, stream)
 		count++
 	}
 	present_ = object.bitmap_&64 != 0
@@ -146,7 +146,7 @@ func WriteAddonInstallation(object *AddonInstallation, stream *jsoniter.Stream) 
 		stream.WriteObjectField("parameters")
 		stream.WriteObjectStart()
 		stream.WriteObjectField("items")
-		WriteAddonInstallationParameterList(object.parameters.Items(), stream)
+		writeAddonInstallationParameterList(object.parameters.items, stream)
 		stream.WriteObjectEnd()
 		count++
 	}
@@ -174,7 +174,7 @@ func WriteAddonInstallation(object *AddonInstallation, stream *jsoniter.Stream) 
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("subscription")
-		WriteObjectReference(object.subscription, stream)
+		writeObjectReference(object.subscription, stream)
 		count++
 	}
 	present_ = object.bitmap_&32768 != 0
@@ -195,13 +195,13 @@ func UnmarshalAddonInstallation(source interface{}) (object *AddonInstallation, 
 	if err != nil {
 		return
 	}
-	object = ReadAddonInstallation(iterator)
+	object = readAddonInstallation(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAddonInstallation reads a value of the 'addon_installation' type from the given iterator.
-func ReadAddonInstallation(iterator *jsoniter.Iterator) *AddonInstallation {
+// readAddonInstallation reads a value of the 'addon_installation' type from the given iterator.
+func readAddonInstallation(iterator *jsoniter.Iterator) *AddonInstallation {
 	object := &AddonInstallation{}
 	for {
 		field := iterator.ReadObject()
@@ -221,15 +221,15 @@ func ReadAddonInstallation(iterator *jsoniter.Iterator) *AddonInstallation {
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
 		case "addon":
-			value := ReadAddon(iterator)
+			value := readAddon(iterator)
 			object.addon = value
 			object.bitmap_ |= 8
 		case "addon_version":
-			value := ReadAddonVersion(iterator)
+			value := readAddonVersion(iterator)
 			object.addonVersion = value
 			object.bitmap_ |= 16
 		case "billing":
-			value := ReadAddonInstallationBilling(iterator)
+			value := readAddonInstallationBilling(iterator)
 			object.billing = value
 			object.bitmap_ |= 32
 		case "creation_timestamp":
@@ -270,11 +270,11 @@ func ReadAddonInstallation(iterator *jsoniter.Iterator) *AddonInstallation {
 				switch field {
 				case "kind":
 					text := iterator.ReadString()
-					value.SetLink(text == AddonInstallationParameterListLinkKind)
+					value.link = text == AddonInstallationParameterListLinkKind
 				case "href":
-					value.SetHREF(iterator.ReadString())
+					value.href = iterator.ReadString()
 				case "items":
-					value.SetItems(ReadAddonInstallationParameterList(iterator))
+					value.items = readAddonInstallationParameterList(iterator)
 				default:
 					iterator.ReadAny()
 				}
@@ -291,7 +291,7 @@ func ReadAddonInstallation(iterator *jsoniter.Iterator) *AddonInstallation {
 			object.stateDescription = value
 			object.bitmap_ |= 8192
 		case "subscription":
-			value := ReadObjectReference(iterator)
+			value := readObjectReference(iterator)
 			object.subscription = value
 			object.bitmap_ |= 16384
 		case "updated_timestamp":

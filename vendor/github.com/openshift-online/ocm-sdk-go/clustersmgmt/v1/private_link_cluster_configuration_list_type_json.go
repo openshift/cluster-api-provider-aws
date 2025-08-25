@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalPrivateLinkClusterConfigurationList(list []*PrivateLinkClusterConfiguration, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WritePrivateLinkClusterConfigurationList(list, stream)
+	writePrivateLinkClusterConfigurationList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalPrivateLinkClusterConfigurationList(list []*PrivateLinkClusterConfig
 	return stream.Error
 }
 
-// WritePrivateLinkClusterConfigurationList writes a list of value of the 'private_link_cluster_configuration' type to
+// writePrivateLinkClusterConfigurationList writes a list of value of the 'private_link_cluster_configuration' type to
 // the given stream.
-func WritePrivateLinkClusterConfigurationList(list []*PrivateLinkClusterConfiguration, stream *jsoniter.Stream) {
+func writePrivateLinkClusterConfigurationList(list []*PrivateLinkClusterConfiguration, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WritePrivateLinkClusterConfiguration(value, stream)
+		writePrivateLinkClusterConfiguration(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalPrivateLinkClusterConfigurationList(source interface{}) (items []*
 	if err != nil {
 		return
 	}
-	items = ReadPrivateLinkClusterConfigurationList(iterator)
+	items = readPrivateLinkClusterConfigurationList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadPrivateLinkClusterConfigurationList reads list of values of the ”private_link_cluster_configuration' type from
+// readPrivateLinkClusterConfigurationList reads list of values of the ”private_link_cluster_configuration' type from
 // the given iterator.
-func ReadPrivateLinkClusterConfigurationList(iterator *jsoniter.Iterator) []*PrivateLinkClusterConfiguration {
+func readPrivateLinkClusterConfigurationList(iterator *jsoniter.Iterator) []*PrivateLinkClusterConfiguration {
 	list := []*PrivateLinkClusterConfiguration{}
 	for iterator.ReadArray() {
-		item := ReadPrivateLinkClusterConfiguration(iterator)
+		item := readPrivateLinkClusterConfiguration(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -21,7 +21,7 @@ import (
 	"math/rand"
 	"time"
 
-	"al.essio.dev/pkg/shellescape"
+	"github.com/alessio/shellescape"
 
 	"sigs.k8s.io/kind/pkg/cluster/internal/delete"
 	"sigs.k8s.io/kind/pkg/cluster/internal/providers"

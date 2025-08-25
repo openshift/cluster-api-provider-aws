@@ -57,7 +57,7 @@ func readCloudResourcesListResponse(response *CloudResourcesListResponse, reader
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadCloudResourceList(iterator)
+			items := readCloudResourceList(iterator)
 			response.items = &CloudResourceList{
 				items: items,
 			}

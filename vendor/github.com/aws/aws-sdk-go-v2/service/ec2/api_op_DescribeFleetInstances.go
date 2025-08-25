@@ -11,14 +11,11 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Describes the running instances for the specified EC2 Fleet.
-//
-// Currently, DescribeFleetInstances does not support fleets of type instant .
-// Instead, use DescribeFleets , specifying the instant fleet ID in the request.
-//
-// For more information, see [Describe your EC2 Fleet] in the Amazon EC2 User Guide.
-//
-// [Describe your EC2 Fleet]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/manage-ec2-fleet.html#monitor-ec2-fleet
+// Describes the running instances for the specified EC2 Fleet. Currently,
+// DescribeFleetInstances does not support fleets of type instant . Instead, use
+// DescribeFleets , specifying the instant fleet ID in the request. For more
+// information, see Describe your EC2 Fleet (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/manage-ec2-fleet.html#monitor-ec2-fleet)
+// in the Amazon EC2 User Guide.
 func (c *Client) DescribeFleetInstances(ctx context.Context, params *DescribeFleetInstancesInput, optFns ...func(*Options)) (*DescribeFleetInstancesOutput, error) {
 	if params == nil {
 		params = &DescribeFleetInstancesInput{}
@@ -48,15 +45,13 @@ type DescribeFleetInstancesInput struct {
 	DryRun *bool
 
 	// The filters.
-	//
 	//   - instance-type - The instance type.
 	Filters []types.Filter
 
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. For more
-	// information, see [Pagination].
-	//
-	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
+	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
+	// .
 	MaxResults *int32
 
 	// The token returned from a previous paginated request. Pagination continues from
@@ -128,9 +123,6 @@ func (c *Client) addOperationDescribeFleetInstancesMiddlewares(stack *middleware
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -141,15 +133,6 @@ func (c *Client) addOperationDescribeFleetInstancesMiddlewares(stack *middleware
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeFleetInstancesValidationMiddleware(stack); err != nil {
@@ -171,18 +154,6 @@ func (c *Client) addOperationDescribeFleetInstancesMiddlewares(stack *middleware
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

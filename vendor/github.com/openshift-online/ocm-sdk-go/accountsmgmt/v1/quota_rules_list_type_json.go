@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalQuotaRulesList(list []*QuotaRules, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteQuotaRulesList(list, stream)
+	writeQuotaRulesList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalQuotaRulesList(list []*QuotaRules, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteQuotaRulesList writes a list of value of the 'quota_rules' type to
+// writeQuotaRulesList writes a list of value of the 'quota_rules' type to
 // the given stream.
-func WriteQuotaRulesList(list []*QuotaRules, stream *jsoniter.Stream) {
+func writeQuotaRulesList(list []*QuotaRules, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteQuotaRules(value, stream)
+		writeQuotaRules(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalQuotaRulesList(source interface{}) (items []*QuotaRules, err error
 	if err != nil {
 		return
 	}
-	items = ReadQuotaRulesList(iterator)
+	items = readQuotaRulesList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadQuotaRulesList reads list of values of the ”quota_rules' type from
+// readQuotaRulesList reads list of values of the ”quota_rules' type from
 // the given iterator.
-func ReadQuotaRulesList(iterator *jsoniter.Iterator) []*QuotaRules {
+func readQuotaRulesList(iterator *jsoniter.Iterator) []*QuotaRules {
 	list := []*QuotaRules{}
 	for iterator.ReadArray() {
-		item := ReadQuotaRules(iterator)
+		item := readQuotaRules(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"go/ast"
 	"go/token"
-	"slices"
 	"strconv"
 	"strings"
 )
@@ -187,7 +186,7 @@ func AddNamedImport(fset *token.FileSet, f *ast.File, name, path string) (added 
 			spec.(*ast.ImportSpec).Path.ValuePos = first.Pos()
 			first.Specs = append(first.Specs, spec)
 		}
-		f.Decls = slices.Delete(f.Decls, i, i+1)
+		f.Decls = append(f.Decls[:i], f.Decls[i+1:]...)
 		i--
 	}
 
@@ -345,12 +344,7 @@ func RewriteImport(fset *token.FileSet, f *ast.File, oldPath, newPath string) (r
 }
 
 // UsesImport reports whether a given import is used.
-// The provided File must have been parsed with syntactic object resolution
-// (not using go/parser.SkipObjectResolution).
 func UsesImport(f *ast.File, path string) (used bool) {
-	if f.Scope == nil {
-		panic("file f was not parsed with syntactic object resolution")
-	}
 	spec := importSpec(f, path)
 	if spec == nil {
 		return

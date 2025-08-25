@@ -49,7 +49,7 @@ func readManagementClustersListResponse(response *ManagementClustersListResponse
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadManagementClusterList(iterator)
+			items := readManagementClusterList(iterator)
 			response.items = &ManagementClusterList{
 				items: items,
 			}

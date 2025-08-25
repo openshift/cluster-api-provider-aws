@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAccessProtectionList(list []*AccessProtection, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAccessProtectionList(list, stream)
+	writeAccessProtectionList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAccessProtectionList(list []*AccessProtection, writer io.Writer) err
 	return stream.Error
 }
 
-// WriteAccessProtectionList writes a list of value of the 'access_protection' type to
+// writeAccessProtectionList writes a list of value of the 'access_protection' type to
 // the given stream.
-func WriteAccessProtectionList(list []*AccessProtection, stream *jsoniter.Stream) {
+func writeAccessProtectionList(list []*AccessProtection, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteAccessProtection(value, stream)
+		writeAccessProtection(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAccessProtectionList(source interface{}) (items []*AccessProtectio
 	if err != nil {
 		return
 	}
-	items = ReadAccessProtectionList(iterator)
+	items = readAccessProtectionList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAccessProtectionList reads list of values of the ”access_protection' type from
+// readAccessProtectionList reads list of values of the ”access_protection' type from
 // the given iterator.
-func ReadAccessProtectionList(iterator *jsoniter.Iterator) []*AccessProtection {
+func readAccessProtectionList(iterator *jsoniter.Iterator) []*AccessProtection {
 	list := []*AccessProtection{}
 	for iterator.ReadArray() {
-		item := ReadAccessProtection(iterator)
+		item := readAccessProtection(iterator)
 		list = append(list, item)
 	}
 	return list

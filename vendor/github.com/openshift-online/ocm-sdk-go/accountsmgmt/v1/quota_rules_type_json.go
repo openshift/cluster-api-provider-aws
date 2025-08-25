@@ -29,7 +29,7 @@ import (
 // MarshalQuotaRules writes a value of the 'quota_rules' type to the given writer.
 func MarshalQuotaRules(object *QuotaRules, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteQuotaRules(object, stream)
+	writeQuotaRules(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalQuotaRules(object *QuotaRules, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteQuotaRules writes a value of the 'quota_rules' type to the given stream.
-func WriteQuotaRules(object *QuotaRules, stream *jsoniter.Stream) {
+// writeQuotaRules writes a value of the 'quota_rules' type to the given stream.
+func writeQuotaRules(object *QuotaRules, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -123,13 +123,13 @@ func UnmarshalQuotaRules(source interface{}) (object *QuotaRules, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadQuotaRules(iterator)
+	object = readQuotaRules(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadQuotaRules reads a value of the 'quota_rules' type from the given iterator.
-func ReadQuotaRules(iterator *jsoniter.Iterator) *QuotaRules {
+// readQuotaRules reads a value of the 'quota_rules' type from the given iterator.
+func readQuotaRules(iterator *jsoniter.Iterator) *QuotaRules {
 	object := &QuotaRules{}
 	for {
 		field := iterator.ReadObject()

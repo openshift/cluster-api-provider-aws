@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalUpgradeTypeList(list []UpgradeType, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteUpgradeTypeList(list, stream)
+	writeUpgradeTypeList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,9 +38,9 @@ func MarshalUpgradeTypeList(list []UpgradeType, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteUpgradeTypeList writes a list of value of the 'upgrade_type' type to
+// writeUpgradeTypeList writes a list of value of the 'upgrade_type' type to
 // the given stream.
-func WriteUpgradeTypeList(list []UpgradeType, stream *jsoniter.Stream) {
+func writeUpgradeTypeList(list []UpgradeType, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -58,14 +58,14 @@ func UnmarshalUpgradeTypeList(source interface{}) (items []UpgradeType, err erro
 	if err != nil {
 		return
 	}
-	items = ReadUpgradeTypeList(iterator)
+	items = readUpgradeTypeList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadUpgradeTypeList reads list of values of the ”upgrade_type' type from
+// readUpgradeTypeList reads list of values of the ”upgrade_type' type from
 // the given iterator.
-func ReadUpgradeTypeList(iterator *jsoniter.Iterator) []UpgradeType {
+func readUpgradeTypeList(iterator *jsoniter.Iterator) []UpgradeType {
 	list := []UpgradeType{}
 	for iterator.ReadArray() {
 		text := iterator.ReadString()

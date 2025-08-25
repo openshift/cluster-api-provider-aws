@@ -21,14 +21,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aws/smithy-go"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	. "sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/wait"
 )
 
 var (
-	errRetryable        = &smithy.GenericAPIError{Code: "retryable error", Message: "retryable error"}
+	errRetryable        = awserr.New("retryable error", "", nil)
 	errNonRetryable     = errors.New("non retryable error")
 	retryableErrorCodes = []string{"retryable error"}
 )

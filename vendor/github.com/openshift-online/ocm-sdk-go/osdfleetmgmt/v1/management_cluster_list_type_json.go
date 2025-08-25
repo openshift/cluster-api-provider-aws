@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalManagementClusterList(list []*ManagementCluster, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteManagementClusterList(list, stream)
+	writeManagementClusterList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalManagementClusterList(list []*ManagementCluster, writer io.Writer) e
 	return stream.Error
 }
 
-// WriteManagementClusterList writes a list of value of the 'management_cluster' type to
+// writeManagementClusterList writes a list of value of the 'management_cluster' type to
 // the given stream.
-func WriteManagementClusterList(list []*ManagementCluster, stream *jsoniter.Stream) {
+func writeManagementClusterList(list []*ManagementCluster, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteManagementCluster(value, stream)
+		writeManagementCluster(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalManagementClusterList(source interface{}) (items []*ManagementClus
 	if err != nil {
 		return
 	}
-	items = ReadManagementClusterList(iterator)
+	items = readManagementClusterList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadManagementClusterList reads list of values of the ”management_cluster' type from
+// readManagementClusterList reads list of values of the ”management_cluster' type from
 // the given iterator.
-func ReadManagementClusterList(iterator *jsoniter.Iterator) []*ManagementCluster {
+func readManagementClusterList(iterator *jsoniter.Iterator) []*ManagementCluster {
 	list := []*ManagementCluster{}
 	for iterator.ReadArray() {
-		item := ReadManagementCluster(iterator)
+		item := readManagementCluster(iterator)
 		list = append(list, item)
 	}
 	return list

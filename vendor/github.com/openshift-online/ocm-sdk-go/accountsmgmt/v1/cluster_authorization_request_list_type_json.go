@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalClusterAuthorizationRequestList(list []*ClusterAuthorizationRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteClusterAuthorizationRequestList(list, stream)
+	writeClusterAuthorizationRequestList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalClusterAuthorizationRequestList(list []*ClusterAuthorizationRequest,
 	return stream.Error
 }
 
-// WriteClusterAuthorizationRequestList writes a list of value of the 'cluster_authorization_request' type to
+// writeClusterAuthorizationRequestList writes a list of value of the 'cluster_authorization_request' type to
 // the given stream.
-func WriteClusterAuthorizationRequestList(list []*ClusterAuthorizationRequest, stream *jsoniter.Stream) {
+func writeClusterAuthorizationRequestList(list []*ClusterAuthorizationRequest, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteClusterAuthorizationRequest(value, stream)
+		writeClusterAuthorizationRequest(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalClusterAuthorizationRequestList(source interface{}) (items []*Clus
 	if err != nil {
 		return
 	}
-	items = ReadClusterAuthorizationRequestList(iterator)
+	items = readClusterAuthorizationRequestList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadClusterAuthorizationRequestList reads list of values of the ”cluster_authorization_request' type from
+// readClusterAuthorizationRequestList reads list of values of the ”cluster_authorization_request' type from
 // the given iterator.
-func ReadClusterAuthorizationRequestList(iterator *jsoniter.Iterator) []*ClusterAuthorizationRequest {
+func readClusterAuthorizationRequestList(iterator *jsoniter.Iterator) []*ClusterAuthorizationRequest {
 	list := []*ClusterAuthorizationRequest{}
 	for iterator.ReadArray() {
-		item := ReadClusterAuthorizationRequest(iterator)
+		item := readClusterAuthorizationRequest(iterator)
 		list = append(list, item)
 	}
 	return list

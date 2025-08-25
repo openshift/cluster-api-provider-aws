@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalTuningConfigList(list []*TuningConfig, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteTuningConfigList(list, stream)
+	writeTuningConfigList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalTuningConfigList(list []*TuningConfig, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteTuningConfigList writes a list of value of the 'tuning_config' type to
+// writeTuningConfigList writes a list of value of the 'tuning_config' type to
 // the given stream.
-func WriteTuningConfigList(list []*TuningConfig, stream *jsoniter.Stream) {
+func writeTuningConfigList(list []*TuningConfig, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteTuningConfig(value, stream)
+		writeTuningConfig(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalTuningConfigList(source interface{}) (items []*TuningConfig, err e
 	if err != nil {
 		return
 	}
-	items = ReadTuningConfigList(iterator)
+	items = readTuningConfigList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadTuningConfigList reads list of values of the ”tuning_config' type from
+// readTuningConfigList reads list of values of the ”tuning_config' type from
 // the given iterator.
-func ReadTuningConfigList(iterator *jsoniter.Iterator) []*TuningConfig {
+func readTuningConfigList(iterator *jsoniter.Iterator) []*TuningConfig {
 	list := []*TuningConfig{}
 	for iterator.ReadArray() {
-		item := ReadTuningConfig(iterator)
+		item := readTuningConfig(iterator)
 		list = append(list, item)
 	}
 	return list

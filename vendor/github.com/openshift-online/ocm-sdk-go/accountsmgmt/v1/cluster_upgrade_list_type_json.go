@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalClusterUpgradeList(list []*ClusterUpgrade, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteClusterUpgradeList(list, stream)
+	writeClusterUpgradeList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalClusterUpgradeList(list []*ClusterUpgrade, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteClusterUpgradeList writes a list of value of the 'cluster_upgrade' type to
+// writeClusterUpgradeList writes a list of value of the 'cluster_upgrade' type to
 // the given stream.
-func WriteClusterUpgradeList(list []*ClusterUpgrade, stream *jsoniter.Stream) {
+func writeClusterUpgradeList(list []*ClusterUpgrade, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteClusterUpgrade(value, stream)
+		writeClusterUpgrade(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalClusterUpgradeList(source interface{}) (items []*ClusterUpgrade, e
 	if err != nil {
 		return
 	}
-	items = ReadClusterUpgradeList(iterator)
+	items = readClusterUpgradeList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadClusterUpgradeList reads list of values of the ”cluster_upgrade' type from
+// readClusterUpgradeList reads list of values of the ”cluster_upgrade' type from
 // the given iterator.
-func ReadClusterUpgradeList(iterator *jsoniter.Iterator) []*ClusterUpgrade {
+func readClusterUpgradeList(iterator *jsoniter.Iterator) []*ClusterUpgrade {
 	list := []*ClusterUpgrade{}
 	for iterator.ReadArray() {
-		item := ReadClusterUpgrade(iterator)
+		item := readClusterUpgrade(iterator)
 		list = append(list, item)
 	}
 	return list

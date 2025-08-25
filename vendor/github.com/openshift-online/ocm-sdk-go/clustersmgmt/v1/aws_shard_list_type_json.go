@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAWSShardList(list []*AWSShard, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAWSShardList(list, stream)
+	writeAWSShardList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAWSShardList(list []*AWSShard, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteAWSShardList writes a list of value of the 'AWS_shard' type to
+// writeAWSShardList writes a list of value of the 'AWS_shard' type to
 // the given stream.
-func WriteAWSShardList(list []*AWSShard, stream *jsoniter.Stream) {
+func writeAWSShardList(list []*AWSShard, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteAWSShard(value, stream)
+		writeAWSShard(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAWSShardList(source interface{}) (items []*AWSShard, err error) {
 	if err != nil {
 		return
 	}
-	items = ReadAWSShardList(iterator)
+	items = readAWSShardList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAWSShardList reads list of values of the ”AWS_shard' type from
+// readAWSShardList reads list of values of the ”AWS_shard' type from
 // the given iterator.
-func ReadAWSShardList(iterator *jsoniter.Iterator) []*AWSShard {
+func readAWSShardList(iterator *jsoniter.Iterator) []*AWSShard {
 	list := []*AWSShard{}
 	for iterator.ReadArray() {
-		item := ReadAWSShard(iterator)
+		item := readAWSShard(iterator)
 		list = append(list, item)
 	}
 	return list

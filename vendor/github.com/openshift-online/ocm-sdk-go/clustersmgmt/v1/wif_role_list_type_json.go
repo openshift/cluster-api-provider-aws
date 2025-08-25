@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalWifRoleList(list []*WifRole, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteWifRoleList(list, stream)
+	writeWifRoleList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalWifRoleList(list []*WifRole, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteWifRoleList writes a list of value of the 'wif_role' type to
+// writeWifRoleList writes a list of value of the 'wif_role' type to
 // the given stream.
-func WriteWifRoleList(list []*WifRole, stream *jsoniter.Stream) {
+func writeWifRoleList(list []*WifRole, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteWifRole(value, stream)
+		writeWifRole(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalWifRoleList(source interface{}) (items []*WifRole, err error) {
 	if err != nil {
 		return
 	}
-	items = ReadWifRoleList(iterator)
+	items = readWifRoleList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadWifRoleList reads list of values of the ”wif_role' type from
+// readWifRoleList reads list of values of the ”wif_role' type from
 // the given iterator.
-func ReadWifRoleList(iterator *jsoniter.Iterator) []*WifRole {
+func readWifRoleList(iterator *jsoniter.Iterator) []*WifRole {
 	list := []*WifRole{}
 	for iterator.ReadArray() {
-		item := ReadWifRole(iterator)
+		item := readWifRole(iterator)
 		list = append(list, item)
 	}
 	return list

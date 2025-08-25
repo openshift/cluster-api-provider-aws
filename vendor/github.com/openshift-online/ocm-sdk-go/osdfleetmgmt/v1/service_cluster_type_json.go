@@ -29,7 +29,7 @@ import (
 // MarshalServiceCluster writes a value of the 'service_cluster' type to the given writer.
 func MarshalServiceCluster(object *ServiceCluster, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteServiceCluster(object, stream)
+	writeServiceCluster(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalServiceCluster(object *ServiceCluster, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteServiceCluster writes a value of the 'service_cluster' type to the given stream.
-func WriteServiceCluster(object *ServiceCluster, stream *jsoniter.Stream) {
+// writeServiceCluster writes a value of the 'service_cluster' type to the given stream.
+func writeServiceCluster(object *ServiceCluster, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -71,7 +71,7 @@ func WriteServiceCluster(object *ServiceCluster, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("dns")
-		WriteDNS(object.dns, stream)
+		writeDNS(object.dns, stream)
 		count++
 	}
 	present_ = object.bitmap_&16 != 0
@@ -89,7 +89,7 @@ func WriteServiceCluster(object *ServiceCluster, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("cluster_management_reference")
-		WriteClusterManagementReference(object.clusterManagementReference, stream)
+		writeClusterManagementReference(object.clusterManagementReference, stream)
 		count++
 	}
 	present_ = object.bitmap_&64 != 0 && object.labels != nil
@@ -98,7 +98,7 @@ func WriteServiceCluster(object *ServiceCluster, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("labels")
-		WriteLabelList(object.labels, stream)
+		writeLabelList(object.labels, stream)
 		count++
 	}
 	present_ = object.bitmap_&128 != 0
@@ -116,7 +116,7 @@ func WriteServiceCluster(object *ServiceCluster, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("provision_shard_reference")
-		WriteProvisionShardReference(object.provisionShardReference, stream)
+		writeProvisionShardReference(object.provisionShardReference, stream)
 		count++
 	}
 	present_ = object.bitmap_&512 != 0
@@ -155,13 +155,13 @@ func UnmarshalServiceCluster(source interface{}) (object *ServiceCluster, err er
 	if err != nil {
 		return
 	}
-	object = ReadServiceCluster(iterator)
+	object = readServiceCluster(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadServiceCluster reads a value of the 'service_cluster' type from the given iterator.
-func ReadServiceCluster(iterator *jsoniter.Iterator) *ServiceCluster {
+// readServiceCluster reads a value of the 'service_cluster' type from the given iterator.
+func readServiceCluster(iterator *jsoniter.Iterator) *ServiceCluster {
 	object := &ServiceCluster{}
 	for {
 		field := iterator.ReadObject()
@@ -181,7 +181,7 @@ func ReadServiceCluster(iterator *jsoniter.Iterator) *ServiceCluster {
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
 		case "dns":
-			value := ReadDNS(iterator)
+			value := readDNS(iterator)
 			object.dns = value
 			object.bitmap_ |= 8
 		case "cloud_provider":
@@ -189,11 +189,11 @@ func ReadServiceCluster(iterator *jsoniter.Iterator) *ServiceCluster {
 			object.cloudProvider = value
 			object.bitmap_ |= 16
 		case "cluster_management_reference":
-			value := ReadClusterManagementReference(iterator)
+			value := readClusterManagementReference(iterator)
 			object.clusterManagementReference = value
 			object.bitmap_ |= 32
 		case "labels":
-			value := ReadLabelList(iterator)
+			value := readLabelList(iterator)
 			object.labels = value
 			object.bitmap_ |= 64
 		case "name":
@@ -201,7 +201,7 @@ func ReadServiceCluster(iterator *jsoniter.Iterator) *ServiceCluster {
 			object.name = value
 			object.bitmap_ |= 128
 		case "provision_shard_reference":
-			value := ReadProvisionShardReference(iterator)
+			value := readProvisionShardReference(iterator)
 			object.provisionShardReference = value
 			object.bitmap_ |= 256
 		case "region":

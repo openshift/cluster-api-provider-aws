@@ -3,9 +3,8 @@ package elb
 import (
 	"fmt"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	elbv2 "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
-	elbv2types "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2/types"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/elbv2"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 )
@@ -23,8 +22,11 @@ func (s *Service) allocatePublicIpv4AddressFromByoIPPool(input *elbv2.CreateLoad
 	}
 
 	// Only NLB is supported
-	if input.Type != elbv2types.LoadBalancerTypeEnumNetwork {
-		return fmt.Errorf("PublicIpv4Pool is not supported with Load Balancer type %s. Use Network Load Balancer instead", input.Type)
+	if input.Type == nil {
+		return fmt.Errorf("PublicIpv4Pool is supported only when the Load Balancer type is %q", elbv2.LoadBalancerTypeEnumNetwork)
+	}
+	if *input.Type != string(elbv2.LoadBalancerTypeEnumNetwork) {
+		return fmt.Errorf("PublicIpv4Pool is not supported with Load Balancer type %s. Use Network Load Balancer instead", *input.Type)
 	}
 
 	// Custom SubnetMappings should not be defined or overridden by user-defined mapping.
@@ -40,14 +42,14 @@ func (s *Service) allocatePublicIpv4AddressFromByoIPPool(input *elbv2.CreateLoad
 		return fmt.Errorf("number of allocated EIP addresses (%d) from pool %q must match with the subnet count (%d)", len(eips), *s.scope.VPC().GetPublicIpv4Pool(), len(input.Subnets))
 	}
 	for cnt, sb := range input.Subnets {
-		input.SubnetMappings = append(input.SubnetMappings, elbv2types.SubnetMapping{
-			SubnetId:     aws.String(sb),
+		input.SubnetMappings = append(input.SubnetMappings, &elbv2.SubnetMapping{
+			SubnetId:     aws.String(*sb),
 			AllocationId: aws.String(eips[cnt]),
 		})
 	}
 	// Subnets and SubnetMappings are mutual exclusive. Cleaning Subnets when BYO IP is defined,
 	// and SubnetMappings are mounted.
-	input.Subnets = []string{}
+	input.Subnets = []*string{}
 
 	return nil
 }

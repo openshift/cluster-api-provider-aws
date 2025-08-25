@@ -19,6 +19,7 @@ package webhooks
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -73,15 +74,12 @@ func (webhook *MachineDrainRule) ValidateDelete(_ context.Context, _ runtime.Obj
 func (webhook *MachineDrainRule) validate(newMDR *clusterv1.MachineDrainRule) error {
 	var allErrs field.ErrorList
 
-	if newMDR.Spec.Drain.Behavior == clusterv1.MachineDrainRuleDrainBehaviorSkip ||
-		newMDR.Spec.Drain.Behavior == clusterv1.MachineDrainRuleDrainBehaviorWaitCompleted {
+	if newMDR.Spec.Drain.Behavior == clusterv1.MachineDrainRuleDrainBehaviorSkip {
 		if newMDR.Spec.Drain.Order != nil {
 			allErrs = append(allErrs,
 				field.Invalid(field.NewPath("spec", "drain", "order"),
 					*newMDR.Spec.Drain.Order,
-					fmt.Sprintf("order must not be set if drain behavior is %q or %q",
-						clusterv1.MachineDrainRuleDrainBehaviorSkip, clusterv1.MachineDrainRuleDrainBehaviorWaitCompleted),
-				),
+					fmt.Sprintf("order must not be set if drain behavior is %q", clusterv1.MachineDrainRuleDrainBehaviorSkip)),
 			)
 		}
 	}
@@ -100,7 +98,14 @@ func (webhook *MachineDrainRule) validate(newMDR *clusterv1.MachineDrainRule) er
 func ValidateMachineDrainRulesSelectors(machineDrainRule *clusterv1.MachineDrainRule) field.ErrorList {
 	var allErrs field.ErrorList
 
+	machinesSelectorUnique := true
 	for i, machineSelector := range machineDrainRule.Spec.Machines {
+		for j := range i {
+			if machinesSelectorUnique && reflect.DeepEqual(machineDrainRule.Spec.Machines[i], machineDrainRule.Spec.Machines[j]) {
+				machinesSelectorUnique = false
+			}
+		}
+
 		if machineSelector.Selector != nil {
 			if _, err := metav1.LabelSelectorAsSelector(machineSelector.Selector); err != nil {
 				allErrs = append(allErrs,
@@ -116,8 +121,20 @@ func ValidateMachineDrainRulesSelectors(machineDrainRule *clusterv1.MachineDrain
 			}
 		}
 	}
+	if !machinesSelectorUnique {
+		allErrs = append(allErrs,
+			field.Forbidden(field.NewPath("spec", "machines"), "Entries in machines must be unique"),
+		)
+	}
 
+	podsSelectorUnique := true
 	for i, podSelector := range machineDrainRule.Spec.Pods {
+		for j := range i {
+			if podsSelectorUnique && reflect.DeepEqual(machineDrainRule.Spec.Pods[i], machineDrainRule.Spec.Pods[j]) {
+				podsSelectorUnique = false
+			}
+		}
+
 		if podSelector.Selector != nil {
 			if _, err := metav1.LabelSelectorAsSelector(podSelector.Selector); err != nil {
 				allErrs = append(allErrs,
@@ -132,6 +149,11 @@ func ValidateMachineDrainRulesSelectors(machineDrainRule *clusterv1.MachineDrain
 				)
 			}
 		}
+	}
+	if !podsSelectorUnique {
+		allErrs = append(allErrs,
+			field.Forbidden(field.NewPath("spec", "pods"), "Entries in pods must be unique"),
+		)
 	}
 
 	return allErrs

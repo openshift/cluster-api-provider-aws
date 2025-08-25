@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalRegistryCredentialList(list []*RegistryCredential, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteRegistryCredentialList(list, stream)
+	writeRegistryCredentialList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalRegistryCredentialList(list []*RegistryCredential, writer io.Writer)
 	return stream.Error
 }
 
-// WriteRegistryCredentialList writes a list of value of the 'registry_credential' type to
+// writeRegistryCredentialList writes a list of value of the 'registry_credential' type to
 // the given stream.
-func WriteRegistryCredentialList(list []*RegistryCredential, stream *jsoniter.Stream) {
+func writeRegistryCredentialList(list []*RegistryCredential, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteRegistryCredential(value, stream)
+		writeRegistryCredential(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalRegistryCredentialList(source interface{}) (items []*RegistryCrede
 	if err != nil {
 		return
 	}
-	items = ReadRegistryCredentialList(iterator)
+	items = readRegistryCredentialList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadRegistryCredentialList reads list of values of the ”registry_credential' type from
+// readRegistryCredentialList reads list of values of the ”registry_credential' type from
 // the given iterator.
-func ReadRegistryCredentialList(iterator *jsoniter.Iterator) []*RegistryCredential {
+func readRegistryCredentialList(iterator *jsoniter.Iterator) []*RegistryCredential {
 	list := []*RegistryCredential{}
 	for iterator.ReadArray() {
-		item := ReadRegistryCredential(iterator)
+		item := readRegistryCredential(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalHTPasswdIdentityProviderList(list []*HTPasswdIdentityProvider, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteHTPasswdIdentityProviderList(list, stream)
+	writeHTPasswdIdentityProviderList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalHTPasswdIdentityProviderList(list []*HTPasswdIdentityProvider, write
 	return stream.Error
 }
 
-// WriteHTPasswdIdentityProviderList writes a list of value of the 'HT_passwd_identity_provider' type to
+// writeHTPasswdIdentityProviderList writes a list of value of the 'HT_passwd_identity_provider' type to
 // the given stream.
-func WriteHTPasswdIdentityProviderList(list []*HTPasswdIdentityProvider, stream *jsoniter.Stream) {
+func writeHTPasswdIdentityProviderList(list []*HTPasswdIdentityProvider, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteHTPasswdIdentityProvider(value, stream)
+		writeHTPasswdIdentityProvider(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalHTPasswdIdentityProviderList(source interface{}) (items []*HTPassw
 	if err != nil {
 		return
 	}
-	items = ReadHTPasswdIdentityProviderList(iterator)
+	items = readHTPasswdIdentityProviderList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadHTPasswdIdentityProviderList reads list of values of the ”HT_passwd_identity_provider' type from
+// readHTPasswdIdentityProviderList reads list of values of the ”HT_passwd_identity_provider' type from
 // the given iterator.
-func ReadHTPasswdIdentityProviderList(iterator *jsoniter.Iterator) []*HTPasswdIdentityProvider {
+func readHTPasswdIdentityProviderList(iterator *jsoniter.Iterator) []*HTPasswdIdentityProvider {
 	list := []*HTPasswdIdentityProvider{}
 	for iterator.ReadArray() {
-		item := ReadHTPasswdIdentityProvider(iterator)
+		item := readHTPasswdIdentityProvider(iterator)
 		list = append(list, item)
 	}
 	return list

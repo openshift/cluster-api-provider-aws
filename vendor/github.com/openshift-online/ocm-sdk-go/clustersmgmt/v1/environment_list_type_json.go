@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalEnvironmentList(list []*Environment, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteEnvironmentList(list, stream)
+	writeEnvironmentList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalEnvironmentList(list []*Environment, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteEnvironmentList writes a list of value of the 'environment' type to
+// writeEnvironmentList writes a list of value of the 'environment' type to
 // the given stream.
-func WriteEnvironmentList(list []*Environment, stream *jsoniter.Stream) {
+func writeEnvironmentList(list []*Environment, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteEnvironment(value, stream)
+		writeEnvironment(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalEnvironmentList(source interface{}) (items []*Environment, err err
 	if err != nil {
 		return
 	}
-	items = ReadEnvironmentList(iterator)
+	items = readEnvironmentList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadEnvironmentList reads list of values of the ”environment' type from
+// readEnvironmentList reads list of values of the ”environment' type from
 // the given iterator.
-func ReadEnvironmentList(iterator *jsoniter.Iterator) []*Environment {
+func readEnvironmentList(iterator *jsoniter.Iterator) []*Environment {
 	list := []*Environment{}
 	for iterator.ReadArray() {
-		item := ReadEnvironment(iterator)
+		item := readEnvironment(iterator)
 		list = append(list, item)
 	}
 	return list

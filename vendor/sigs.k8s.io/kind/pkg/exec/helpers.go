@@ -23,7 +23,7 @@ import (
 	"os"
 	"strings"
 
-	"al.essio.dev/pkg/shellescape"
+	"github.com/alessio/shellescape"
 
 	"sigs.k8s.io/kind/pkg/errors"
 )

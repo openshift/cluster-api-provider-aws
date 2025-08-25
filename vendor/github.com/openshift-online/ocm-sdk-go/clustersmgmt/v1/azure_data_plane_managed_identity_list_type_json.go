@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAzureDataPlaneManagedIdentityList(list []*AzureDataPlaneManagedIdentity, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAzureDataPlaneManagedIdentityList(list, stream)
+	writeAzureDataPlaneManagedIdentityList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAzureDataPlaneManagedIdentityList(list []*AzureDataPlaneManagedIdent
 	return stream.Error
 }
 
-// WriteAzureDataPlaneManagedIdentityList writes a list of value of the 'azure_data_plane_managed_identity' type to
+// writeAzureDataPlaneManagedIdentityList writes a list of value of the 'azure_data_plane_managed_identity' type to
 // the given stream.
-func WriteAzureDataPlaneManagedIdentityList(list []*AzureDataPlaneManagedIdentity, stream *jsoniter.Stream) {
+func writeAzureDataPlaneManagedIdentityList(list []*AzureDataPlaneManagedIdentity, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteAzureDataPlaneManagedIdentity(value, stream)
+		writeAzureDataPlaneManagedIdentity(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAzureDataPlaneManagedIdentityList(source interface{}) (items []*Az
 	if err != nil {
 		return
 	}
-	items = ReadAzureDataPlaneManagedIdentityList(iterator)
+	items = readAzureDataPlaneManagedIdentityList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAzureDataPlaneManagedIdentityList reads list of values of the ”azure_data_plane_managed_identity' type from
+// readAzureDataPlaneManagedIdentityList reads list of values of the ”azure_data_plane_managed_identity' type from
 // the given iterator.
-func ReadAzureDataPlaneManagedIdentityList(iterator *jsoniter.Iterator) []*AzureDataPlaneManagedIdentity {
+func readAzureDataPlaneManagedIdentityList(iterator *jsoniter.Iterator) []*AzureDataPlaneManagedIdentity {
 	list := []*AzureDataPlaneManagedIdentity{}
 	for iterator.ReadArray() {
-		item := ReadAzureDataPlaneManagedIdentity(iterator)
+		item := readAzureDataPlaneManagedIdentity(iterator)
 		list = append(list, item)
 	}
 	return list

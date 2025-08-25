@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalGCPList(list []*GCP, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteGCPList(list, stream)
+	writeGCPList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalGCPList(list []*GCP, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteGCPList writes a list of value of the 'GCP' type to
+// writeGCPList writes a list of value of the 'GCP' type to
 // the given stream.
-func WriteGCPList(list []*GCP, stream *jsoniter.Stream) {
+func writeGCPList(list []*GCP, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteGCP(value, stream)
+		writeGCP(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalGCPList(source interface{}) (items []*GCP, err error) {
 	if err != nil {
 		return
 	}
-	items = ReadGCPList(iterator)
+	items = readGCPList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadGCPList reads list of values of the ”GCP' type from
+// readGCPList reads list of values of the ”GCP' type from
 // the given iterator.
-func ReadGCPList(iterator *jsoniter.Iterator) []*GCP {
+func readGCPList(iterator *jsoniter.Iterator) []*GCP {
 	list := []*GCP{}
 	for iterator.ReadArray() {
-		item := ReadGCP(iterator)
+		item := readGCP(iterator)
 		list = append(list, item)
 	}
 	return list

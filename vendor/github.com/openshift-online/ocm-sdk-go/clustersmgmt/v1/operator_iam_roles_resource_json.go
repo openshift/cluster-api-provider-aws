@@ -57,7 +57,7 @@ func readOperatorIAMRolesListResponse(response *OperatorIAMRolesListResponse, re
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadOperatorIAMRoleList(iterator)
+			items := readOperatorIAMRoleList(iterator)
 			response.items = &OperatorIAMRoleList{
 				items: items,
 			}

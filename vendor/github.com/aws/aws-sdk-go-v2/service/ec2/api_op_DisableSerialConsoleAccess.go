@@ -12,9 +12,8 @@ import (
 
 // Disables access to the EC2 serial console of all instances for your account. By
 // default, access to the EC2 serial console is disabled for your account. For more
-// information, see [Manage account access to the EC2 serial console]in the Amazon EC2 User Guide.
-//
-// [Manage account access to the EC2 serial console]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configure-access-to-serial-console.html#serial-console-account-access
+// information, see Manage account access to the EC2 serial console (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configure-access-to-serial-console.html#serial-console-account-access)
+// in the Amazon EC2 User Guide.
 func (c *Client) DisableSerialConsoleAccess(ctx context.Context, params *DisableSerialConsoleAccessInput, optFns ...func(*Options)) (*DisableSerialConsoleAccessOutput, error) {
 	if params == nil {
 		params = &DisableSerialConsoleAccessInput{}
@@ -97,9 +96,6 @@ func (c *Client) addOperationDisableSerialConsoleAccessMiddlewares(stack *middle
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -110,15 +106,6 @@ func (c *Client) addOperationDisableSerialConsoleAccessMiddlewares(stack *middle
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDisableSerialConsoleAccess(options.Region), middleware.Before); err != nil {
@@ -137,18 +124,6 @@ func (c *Client) addOperationDisableSerialConsoleAccessMiddlewares(stack *middle
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

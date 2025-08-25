@@ -30,7 +30,7 @@ import (
 // MarshalStatus writes a value of the 'status' type to the given writer.
 func MarshalStatus(object *Status, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteStatus(object, stream)
+	writeStatus(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalStatus(object *Status, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteStatus writes a value of the 'status' type to the given stream.
-func WriteStatus(object *Status, stream *jsoniter.Stream) {
+// writeStatus writes a value of the 'status' type to the given stream.
+func writeStatus(object *Status, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -90,7 +90,7 @@ func WriteStatus(object *Status, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("service")
-		WriteService(object.service, stream)
+		writeService(object.service, stream)
 		count++
 	}
 	present_ = object.bitmap_&64 != 0 && object.serviceInfo != nil
@@ -99,7 +99,7 @@ func WriteStatus(object *Status, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("service_info")
-		WriteServiceInfo(object.serviceInfo, stream)
+		writeServiceInfo(object.serviceInfo, stream)
 		count++
 	}
 	present_ = object.bitmap_&128 != 0
@@ -129,13 +129,13 @@ func UnmarshalStatus(source interface{}) (object *Status, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadStatus(iterator)
+	object = readStatus(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadStatus reads a value of the 'status' type from the given iterator.
-func ReadStatus(iterator *jsoniter.Iterator) *Status {
+// readStatus reads a value of the 'status' type from the given iterator.
+func readStatus(iterator *jsoniter.Iterator) *Status {
 	object := &Status{}
 	for {
 		field := iterator.ReadObject()
@@ -168,11 +168,11 @@ func ReadStatus(iterator *jsoniter.Iterator) *Status {
 			object.metadata = value
 			object.bitmap_ |= 16
 		case "service":
-			value := ReadService(iterator)
+			value := readService(iterator)
 			object.service = value
 			object.bitmap_ |= 32
 		case "service_info":
-			value := ReadServiceInfo(iterator)
+			value := readServiceInfo(iterator)
 			object.serviceInfo = value
 			object.bitmap_ |= 64
 		case "status":

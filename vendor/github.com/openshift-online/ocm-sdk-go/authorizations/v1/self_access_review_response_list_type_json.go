@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalSelfAccessReviewResponseList(list []*SelfAccessReviewResponse, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteSelfAccessReviewResponseList(list, stream)
+	writeSelfAccessReviewResponseList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalSelfAccessReviewResponseList(list []*SelfAccessReviewResponse, write
 	return stream.Error
 }
 
-// WriteSelfAccessReviewResponseList writes a list of value of the 'self_access_review_response' type to
+// writeSelfAccessReviewResponseList writes a list of value of the 'self_access_review_response' type to
 // the given stream.
-func WriteSelfAccessReviewResponseList(list []*SelfAccessReviewResponse, stream *jsoniter.Stream) {
+func writeSelfAccessReviewResponseList(list []*SelfAccessReviewResponse, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteSelfAccessReviewResponse(value, stream)
+		writeSelfAccessReviewResponse(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalSelfAccessReviewResponseList(source interface{}) (items []*SelfAcc
 	if err != nil {
 		return
 	}
-	items = ReadSelfAccessReviewResponseList(iterator)
+	items = readSelfAccessReviewResponseList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadSelfAccessReviewResponseList reads list of values of the ”self_access_review_response' type from
+// readSelfAccessReviewResponseList reads list of values of the ”self_access_review_response' type from
 // the given iterator.
-func ReadSelfAccessReviewResponseList(iterator *jsoniter.Iterator) []*SelfAccessReviewResponse {
+func readSelfAccessReviewResponseList(iterator *jsoniter.Iterator) []*SelfAccessReviewResponse {
 	list := []*SelfAccessReviewResponse{}
 	for iterator.ReadArray() {
-		item := ReadSelfAccessReviewResponse(iterator)
+		item := readSelfAccessReviewResponse(iterator)
 		list = append(list, item)
 	}
 	return list

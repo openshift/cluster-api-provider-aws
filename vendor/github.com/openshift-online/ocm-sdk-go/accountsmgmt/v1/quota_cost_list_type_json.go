@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalQuotaCostList(list []*QuotaCost, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteQuotaCostList(list, stream)
+	writeQuotaCostList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalQuotaCostList(list []*QuotaCost, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteQuotaCostList writes a list of value of the 'quota_cost' type to
+// writeQuotaCostList writes a list of value of the 'quota_cost' type to
 // the given stream.
-func WriteQuotaCostList(list []*QuotaCost, stream *jsoniter.Stream) {
+func writeQuotaCostList(list []*QuotaCost, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteQuotaCost(value, stream)
+		writeQuotaCost(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalQuotaCostList(source interface{}) (items []*QuotaCost, err error) 
 	if err != nil {
 		return
 	}
-	items = ReadQuotaCostList(iterator)
+	items = readQuotaCostList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadQuotaCostList reads list of values of the ”quota_cost' type from
+// readQuotaCostList reads list of values of the ”quota_cost' type from
 // the given iterator.
-func ReadQuotaCostList(iterator *jsoniter.Iterator) []*QuotaCost {
+func readQuotaCostList(iterator *jsoniter.Iterator) []*QuotaCost {
 	list := []*QuotaCost{}
 	for iterator.ReadArray() {
-		item := ReadQuotaCost(iterator)
+		item := readQuotaCost(iterator)
 		list = append(list, item)
 	}
 	return list

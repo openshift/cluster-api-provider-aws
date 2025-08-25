@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalGroupsClaimList(list []*GroupsClaim, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteGroupsClaimList(list, stream)
+	writeGroupsClaimList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalGroupsClaimList(list []*GroupsClaim, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteGroupsClaimList writes a list of value of the 'groups_claim' type to
+// writeGroupsClaimList writes a list of value of the 'groups_claim' type to
 // the given stream.
-func WriteGroupsClaimList(list []*GroupsClaim, stream *jsoniter.Stream) {
+func writeGroupsClaimList(list []*GroupsClaim, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteGroupsClaim(value, stream)
+		writeGroupsClaim(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalGroupsClaimList(source interface{}) (items []*GroupsClaim, err err
 	if err != nil {
 		return
 	}
-	items = ReadGroupsClaimList(iterator)
+	items = readGroupsClaimList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadGroupsClaimList reads list of values of the ”groups_claim' type from
+// readGroupsClaimList reads list of values of the ”groups_claim' type from
 // the given iterator.
-func ReadGroupsClaimList(iterator *jsoniter.Iterator) []*GroupsClaim {
+func readGroupsClaimList(iterator *jsoniter.Iterator) []*GroupsClaim {
 	list := []*GroupsClaim{}
 	for iterator.ReadArray() {
-		item := ReadGroupsClaim(iterator)
+		item := readGroupsClaim(iterator)
 		list = append(list, item)
 	}
 	return list

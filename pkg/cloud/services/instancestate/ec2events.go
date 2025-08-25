@@ -16,22 +16,20 @@ limitations under the License.
 
 package instancestate
 
-import "context"
-
 // ReconcileEC2Events will reconcile a Service's EC2 events.
-func (s Service) ReconcileEC2Events(ctx context.Context) error {
-	if err := s.reconcileSQSQueue(ctx); err != nil {
+func (s Service) ReconcileEC2Events() error {
+	if err := s.reconcileSQSQueue(); err != nil {
 		return err
 	}
 
-	return s.reconcileRules(ctx)
+	return s.reconcileRules()
 }
 
 // DeleteEC2Events will delete a Service's EC2 events.
-func (s Service) DeleteEC2Events(ctx context.Context) error {
-	if err := s.deleteRules(ctx); err != nil {
+func (s Service) DeleteEC2Events() error {
+	if err := s.deleteRules(); err != nil {
 		return err
 	}
 
-	return s.deleteSQSQueue(ctx)
+	return s.deleteSQSQueue()
 }

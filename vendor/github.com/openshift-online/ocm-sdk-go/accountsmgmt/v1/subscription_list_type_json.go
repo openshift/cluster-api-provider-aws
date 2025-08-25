@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalSubscriptionList(list []*Subscription, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteSubscriptionList(list, stream)
+	writeSubscriptionList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalSubscriptionList(list []*Subscription, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteSubscriptionList writes a list of value of the 'subscription' type to
+// writeSubscriptionList writes a list of value of the 'subscription' type to
 // the given stream.
-func WriteSubscriptionList(list []*Subscription, stream *jsoniter.Stream) {
+func writeSubscriptionList(list []*Subscription, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteSubscription(value, stream)
+		writeSubscription(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalSubscriptionList(source interface{}) (items []*Subscription, err e
 	if err != nil {
 		return
 	}
-	items = ReadSubscriptionList(iterator)
+	items = readSubscriptionList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadSubscriptionList reads list of values of the ”subscription' type from
+// readSubscriptionList reads list of values of the ”subscription' type from
 // the given iterator.
-func ReadSubscriptionList(iterator *jsoniter.Iterator) []*Subscription {
+func readSubscriptionList(iterator *jsoniter.Iterator) []*Subscription {
 	list := []*Subscription{}
 	for iterator.ReadArray() {
-		item := ReadSubscription(iterator)
+		item := readSubscription(iterator)
 		list = append(list, item)
 	}
 	return list

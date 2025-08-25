@@ -29,7 +29,7 @@ import (
 // MarshalAddonSecretPropagation writes a value of the 'addon_secret_propagation' type to the given writer.
 func MarshalAddonSecretPropagation(object *AddonSecretPropagation, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAddonSecretPropagation(object, stream)
+	writeAddonSecretPropagation(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAddonSecretPropagation(object *AddonSecretPropagation, writer io.Wri
 	return stream.Error
 }
 
-// WriteAddonSecretPropagation writes a value of the 'addon_secret_propagation' type to the given stream.
-func WriteAddonSecretPropagation(object *AddonSecretPropagation, stream *jsoniter.Stream) {
+// writeAddonSecretPropagation writes a value of the 'addon_secret_propagation' type to the given stream.
+func writeAddonSecretPropagation(object *AddonSecretPropagation, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -87,13 +87,13 @@ func UnmarshalAddonSecretPropagation(source interface{}) (object *AddonSecretPro
 	if err != nil {
 		return
 	}
-	object = ReadAddonSecretPropagation(iterator)
+	object = readAddonSecretPropagation(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAddonSecretPropagation reads a value of the 'addon_secret_propagation' type from the given iterator.
-func ReadAddonSecretPropagation(iterator *jsoniter.Iterator) *AddonSecretPropagation {
+// readAddonSecretPropagation reads a value of the 'addon_secret_propagation' type from the given iterator.
+func readAddonSecretPropagation(iterator *jsoniter.Iterator) *AddonSecretPropagation {
 	object := &AddonSecretPropagation{}
 	for {
 		field := iterator.ReadObject()

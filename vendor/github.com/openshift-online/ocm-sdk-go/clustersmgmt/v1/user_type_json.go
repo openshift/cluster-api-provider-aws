@@ -29,7 +29,7 @@ import (
 // MarshalUser writes a value of the 'user' type to the given writer.
 func MarshalUser(object *User, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteUser(object, stream)
+	writeUser(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalUser(object *User, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteUser writes a value of the 'user' type to the given stream.
-func WriteUser(object *User, stream *jsoniter.Stream) {
+// writeUser writes a value of the 'user' type to the given stream.
+func writeUser(object *User, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -73,13 +73,13 @@ func UnmarshalUser(source interface{}) (object *User, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadUser(iterator)
+	object = readUser(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadUser reads a value of the 'user' type from the given iterator.
-func ReadUser(iterator *jsoniter.Iterator) *User {
+// readUser reads a value of the 'user' type from the given iterator.
+func readUser(iterator *jsoniter.Iterator) *User {
 	object := &User{}
 	for {
 		field := iterator.ReadObject()

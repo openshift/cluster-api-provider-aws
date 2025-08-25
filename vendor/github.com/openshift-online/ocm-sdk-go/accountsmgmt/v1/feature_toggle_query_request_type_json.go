@@ -29,7 +29,7 @@ import (
 // MarshalFeatureToggleQueryRequest writes a value of the 'feature_toggle_query_request' type to the given writer.
 func MarshalFeatureToggleQueryRequest(object *FeatureToggleQueryRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteFeatureToggleQueryRequest(object, stream)
+	writeFeatureToggleQueryRequest(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalFeatureToggleQueryRequest(object *FeatureToggleQueryRequest, writer 
 	return stream.Error
 }
 
-// WriteFeatureToggleQueryRequest writes a value of the 'feature_toggle_query_request' type to the given stream.
-func WriteFeatureToggleQueryRequest(object *FeatureToggleQueryRequest, stream *jsoniter.Stream) {
+// writeFeatureToggleQueryRequest writes a value of the 'feature_toggle_query_request' type to the given stream.
+func writeFeatureToggleQueryRequest(object *FeatureToggleQueryRequest, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -60,13 +60,13 @@ func UnmarshalFeatureToggleQueryRequest(source interface{}) (object *FeatureTogg
 	if err != nil {
 		return
 	}
-	object = ReadFeatureToggleQueryRequest(iterator)
+	object = readFeatureToggleQueryRequest(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadFeatureToggleQueryRequest reads a value of the 'feature_toggle_query_request' type from the given iterator.
-func ReadFeatureToggleQueryRequest(iterator *jsoniter.Iterator) *FeatureToggleQueryRequest {
+// readFeatureToggleQueryRequest reads a value of the 'feature_toggle_query_request' type from the given iterator.
+func readFeatureToggleQueryRequest(iterator *jsoniter.Iterator) *FeatureToggleQueryRequest {
 	object := &FeatureToggleQueryRequest{}
 	for {
 		field := iterator.ReadObject()

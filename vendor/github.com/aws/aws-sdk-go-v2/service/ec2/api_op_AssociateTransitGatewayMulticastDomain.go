@@ -12,12 +12,10 @@ import (
 )
 
 // Associates the specified subnets and transit gateway attachments with the
-// specified transit gateway multicast domain.
-//
-// The transit gateway attachment must be in the available state before you can
-// add a resource. Use [DescribeTransitGatewayAttachments]to see the state of the attachment.
-//
-// [DescribeTransitGatewayAttachments]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeTransitGatewayAttachments.html
+// specified transit gateway multicast domain. The transit gateway attachment must
+// be in the available state before you can add a resource. Use
+// DescribeTransitGatewayAttachments (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeTransitGatewayAttachments.html)
+// to see the state of the attachment.
 func (c *Client) AssociateTransitGatewayMulticastDomain(ctx context.Context, params *AssociateTransitGatewayMulticastDomainInput, optFns ...func(*Options)) (*AssociateTransitGatewayMulticastDomainOutput, error) {
 	if params == nil {
 		params = &AssociateTransitGatewayMulticastDomainInput{}
@@ -114,9 +112,6 @@ func (c *Client) addOperationAssociateTransitGatewayMulticastDomainMiddlewares(s
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -127,15 +122,6 @@ func (c *Client) addOperationAssociateTransitGatewayMulticastDomainMiddlewares(s
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpAssociateTransitGatewayMulticastDomainValidationMiddleware(stack); err != nil {
@@ -157,18 +143,6 @@ func (c *Client) addOperationAssociateTransitGatewayMulticastDomainMiddlewares(s
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

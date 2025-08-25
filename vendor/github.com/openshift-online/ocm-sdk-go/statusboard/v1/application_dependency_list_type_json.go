@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalApplicationDependencyList(list []*ApplicationDependency, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteApplicationDependencyList(list, stream)
+	writeApplicationDependencyList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalApplicationDependencyList(list []*ApplicationDependency, writer io.W
 	return stream.Error
 }
 
-// WriteApplicationDependencyList writes a list of value of the 'application_dependency' type to
+// writeApplicationDependencyList writes a list of value of the 'application_dependency' type to
 // the given stream.
-func WriteApplicationDependencyList(list []*ApplicationDependency, stream *jsoniter.Stream) {
+func writeApplicationDependencyList(list []*ApplicationDependency, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteApplicationDependency(value, stream)
+		writeApplicationDependency(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalApplicationDependencyList(source interface{}) (items []*Applicatio
 	if err != nil {
 		return
 	}
-	items = ReadApplicationDependencyList(iterator)
+	items = readApplicationDependencyList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadApplicationDependencyList reads list of values of the ”application_dependency' type from
+// readApplicationDependencyList reads list of values of the ”application_dependency' type from
 // the given iterator.
-func ReadApplicationDependencyList(iterator *jsoniter.Iterator) []*ApplicationDependency {
+func readApplicationDependencyList(iterator *jsoniter.Iterator) []*ApplicationDependency {
 	list := []*ApplicationDependency{}
 	for iterator.ReadArray() {
-		item := ReadApplicationDependency(iterator)
+		item := readApplicationDependency(iterator)
 		list = append(list, item)
 	}
 	return list

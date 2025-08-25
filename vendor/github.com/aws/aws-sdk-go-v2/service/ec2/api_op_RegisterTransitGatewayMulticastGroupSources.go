@@ -12,17 +12,12 @@ import (
 )
 
 // Registers sources (network interfaces) with the specified transit gateway
-// multicast group.
-//
-// A multicast source is a network interface attached to a supported instance that
-// sends multicast traffic. For more information about supported instances, see [Multicast on transit gateways]in
-// the Amazon Web Services Transit Gateways Guide.
-//
-// After you add the source, use [SearchTransitGatewayMulticastGroups] to verify that the source was added to the
-// multicast group.
-//
-// [SearchTransitGatewayMulticastGroups]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_SearchTransitGatewayMulticastGroups.html
-// [Multicast on transit gateways]: https://docs.aws.amazon.com/vpc/latest/tgw/tgw-multicast-overview.html
+// multicast group. A multicast source is a network interface attached to a
+// supported instance that sends multicast traffic. For information about supported
+// instances, see Multicast Considerations (https://docs.aws.amazon.com/vpc/latest/tgw/transit-gateway-limits.html#multicast-limits)
+// in Amazon VPC Transit Gateways. After you add the source, use
+// SearchTransitGatewayMulticastGroups (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_SearchTransitGatewayMulticastGroups.html)
+// to verify that the source was added to the multicast group.
 func (c *Client) RegisterTransitGatewayMulticastGroupSources(ctx context.Context, params *RegisterTransitGatewayMulticastGroupSourcesInput, optFns ...func(*Options)) (*RegisterTransitGatewayMulticastGroupSourcesOutput, error) {
 	if params == nil {
 		params = &RegisterTransitGatewayMulticastGroupSourcesInput{}
@@ -117,9 +112,6 @@ func (c *Client) addOperationRegisterTransitGatewayMulticastGroupSourcesMiddlewa
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -130,15 +122,6 @@ func (c *Client) addOperationRegisterTransitGatewayMulticastGroupSourcesMiddlewa
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpRegisterTransitGatewayMulticastGroupSourcesValidationMiddleware(stack); err != nil {
@@ -160,18 +143,6 @@ func (c *Client) addOperationRegisterTransitGatewayMulticastGroupSourcesMiddlewa
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

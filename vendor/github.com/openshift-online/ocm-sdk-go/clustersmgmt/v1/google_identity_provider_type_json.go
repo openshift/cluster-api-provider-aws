@@ -29,7 +29,7 @@ import (
 // MarshalGoogleIdentityProvider writes a value of the 'google_identity_provider' type to the given writer.
 func MarshalGoogleIdentityProvider(object *GoogleIdentityProvider, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteGoogleIdentityProvider(object, stream)
+	writeGoogleIdentityProvider(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalGoogleIdentityProvider(object *GoogleIdentityProvider, writer io.Wri
 	return stream.Error
 }
 
-// WriteGoogleIdentityProvider writes a value of the 'google_identity_provider' type to the given stream.
-func WriteGoogleIdentityProvider(object *GoogleIdentityProvider, stream *jsoniter.Stream) {
+// writeGoogleIdentityProvider writes a value of the 'google_identity_provider' type to the given stream.
+func writeGoogleIdentityProvider(object *GoogleIdentityProvider, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -78,13 +78,13 @@ func UnmarshalGoogleIdentityProvider(source interface{}) (object *GoogleIdentity
 	if err != nil {
 		return
 	}
-	object = ReadGoogleIdentityProvider(iterator)
+	object = readGoogleIdentityProvider(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadGoogleIdentityProvider reads a value of the 'google_identity_provider' type from the given iterator.
-func ReadGoogleIdentityProvider(iterator *jsoniter.Iterator) *GoogleIdentityProvider {
+// readGoogleIdentityProvider reads a value of the 'google_identity_provider' type from the given iterator.
+func readGoogleIdentityProvider(iterator *jsoniter.Iterator) *GoogleIdentityProvider {
 	object := &GoogleIdentityProvider{}
 	for {
 		field := iterator.ReadObject()

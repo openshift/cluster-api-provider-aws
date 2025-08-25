@@ -29,7 +29,7 @@ import (
 // MarshalFlavour writes a value of the 'flavour' type to the given writer.
 func MarshalFlavour(object *Flavour, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteFlavour(object, stream)
+	writeFlavour(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalFlavour(object *Flavour, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteFlavour writes a value of the 'flavour' type to the given stream.
-func WriteFlavour(object *Flavour, stream *jsoniter.Stream) {
+// writeFlavour writes a value of the 'flavour' type to the given stream.
+func writeFlavour(object *Flavour, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -71,7 +71,7 @@ func WriteFlavour(object *Flavour, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("aws")
-		WriteAWSFlavour(object.aws, stream)
+		writeAWSFlavour(object.aws, stream)
 		count++
 	}
 	present_ = object.bitmap_&16 != 0 && object.gcp != nil
@@ -80,7 +80,7 @@ func WriteFlavour(object *Flavour, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("gcp")
-		WriteGCPFlavour(object.gcp, stream)
+		writeGCPFlavour(object.gcp, stream)
 		count++
 	}
 	present_ = object.bitmap_&32 != 0
@@ -98,7 +98,7 @@ func WriteFlavour(object *Flavour, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("network")
-		WriteNetwork(object.network, stream)
+		writeNetwork(object.network, stream)
 		count++
 	}
 	present_ = object.bitmap_&128 != 0 && object.nodes != nil
@@ -107,7 +107,7 @@ func WriteFlavour(object *Flavour, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("nodes")
-		WriteFlavourNodes(object.nodes, stream)
+		writeFlavourNodes(object.nodes, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -119,13 +119,13 @@ func UnmarshalFlavour(source interface{}) (object *Flavour, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadFlavour(iterator)
+	object = readFlavour(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadFlavour reads a value of the 'flavour' type from the given iterator.
-func ReadFlavour(iterator *jsoniter.Iterator) *Flavour {
+// readFlavour reads a value of the 'flavour' type from the given iterator.
+func readFlavour(iterator *jsoniter.Iterator) *Flavour {
 	object := &Flavour{}
 	for {
 		field := iterator.ReadObject()
@@ -145,11 +145,11 @@ func ReadFlavour(iterator *jsoniter.Iterator) *Flavour {
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
 		case "aws":
-			value := ReadAWSFlavour(iterator)
+			value := readAWSFlavour(iterator)
 			object.aws = value
 			object.bitmap_ |= 8
 		case "gcp":
-			value := ReadGCPFlavour(iterator)
+			value := readGCPFlavour(iterator)
 			object.gcp = value
 			object.bitmap_ |= 16
 		case "name":
@@ -157,11 +157,11 @@ func ReadFlavour(iterator *jsoniter.Iterator) *Flavour {
 			object.name = value
 			object.bitmap_ |= 32
 		case "network":
-			value := ReadNetwork(iterator)
+			value := readNetwork(iterator)
 			object.network = value
 			object.bitmap_ |= 64
 		case "nodes":
-			value := ReadFlavourNodes(iterator)
+			value := readFlavourNodes(iterator)
 			object.nodes = value
 			object.bitmap_ |= 128
 		default:

@@ -751,9 +751,7 @@ func ValidateSubnetsCount(multiAZ bool, privateLink bool, subnetsInputCount int)
 	return nil
 }
 
-func ValidateHostedClusterSubnets(awsClient aws.Client, isPrivate bool, subnetIDs []string,
-	privateIngress bool) (int, error) {
-
+func ValidateHostedClusterSubnets(awsClient aws.Client, isPrivate bool, subnetIDs []string) (int, error) {
 	if isPrivate && len(subnetIDs) < 1 {
 		return 0, fmt.Errorf("The number of subnets for a private hosted cluster should be at least one")
 	}
@@ -783,7 +781,7 @@ func ValidateHostedClusterSubnets(awsClient aws.Client, isPrivate bool, subnetID
 	privateSubnetCount := len(privateSubnets)
 	publicSubnetsCount := len(subnets) - privateSubnetCount
 
-	if isPrivate && privateIngress {
+	if isPrivate {
 		if publicSubnetsCount > 0 {
 			return 0, fmt.Errorf("The number of public subnets for a private hosted cluster should be zero")
 		}
@@ -895,7 +893,7 @@ func (c *Client) GetVersionsList(channelGroup string, defaultFirst bool) ([]stri
 	return versionList, nil
 }
 
-func ValidateOperatorRolesMatchOidcProvider(reporter reporter.Logger, awsClient aws.Client,
+func ValidateOperatorRolesMatchOidcProvider(reporter *reporter.Object, awsClient aws.Client,
 	operatorIAMRoleList []OperatorIAMRole, oidcEndpointUrl string,
 	clusterVersion string, expectedOperatorRolePath string,
 	accountRolesHasManagedPolicies bool, logOperatorRoles bool) error {

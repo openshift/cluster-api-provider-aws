@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalClusterRegistrationRequestList(list []*ClusterRegistrationRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteClusterRegistrationRequestList(list, stream)
+	writeClusterRegistrationRequestList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalClusterRegistrationRequestList(list []*ClusterRegistrationRequest, w
 	return stream.Error
 }
 
-// WriteClusterRegistrationRequestList writes a list of value of the 'cluster_registration_request' type to
+// writeClusterRegistrationRequestList writes a list of value of the 'cluster_registration_request' type to
 // the given stream.
-func WriteClusterRegistrationRequestList(list []*ClusterRegistrationRequest, stream *jsoniter.Stream) {
+func writeClusterRegistrationRequestList(list []*ClusterRegistrationRequest, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteClusterRegistrationRequest(value, stream)
+		writeClusterRegistrationRequest(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalClusterRegistrationRequestList(source interface{}) (items []*Clust
 	if err != nil {
 		return
 	}
-	items = ReadClusterRegistrationRequestList(iterator)
+	items = readClusterRegistrationRequestList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadClusterRegistrationRequestList reads list of values of the ”cluster_registration_request' type from
+// readClusterRegistrationRequestList reads list of values of the ”cluster_registration_request' type from
 // the given iterator.
-func ReadClusterRegistrationRequestList(iterator *jsoniter.Iterator) []*ClusterRegistrationRequest {
+func readClusterRegistrationRequestList(iterator *jsoniter.Iterator) []*ClusterRegistrationRequest {
 	list := []*ClusterRegistrationRequest{}
 	for iterator.ReadArray() {
-		item := ReadClusterRegistrationRequest(iterator)
+		item := readClusterRegistrationRequest(iterator)
 		list = append(list, item)
 	}
 	return list

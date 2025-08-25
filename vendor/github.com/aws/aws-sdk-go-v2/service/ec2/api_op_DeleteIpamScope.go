@@ -11,11 +11,9 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Delete the scope for an IPAM. You cannot delete the default scopes.
-//
-// For more information, see [Delete a scope] in the Amazon VPC IPAM User Guide.
-//
-// [Delete a scope]: https://docs.aws.amazon.com/vpc/latest/ipam/delete-scope-ipam.html
+// Delete the scope for an IPAM. You cannot delete the default scopes. For more
+// information, see Delete a scope (https://docs.aws.amazon.com/vpc/latest/ipam/delete-scope-ipam.html)
+// in the Amazon VPC IPAM User Guide.
 func (c *Client) DeleteIpamScope(ctx context.Context, params *DeleteIpamScopeInput, optFns ...func(*Options)) (*DeleteIpamScopeOutput, error) {
 	if params == nil {
 		params = &DeleteIpamScopeInput{}
@@ -101,9 +99,6 @@ func (c *Client) addOperationDeleteIpamScopeMiddlewares(stack *middleware.Stack,
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -114,15 +109,6 @@ func (c *Client) addOperationDeleteIpamScopeMiddlewares(stack *middleware.Stack,
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeleteIpamScopeValidationMiddleware(stack); err != nil {
@@ -144,18 +130,6 @@ func (c *Client) addOperationDeleteIpamScopeMiddlewares(stack *middleware.Stack,
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

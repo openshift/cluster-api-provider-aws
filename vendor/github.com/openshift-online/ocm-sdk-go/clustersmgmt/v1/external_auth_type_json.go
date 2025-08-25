@@ -29,7 +29,7 @@ import (
 // MarshalExternalAuth writes a value of the 'external_auth' type to the given writer.
 func MarshalExternalAuth(object *ExternalAuth, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteExternalAuth(object, stream)
+	writeExternalAuth(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalExternalAuth(object *ExternalAuth, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteExternalAuth writes a value of the 'external_auth' type to the given stream.
-func WriteExternalAuth(object *ExternalAuth, stream *jsoniter.Stream) {
+// writeExternalAuth writes a value of the 'external_auth' type to the given stream.
+func writeExternalAuth(object *ExternalAuth, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -71,7 +71,7 @@ func WriteExternalAuth(object *ExternalAuth, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("claim")
-		WriteExternalAuthClaim(object.claim, stream)
+		writeExternalAuthClaim(object.claim, stream)
 		count++
 	}
 	present_ = object.bitmap_&16 != 0 && object.clients != nil
@@ -80,7 +80,7 @@ func WriteExternalAuth(object *ExternalAuth, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("clients")
-		WriteExternalAuthClientConfigList(object.clients, stream)
+		writeExternalAuthClientConfigList(object.clients, stream)
 		count++
 	}
 	present_ = object.bitmap_&32 != 0 && object.issuer != nil
@@ -89,7 +89,7 @@ func WriteExternalAuth(object *ExternalAuth, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("issuer")
-		WriteTokenIssuer(object.issuer, stream)
+		writeTokenIssuer(object.issuer, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -101,13 +101,13 @@ func UnmarshalExternalAuth(source interface{}) (object *ExternalAuth, err error)
 	if err != nil {
 		return
 	}
-	object = ReadExternalAuth(iterator)
+	object = readExternalAuth(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadExternalAuth reads a value of the 'external_auth' type from the given iterator.
-func ReadExternalAuth(iterator *jsoniter.Iterator) *ExternalAuth {
+// readExternalAuth reads a value of the 'external_auth' type from the given iterator.
+func readExternalAuth(iterator *jsoniter.Iterator) *ExternalAuth {
 	object := &ExternalAuth{}
 	for {
 		field := iterator.ReadObject()
@@ -127,15 +127,15 @@ func ReadExternalAuth(iterator *jsoniter.Iterator) *ExternalAuth {
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
 		case "claim":
-			value := ReadExternalAuthClaim(iterator)
+			value := readExternalAuthClaim(iterator)
 			object.claim = value
 			object.bitmap_ |= 8
 		case "clients":
-			value := ReadExternalAuthClientConfigList(iterator)
+			value := readExternalAuthClientConfigList(iterator)
 			object.clients = value
 			object.bitmap_ |= 16
 		case "issuer":
-			value := ReadTokenIssuer(iterator)
+			value := readTokenIssuer(iterator)
 			object.issuer = value
 			object.bitmap_ |= 32
 		default:

@@ -31,7 +31,7 @@ import (
 // the given writer.
 func MarshalDateList(list []time.Time, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteDateList(list, stream)
+	writeDateList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -39,9 +39,9 @@ func MarshalDateList(list []time.Time, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteDateList writes a list of value of the 'date' type to
+// writeDateList writes a list of value of the 'date' type to
 // the given stream.
-func WriteDateList(list []time.Time, stream *jsoniter.Stream) {
+func writeDateList(list []time.Time, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -59,14 +59,14 @@ func UnmarshalDateList(source interface{}) (items []time.Time, err error) {
 	if err != nil {
 		return
 	}
-	items = ReadDateList(iterator)
+	items = readDateList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadDateList reads list of values of the ”date' type from
+// readDateList reads list of values of the ”date' type from
 // the given iterator.
-func ReadDateList(iterator *jsoniter.Iterator) []time.Time {
+func readDateList(iterator *jsoniter.Iterator) []time.Time {
 	list := []time.Time{}
 	for iterator.ReadArray() {
 		text := iterator.ReadString()

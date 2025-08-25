@@ -29,7 +29,7 @@ import (
 // MarshalAzureNodePool writes a value of the 'azure_node_pool' type to the given writer.
 func MarshalAzureNodePool(object *AzureNodePool, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAzureNodePool(object, stream)
+	writeAzureNodePool(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAzureNodePool(object *AzureNodePool, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteAzureNodePool writes a value of the 'azure_node_pool' type to the given stream.
-func WriteAzureNodePool(object *AzureNodePool, stream *jsoniter.Stream) {
+// writeAzureNodePool writes a value of the 'azure_node_pool' type to the given stream.
+func writeAzureNodePool(object *AzureNodePool, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -96,13 +96,13 @@ func UnmarshalAzureNodePool(source interface{}) (object *AzureNodePool, err erro
 	if err != nil {
 		return
 	}
-	object = ReadAzureNodePool(iterator)
+	object = readAzureNodePool(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAzureNodePool reads a value of the 'azure_node_pool' type from the given iterator.
-func ReadAzureNodePool(iterator *jsoniter.Iterator) *AzureNodePool {
+// readAzureNodePool reads a value of the 'azure_node_pool' type from the given iterator.
+func readAzureNodePool(iterator *jsoniter.Iterator) *AzureNodePool {
 	object := &AzureNodePool{}
 	for {
 		field := iterator.ReadObject()

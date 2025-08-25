@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalQueueList(list []*Queue, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteQueueList(list, stream)
+	writeQueueList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalQueueList(list []*Queue, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteQueueList writes a list of value of the 'queue' type to
+// writeQueueList writes a list of value of the 'queue' type to
 // the given stream.
-func WriteQueueList(list []*Queue, stream *jsoniter.Stream) {
+func writeQueueList(list []*Queue, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteQueue(value, stream)
+		writeQueue(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalQueueList(source interface{}) (items []*Queue, err error) {
 	if err != nil {
 		return
 	}
-	items = ReadQueueList(iterator)
+	items = readQueueList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadQueueList reads list of values of the ”queue' type from
+// readQueueList reads list of values of the ”queue' type from
 // the given iterator.
-func ReadQueueList(iterator *jsoniter.Iterator) []*Queue {
+func readQueueList(iterator *jsoniter.Iterator) []*Queue {
 	list := []*Queue{}
 	for iterator.ReadArray() {
-		item := ReadQueue(iterator)
+		item := readQueue(iterator)
 		list = append(list, item)
 	}
 	return list

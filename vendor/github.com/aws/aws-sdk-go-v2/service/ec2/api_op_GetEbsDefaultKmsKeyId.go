@@ -11,12 +11,10 @@ import (
 )
 
 // Describes the default KMS key for EBS encryption by default for your account in
-// this Region. You can change the default KMS key for encryption by default using ModifyEbsDefaultKmsKeyId
-// or ResetEbsDefaultKmsKeyId.
-//
-// For more information, see [Amazon EBS encryption] in the Amazon EBS User Guide.
-//
-// [Amazon EBS encryption]: https://docs.aws.amazon.com/ebs/latest/userguide/ebs-encryption.html
+// this Region. You can change the default KMS key for encryption by default using
+// ModifyEbsDefaultKmsKeyId or ResetEbsDefaultKmsKeyId . For more information, see
+// Amazon EBS encryption (https://docs.aws.amazon.com/ebs/latest/userguide/ebs-encryption.html)
+// in the Amazon EBS User Guide.
 func (c *Client) GetEbsDefaultKmsKeyId(ctx context.Context, params *GetEbsDefaultKmsKeyIdInput, optFns ...func(*Options)) (*GetEbsDefaultKmsKeyIdOutput, error) {
 	if params == nil {
 		params = &GetEbsDefaultKmsKeyIdInput{}
@@ -97,9 +95,6 @@ func (c *Client) addOperationGetEbsDefaultKmsKeyIdMiddlewares(stack *middleware.
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -110,15 +105,6 @@ func (c *Client) addOperationGetEbsDefaultKmsKeyIdMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetEbsDefaultKmsKeyId(options.Region), middleware.Before); err != nil {
@@ -137,18 +123,6 @@ func (c *Client) addOperationGetEbsDefaultKmsKeyIdMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

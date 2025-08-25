@@ -29,7 +29,7 @@ import (
 // MarshalSubscriptionMetrics writes a value of the 'subscription_metrics' type to the given writer.
 func MarshalSubscriptionMetrics(object *SubscriptionMetrics, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteSubscriptionMetrics(object, stream)
+	writeSubscriptionMetrics(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalSubscriptionMetrics(object *SubscriptionMetrics, writer io.Writer) e
 	return stream.Error
 }
 
-// WriteSubscriptionMetrics writes a value of the 'subscription_metrics' type to the given stream.
-func WriteSubscriptionMetrics(object *SubscriptionMetrics, stream *jsoniter.Stream) {
+// writeSubscriptionMetrics writes a value of the 'subscription_metrics' type to the given stream.
+func writeSubscriptionMetrics(object *SubscriptionMetrics, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -57,7 +57,7 @@ func WriteSubscriptionMetrics(object *SubscriptionMetrics, stream *jsoniter.Stre
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("compute_nodes_cpu")
-		WriteClusterResource(object.computeNodesCpu, stream)
+		writeClusterResource(object.computeNodesCpu, stream)
 		count++
 	}
 	present_ = object.bitmap_&4 != 0 && object.computeNodesMemory != nil
@@ -66,7 +66,7 @@ func WriteSubscriptionMetrics(object *SubscriptionMetrics, stream *jsoniter.Stre
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("compute_nodes_memory")
-		WriteClusterResource(object.computeNodesMemory, stream)
+		writeClusterResource(object.computeNodesMemory, stream)
 		count++
 	}
 	present_ = object.bitmap_&8 != 0 && object.computeNodesSockets != nil
@@ -75,7 +75,7 @@ func WriteSubscriptionMetrics(object *SubscriptionMetrics, stream *jsoniter.Stre
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("compute_nodes_sockets")
-		WriteClusterResource(object.computeNodesSockets, stream)
+		writeClusterResource(object.computeNodesSockets, stream)
 		count++
 	}
 	present_ = object.bitmap_&16 != 0
@@ -93,7 +93,7 @@ func WriteSubscriptionMetrics(object *SubscriptionMetrics, stream *jsoniter.Stre
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("cpu")
-		WriteClusterResource(object.cpu, stream)
+		writeClusterResource(object.cpu, stream)
 		count++
 	}
 	present_ = object.bitmap_&64 != 0
@@ -120,7 +120,7 @@ func WriteSubscriptionMetrics(object *SubscriptionMetrics, stream *jsoniter.Stre
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("memory")
-		WriteClusterResource(object.memory, stream)
+		writeClusterResource(object.memory, stream)
 		count++
 	}
 	present_ = object.bitmap_&512 != 0 && object.nodes != nil
@@ -129,7 +129,7 @@ func WriteSubscriptionMetrics(object *SubscriptionMetrics, stream *jsoniter.Stre
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("nodes")
-		WriteClusterMetricsNodes(object.nodes, stream)
+		writeClusterMetricsNodes(object.nodes, stream)
 		count++
 	}
 	present_ = object.bitmap_&1024 != 0
@@ -174,7 +174,7 @@ func WriteSubscriptionMetrics(object *SubscriptionMetrics, stream *jsoniter.Stre
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("sockets")
-		WriteClusterResource(object.sockets, stream)
+		writeClusterResource(object.sockets, stream)
 		count++
 	}
 	present_ = object.bitmap_&32768 != 0
@@ -201,7 +201,7 @@ func WriteSubscriptionMetrics(object *SubscriptionMetrics, stream *jsoniter.Stre
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("storage")
-		WriteClusterResource(object.storage, stream)
+		writeClusterResource(object.storage, stream)
 		count++
 	}
 	present_ = object.bitmap_&262144 != 0
@@ -237,7 +237,7 @@ func WriteSubscriptionMetrics(object *SubscriptionMetrics, stream *jsoniter.Stre
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("upgrade")
-		WriteClusterUpgrade(object.upgrade, stream)
+		writeClusterUpgrade(object.upgrade, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -249,13 +249,13 @@ func UnmarshalSubscriptionMetrics(source interface{}) (object *SubscriptionMetri
 	if err != nil {
 		return
 	}
-	object = ReadSubscriptionMetrics(iterator)
+	object = readSubscriptionMetrics(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadSubscriptionMetrics reads a value of the 'subscription_metrics' type from the given iterator.
-func ReadSubscriptionMetrics(iterator *jsoniter.Iterator) *SubscriptionMetrics {
+// readSubscriptionMetrics reads a value of the 'subscription_metrics' type from the given iterator.
+func readSubscriptionMetrics(iterator *jsoniter.Iterator) *SubscriptionMetrics {
 	object := &SubscriptionMetrics{}
 	for {
 		field := iterator.ReadObject()
@@ -268,15 +268,15 @@ func ReadSubscriptionMetrics(iterator *jsoniter.Iterator) *SubscriptionMetrics {
 			object.cloudProvider = value
 			object.bitmap_ |= 1
 		case "compute_nodes_cpu":
-			value := ReadClusterResource(iterator)
+			value := readClusterResource(iterator)
 			object.computeNodesCpu = value
 			object.bitmap_ |= 2
 		case "compute_nodes_memory":
-			value := ReadClusterResource(iterator)
+			value := readClusterResource(iterator)
 			object.computeNodesMemory = value
 			object.bitmap_ |= 4
 		case "compute_nodes_sockets":
-			value := ReadClusterResource(iterator)
+			value := readClusterResource(iterator)
 			object.computeNodesSockets = value
 			object.bitmap_ |= 8
 		case "console_url":
@@ -284,7 +284,7 @@ func ReadSubscriptionMetrics(iterator *jsoniter.Iterator) *SubscriptionMetrics {
 			object.consoleUrl = value
 			object.bitmap_ |= 16
 		case "cpu":
-			value := ReadClusterResource(iterator)
+			value := readClusterResource(iterator)
 			object.cpu = value
 			object.bitmap_ |= 32
 		case "critical_alerts_firing":
@@ -296,11 +296,11 @@ func ReadSubscriptionMetrics(iterator *jsoniter.Iterator) *SubscriptionMetrics {
 			object.healthState = value
 			object.bitmap_ |= 128
 		case "memory":
-			value := ReadClusterResource(iterator)
+			value := readClusterResource(iterator)
 			object.memory = value
 			object.bitmap_ |= 256
 		case "nodes":
-			value := ReadClusterMetricsNodes(iterator)
+			value := readClusterMetricsNodes(iterator)
 			object.nodes = value
 			object.bitmap_ |= 512
 		case "openshift_version":
@@ -320,7 +320,7 @@ func ReadSubscriptionMetrics(iterator *jsoniter.Iterator) *SubscriptionMetrics {
 			object.region = value
 			object.bitmap_ |= 8192
 		case "sockets":
-			value := ReadClusterResource(iterator)
+			value := readClusterResource(iterator)
 			object.sockets = value
 			object.bitmap_ |= 16384
 		case "state":
@@ -332,7 +332,7 @@ func ReadSubscriptionMetrics(iterator *jsoniter.Iterator) *SubscriptionMetrics {
 			object.stateDescription = value
 			object.bitmap_ |= 65536
 		case "storage":
-			value := ReadClusterResource(iterator)
+			value := readClusterResource(iterator)
 			object.storage = value
 			object.bitmap_ |= 131072
 		case "subscription_cpu_total":
@@ -348,7 +348,7 @@ func ReadSubscriptionMetrics(iterator *jsoniter.Iterator) *SubscriptionMetrics {
 			object.subscriptionSocketTotal = value
 			object.bitmap_ |= 1048576
 		case "upgrade":
-			value := ReadClusterUpgrade(iterator)
+			value := readClusterUpgrade(iterator)
 			object.upgrade = value
 			object.bitmap_ |= 2097152
 		default:

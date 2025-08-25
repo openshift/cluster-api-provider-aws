@@ -29,7 +29,7 @@ import (
 // MarshalAWSVolume writes a value of the 'AWS_volume' type to the given writer.
 func MarshalAWSVolume(object *AWSVolume, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAWSVolume(object, stream)
+	writeAWSVolume(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAWSVolume(object *AWSVolume, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteAWSVolume writes a value of the 'AWS_volume' type to the given stream.
-func WriteAWSVolume(object *AWSVolume, stream *jsoniter.Stream) {
+// writeAWSVolume writes a value of the 'AWS_volume' type to the given stream.
+func writeAWSVolume(object *AWSVolume, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -69,13 +69,13 @@ func UnmarshalAWSVolume(source interface{}) (object *AWSVolume, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadAWSVolume(iterator)
+	object = readAWSVolume(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAWSVolume reads a value of the 'AWS_volume' type from the given iterator.
-func ReadAWSVolume(iterator *jsoniter.Iterator) *AWSVolume {
+// readAWSVolume reads a value of the 'AWS_volume' type from the given iterator.
+func readAWSVolume(iterator *jsoniter.Iterator) *AWSVolume {
 	object := &AWSVolume{}
 	for {
 		field := iterator.ReadObject()

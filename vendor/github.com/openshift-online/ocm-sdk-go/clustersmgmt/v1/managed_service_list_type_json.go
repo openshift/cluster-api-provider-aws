@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalManagedServiceList(list []*ManagedService, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteManagedServiceList(list, stream)
+	writeManagedServiceList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalManagedServiceList(list []*ManagedService, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteManagedServiceList writes a list of value of the 'managed_service' type to
+// writeManagedServiceList writes a list of value of the 'managed_service' type to
 // the given stream.
-func WriteManagedServiceList(list []*ManagedService, stream *jsoniter.Stream) {
+func writeManagedServiceList(list []*ManagedService, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteManagedService(value, stream)
+		writeManagedService(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalManagedServiceList(source interface{}) (items []*ManagedService, e
 	if err != nil {
 		return
 	}
-	items = ReadManagedServiceList(iterator)
+	items = readManagedServiceList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadManagedServiceList reads list of values of the ”managed_service' type from
+// readManagedServiceList reads list of values of the ”managed_service' type from
 // the given iterator.
-func ReadManagedServiceList(iterator *jsoniter.Iterator) []*ManagedService {
+func readManagedServiceList(iterator *jsoniter.Iterator) []*ManagedService {
 	list := []*ManagedService{}
 	for iterator.ReadArray() {
-		item := ReadManagedService(iterator)
+		item := readManagedService(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -29,7 +29,7 @@ import (
 // MarshalFlavourNodes writes a value of the 'flavour_nodes' type to the given writer.
 func MarshalFlavourNodes(object *FlavourNodes, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteFlavourNodes(object, stream)
+	writeFlavourNodes(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalFlavourNodes(object *FlavourNodes, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteFlavourNodes writes a value of the 'flavour_nodes' type to the given stream.
-func WriteFlavourNodes(object *FlavourNodes, stream *jsoniter.Stream) {
+// writeFlavourNodes writes a value of the 'flavour_nodes' type to the given stream.
+func writeFlavourNodes(object *FlavourNodes, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -60,13 +60,13 @@ func UnmarshalFlavourNodes(source interface{}) (object *FlavourNodes, err error)
 	if err != nil {
 		return
 	}
-	object = ReadFlavourNodes(iterator)
+	object = readFlavourNodes(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadFlavourNodes reads a value of the 'flavour_nodes' type from the given iterator.
-func ReadFlavourNodes(iterator *jsoniter.Iterator) *FlavourNodes {
+// readFlavourNodes reads a value of the 'flavour_nodes' type from the given iterator.
+func readFlavourNodes(iterator *jsoniter.Iterator) *FlavourNodes {
 	object := &FlavourNodes{}
 	for {
 		field := iterator.ReadObject()

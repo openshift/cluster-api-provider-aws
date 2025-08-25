@@ -29,7 +29,7 @@ import (
 // MarshalStatefulObject writes a value of the 'stateful_object' type to the given writer.
 func MarshalStatefulObject(object *StatefulObject, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteStatefulObject(object, stream)
+	writeStatefulObject(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalStatefulObject(object *StatefulObject, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteStatefulObject writes a value of the 'stateful_object' type to the given stream.
-func WriteStatefulObject(object *StatefulObject, stream *jsoniter.Stream) {
+// writeStatefulObject writes a value of the 'stateful_object' type to the given stream.
+func writeStatefulObject(object *StatefulObject, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -87,13 +87,13 @@ func UnmarshalStatefulObject(source interface{}) (object *StatefulObject, err er
 	if err != nil {
 		return
 	}
-	object = ReadStatefulObject(iterator)
+	object = readStatefulObject(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadStatefulObject reads a value of the 'stateful_object' type from the given iterator.
-func ReadStatefulObject(iterator *jsoniter.Iterator) *StatefulObject {
+// readStatefulObject reads a value of the 'stateful_object' type from the given iterator.
+func readStatefulObject(iterator *jsoniter.Iterator) *StatefulObject {
 	object := &StatefulObject{}
 	for {
 		field := iterator.ReadObject()

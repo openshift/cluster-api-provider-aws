@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalProductMinimalVersionList(list []*ProductMinimalVersion, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteProductMinimalVersionList(list, stream)
+	writeProductMinimalVersionList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalProductMinimalVersionList(list []*ProductMinimalVersion, writer io.W
 	return stream.Error
 }
 
-// WriteProductMinimalVersionList writes a list of value of the 'product_minimal_version' type to
+// writeProductMinimalVersionList writes a list of value of the 'product_minimal_version' type to
 // the given stream.
-func WriteProductMinimalVersionList(list []*ProductMinimalVersion, stream *jsoniter.Stream) {
+func writeProductMinimalVersionList(list []*ProductMinimalVersion, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteProductMinimalVersion(value, stream)
+		writeProductMinimalVersion(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalProductMinimalVersionList(source interface{}) (items []*ProductMin
 	if err != nil {
 		return
 	}
-	items = ReadProductMinimalVersionList(iterator)
+	items = readProductMinimalVersionList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadProductMinimalVersionList reads list of values of the ”product_minimal_version' type from
+// readProductMinimalVersionList reads list of values of the ”product_minimal_version' type from
 // the given iterator.
-func ReadProductMinimalVersionList(iterator *jsoniter.Iterator) []*ProductMinimalVersion {
+func readProductMinimalVersionList(iterator *jsoniter.Iterator) []*ProductMinimalVersion {
 	list := []*ProductMinimalVersion{}
 	for iterator.ReadArray() {
-		item := ReadProductMinimalVersion(iterator)
+		item := readProductMinimalVersion(iterator)
 		list = append(list, item)
 	}
 	return list

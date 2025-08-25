@@ -30,7 +30,7 @@ import (
 // MarshalCPUTotalNodeRoleOSMetricNode writes a value of the 'CPU_total_node_role_OS_metric_node' type to the given writer.
 func MarshalCPUTotalNodeRoleOSMetricNode(object *CPUTotalNodeRoleOSMetricNode, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteCPUTotalNodeRoleOSMetricNode(object, stream)
+	writeCPUTotalNodeRoleOSMetricNode(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalCPUTotalNodeRoleOSMetricNode(object *CPUTotalNodeRoleOSMetricNode, w
 	return stream.Error
 }
 
-// WriteCPUTotalNodeRoleOSMetricNode writes a value of the 'CPU_total_node_role_OS_metric_node' type to the given stream.
-func WriteCPUTotalNodeRoleOSMetricNode(object *CPUTotalNodeRoleOSMetricNode, stream *jsoniter.Stream) {
+// writeCPUTotalNodeRoleOSMetricNode writes a value of the 'CPU_total_node_role_OS_metric_node' type to the given stream.
+func writeCPUTotalNodeRoleOSMetricNode(object *CPUTotalNodeRoleOSMetricNode, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -58,7 +58,7 @@ func WriteCPUTotalNodeRoleOSMetricNode(object *CPUTotalNodeRoleOSMetricNode, str
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("node_roles")
-		WriteStringList(object.nodeRoles, stream)
+		writeStringList(object.nodeRoles, stream)
 		count++
 	}
 	present_ = object.bitmap_&4 != 0
@@ -88,13 +88,13 @@ func UnmarshalCPUTotalNodeRoleOSMetricNode(source interface{}) (object *CPUTotal
 	if err != nil {
 		return
 	}
-	object = ReadCPUTotalNodeRoleOSMetricNode(iterator)
+	object = readCPUTotalNodeRoleOSMetricNode(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadCPUTotalNodeRoleOSMetricNode reads a value of the 'CPU_total_node_role_OS_metric_node' type from the given iterator.
-func ReadCPUTotalNodeRoleOSMetricNode(iterator *jsoniter.Iterator) *CPUTotalNodeRoleOSMetricNode {
+// readCPUTotalNodeRoleOSMetricNode reads a value of the 'CPU_total_node_role_OS_metric_node' type from the given iterator.
+func readCPUTotalNodeRoleOSMetricNode(iterator *jsoniter.Iterator) *CPUTotalNodeRoleOSMetricNode {
 	object := &CPUTotalNodeRoleOSMetricNode{}
 	for {
 		field := iterator.ReadObject()
@@ -107,7 +107,7 @@ func ReadCPUTotalNodeRoleOSMetricNode(iterator *jsoniter.Iterator) *CPUTotalNode
 			object.cpuTotal = value
 			object.bitmap_ |= 1
 		case "node_roles":
-			value := ReadStringList(iterator)
+			value := readStringList(iterator)
 			object.nodeRoles = value
 			object.bitmap_ |= 2
 		case "operating_system":

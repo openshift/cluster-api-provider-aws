@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalPlatformList(list []Platform, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WritePlatformList(list, stream)
+	writePlatformList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,9 +38,9 @@ func MarshalPlatformList(list []Platform, writer io.Writer) error {
 	return stream.Error
 }
 
-// WritePlatformList writes a list of value of the 'platform' type to
+// writePlatformList writes a list of value of the 'platform' type to
 // the given stream.
-func WritePlatformList(list []Platform, stream *jsoniter.Stream) {
+func writePlatformList(list []Platform, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -58,14 +58,14 @@ func UnmarshalPlatformList(source interface{}) (items []Platform, err error) {
 	if err != nil {
 		return
 	}
-	items = ReadPlatformList(iterator)
+	items = readPlatformList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadPlatformList reads list of values of the ”platform' type from
+// readPlatformList reads list of values of the ”platform' type from
 // the given iterator.
-func ReadPlatformList(iterator *jsoniter.Iterator) []Platform {
+func readPlatformList(iterator *jsoniter.Iterator) []Platform {
 	list := []Platform{}
 	for iterator.ReadArray() {
 		text := iterator.ReadString()

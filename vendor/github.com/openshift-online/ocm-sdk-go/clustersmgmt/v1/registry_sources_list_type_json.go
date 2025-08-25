@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalRegistrySourcesList(list []*RegistrySources, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteRegistrySourcesList(list, stream)
+	writeRegistrySourcesList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalRegistrySourcesList(list []*RegistrySources, writer io.Writer) error
 	return stream.Error
 }
 
-// WriteRegistrySourcesList writes a list of value of the 'registry_sources' type to
+// writeRegistrySourcesList writes a list of value of the 'registry_sources' type to
 // the given stream.
-func WriteRegistrySourcesList(list []*RegistrySources, stream *jsoniter.Stream) {
+func writeRegistrySourcesList(list []*RegistrySources, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteRegistrySources(value, stream)
+		writeRegistrySources(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalRegistrySourcesList(source interface{}) (items []*RegistrySources,
 	if err != nil {
 		return
 	}
-	items = ReadRegistrySourcesList(iterator)
+	items = readRegistrySourcesList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadRegistrySourcesList reads list of values of the ”registry_sources' type from
+// readRegistrySourcesList reads list of values of the ”registry_sources' type from
 // the given iterator.
-func ReadRegistrySourcesList(iterator *jsoniter.Iterator) []*RegistrySources {
+func readRegistrySourcesList(iterator *jsoniter.Iterator) []*RegistrySources {
 	list := []*RegistrySources{}
 	for iterator.ReadArray() {
-		item := ReadRegistrySources(iterator)
+		item := readRegistrySources(iterator)
 		list = append(list, item)
 	}
 	return list

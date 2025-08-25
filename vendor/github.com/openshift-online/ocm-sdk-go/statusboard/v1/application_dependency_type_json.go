@@ -30,7 +30,7 @@ import (
 // MarshalApplicationDependency writes a value of the 'application_dependency' type to the given writer.
 func MarshalApplicationDependency(object *ApplicationDependency, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteApplicationDependency(object, stream)
+	writeApplicationDependency(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalApplicationDependency(object *ApplicationDependency, writer io.Write
 	return stream.Error
 }
 
-// WriteApplicationDependency writes a value of the 'application_dependency' type to the given stream.
-func WriteApplicationDependency(object *ApplicationDependency, stream *jsoniter.Stream) {
+// writeApplicationDependency writes a value of the 'application_dependency' type to the given stream.
+func writeApplicationDependency(object *ApplicationDependency, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -72,7 +72,7 @@ func WriteApplicationDependency(object *ApplicationDependency, stream *jsoniter.
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("application")
-		WriteApplication(object.application, stream)
+		writeApplication(object.application, stream)
 		count++
 	}
 	present_ = object.bitmap_&16 != 0
@@ -108,7 +108,7 @@ func WriteApplicationDependency(object *ApplicationDependency, stream *jsoniter.
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("owners")
-		WriteOwnerList(object.owners, stream)
+		writeOwnerList(object.owners, stream)
 		count++
 	}
 	present_ = object.bitmap_&256 != 0 && object.service != nil
@@ -117,7 +117,7 @@ func WriteApplicationDependency(object *ApplicationDependency, stream *jsoniter.
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("service")
-		WriteService(object.service, stream)
+		writeService(object.service, stream)
 		count++
 	}
 	present_ = object.bitmap_&512 != 0
@@ -147,13 +147,13 @@ func UnmarshalApplicationDependency(source interface{}) (object *ApplicationDepe
 	if err != nil {
 		return
 	}
-	object = ReadApplicationDependency(iterator)
+	object = readApplicationDependency(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadApplicationDependency reads a value of the 'application_dependency' type from the given iterator.
-func ReadApplicationDependency(iterator *jsoniter.Iterator) *ApplicationDependency {
+// readApplicationDependency reads a value of the 'application_dependency' type from the given iterator.
+func readApplicationDependency(iterator *jsoniter.Iterator) *ApplicationDependency {
 	object := &ApplicationDependency{}
 	for {
 		field := iterator.ReadObject()
@@ -173,7 +173,7 @@ func ReadApplicationDependency(iterator *jsoniter.Iterator) *ApplicationDependen
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
 		case "application":
-			value := ReadApplication(iterator)
+			value := readApplication(iterator)
 			object.application = value
 			object.bitmap_ |= 8
 		case "created_at":
@@ -194,11 +194,11 @@ func ReadApplicationDependency(iterator *jsoniter.Iterator) *ApplicationDependen
 			object.name = value
 			object.bitmap_ |= 64
 		case "owners":
-			value := ReadOwnerList(iterator)
+			value := readOwnerList(iterator)
 			object.owners = value
 			object.bitmap_ |= 128
 		case "service":
-			value := ReadService(iterator)
+			value := readService(iterator)
 			object.service = value
 			object.bitmap_ |= 256
 		case "type":

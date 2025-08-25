@@ -7,7 +7,6 @@ package encoding
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -261,7 +260,7 @@ func writeTableSection(w io.Writer, s module.TableSection) error {
 				return err
 			}
 		default:
-			return errors.New("illegal table element type")
+			return fmt.Errorf("illegal table element type")
 		}
 		if err := writeLimits(&buf, table.Lim); err != nil {
 			return err
@@ -589,7 +588,7 @@ func writeImport(w io.Writer, imp module.Import) error {
 		}
 		return writeByte(w, constant.Const)
 	default:
-		return errors.New("illegal import descriptor type")
+		return fmt.Errorf("illegal import descriptor type")
 	}
 }
 

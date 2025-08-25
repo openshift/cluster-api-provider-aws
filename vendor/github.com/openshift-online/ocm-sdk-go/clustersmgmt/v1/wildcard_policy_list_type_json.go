@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalWildcardPolicyList(list []WildcardPolicy, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteWildcardPolicyList(list, stream)
+	writeWildcardPolicyList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,9 +38,9 @@ func MarshalWildcardPolicyList(list []WildcardPolicy, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteWildcardPolicyList writes a list of value of the 'wildcard_policy' type to
+// writeWildcardPolicyList writes a list of value of the 'wildcard_policy' type to
 // the given stream.
-func WriteWildcardPolicyList(list []WildcardPolicy, stream *jsoniter.Stream) {
+func writeWildcardPolicyList(list []WildcardPolicy, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -58,14 +58,14 @@ func UnmarshalWildcardPolicyList(source interface{}) (items []WildcardPolicy, er
 	if err != nil {
 		return
 	}
-	items = ReadWildcardPolicyList(iterator)
+	items = readWildcardPolicyList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadWildcardPolicyList reads list of values of the ”wildcard_policy' type from
+// readWildcardPolicyList reads list of values of the ”wildcard_policy' type from
 // the given iterator.
-func ReadWildcardPolicyList(iterator *jsoniter.Iterator) []WildcardPolicy {
+func readWildcardPolicyList(iterator *jsoniter.Iterator) []WildcardPolicy {
 	list := []WildcardPolicy{}
 	for iterator.ReadArray() {
 		text := iterator.ReadString()

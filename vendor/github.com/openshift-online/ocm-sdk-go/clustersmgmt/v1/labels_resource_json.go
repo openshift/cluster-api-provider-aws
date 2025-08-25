@@ -57,7 +57,7 @@ func readLabelsListResponse(response *LabelsListResponse, reader io.Reader) erro
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadLabelList(iterator)
+			items := readLabelList(iterator)
 			response.items = &LabelList{
 				items: items,
 			}

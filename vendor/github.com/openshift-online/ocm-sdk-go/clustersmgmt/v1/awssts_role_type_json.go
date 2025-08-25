@@ -29,7 +29,7 @@ import (
 // MarshalAWSSTSRole writes a value of the 'AWSSTS_role' type to the given writer.
 func MarshalAWSSTSRole(object *AWSSTSRole, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAWSSTSRole(object, stream)
+	writeAWSSTSRole(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAWSSTSRole(object *AWSSTSRole, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteAWSSTSRole writes a value of the 'AWSSTS_role' type to the given stream.
-func WriteAWSSTSRole(object *AWSSTSRole, stream *jsoniter.Stream) {
+// writeAWSSTSRole writes a value of the 'AWSSTS_role' type to the given stream.
+func writeAWSSTSRole(object *AWSSTSRole, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -105,13 +105,13 @@ func UnmarshalAWSSTSRole(source interface{}) (object *AWSSTSRole, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadAWSSTSRole(iterator)
+	object = readAWSSTSRole(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAWSSTSRole reads a value of the 'AWSSTS_role' type from the given iterator.
-func ReadAWSSTSRole(iterator *jsoniter.Iterator) *AWSSTSRole {
+// readAWSSTSRole reads a value of the 'AWSSTS_role' type from the given iterator.
+func readAWSSTSRole(iterator *jsoniter.Iterator) *AWSSTSRole {
 	object := &AWSSTSRole{}
 	for {
 		field := iterator.ReadObject()

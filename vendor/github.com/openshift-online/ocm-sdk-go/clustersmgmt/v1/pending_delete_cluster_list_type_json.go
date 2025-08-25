@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalPendingDeleteClusterList(list []*PendingDeleteCluster, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WritePendingDeleteClusterList(list, stream)
+	writePendingDeleteClusterList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalPendingDeleteClusterList(list []*PendingDeleteCluster, writer io.Wri
 	return stream.Error
 }
 
-// WritePendingDeleteClusterList writes a list of value of the 'pending_delete_cluster' type to
+// writePendingDeleteClusterList writes a list of value of the 'pending_delete_cluster' type to
 // the given stream.
-func WritePendingDeleteClusterList(list []*PendingDeleteCluster, stream *jsoniter.Stream) {
+func writePendingDeleteClusterList(list []*PendingDeleteCluster, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WritePendingDeleteCluster(value, stream)
+		writePendingDeleteCluster(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalPendingDeleteClusterList(source interface{}) (items []*PendingDele
 	if err != nil {
 		return
 	}
-	items = ReadPendingDeleteClusterList(iterator)
+	items = readPendingDeleteClusterList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadPendingDeleteClusterList reads list of values of the ”pending_delete_cluster' type from
+// readPendingDeleteClusterList reads list of values of the ”pending_delete_cluster' type from
 // the given iterator.
-func ReadPendingDeleteClusterList(iterator *jsoniter.Iterator) []*PendingDeleteCluster {
+func readPendingDeleteClusterList(iterator *jsoniter.Iterator) []*PendingDeleteCluster {
 	list := []*PendingDeleteCluster{}
 	for iterator.ReadArray() {
-		item := ReadPendingDeleteCluster(iterator)
+		item := readPendingDeleteCluster(iterator)
 		list = append(list, item)
 	}
 	return list

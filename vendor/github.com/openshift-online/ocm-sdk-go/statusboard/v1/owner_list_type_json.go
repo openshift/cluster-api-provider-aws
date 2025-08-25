@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalOwnerList(list []*Owner, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteOwnerList(list, stream)
+	writeOwnerList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalOwnerList(list []*Owner, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteOwnerList writes a list of value of the 'owner' type to
+// writeOwnerList writes a list of value of the 'owner' type to
 // the given stream.
-func WriteOwnerList(list []*Owner, stream *jsoniter.Stream) {
+func writeOwnerList(list []*Owner, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteOwner(value, stream)
+		writeOwner(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalOwnerList(source interface{}) (items []*Owner, err error) {
 	if err != nil {
 		return
 	}
-	items = ReadOwnerList(iterator)
+	items = readOwnerList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadOwnerList reads list of values of the ”owner' type from
+// readOwnerList reads list of values of the ”owner' type from
 // the given iterator.
-func ReadOwnerList(iterator *jsoniter.Iterator) []*Owner {
+func readOwnerList(iterator *jsoniter.Iterator) []*Owner {
 	list := []*Owner{}
 	for iterator.ReadArray() {
-		item := ReadOwner(iterator)
+		item := readOwner(iterator)
 		list = append(list, item)
 	}
 	return list

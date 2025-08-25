@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalNodePoolAutoscalingList(list []*NodePoolAutoscaling, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteNodePoolAutoscalingList(list, stream)
+	writeNodePoolAutoscalingList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalNodePoolAutoscalingList(list []*NodePoolAutoscaling, writer io.Write
 	return stream.Error
 }
 
-// WriteNodePoolAutoscalingList writes a list of value of the 'node_pool_autoscaling' type to
+// writeNodePoolAutoscalingList writes a list of value of the 'node_pool_autoscaling' type to
 // the given stream.
-func WriteNodePoolAutoscalingList(list []*NodePoolAutoscaling, stream *jsoniter.Stream) {
+func writeNodePoolAutoscalingList(list []*NodePoolAutoscaling, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteNodePoolAutoscaling(value, stream)
+		writeNodePoolAutoscaling(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalNodePoolAutoscalingList(source interface{}) (items []*NodePoolAuto
 	if err != nil {
 		return
 	}
-	items = ReadNodePoolAutoscalingList(iterator)
+	items = readNodePoolAutoscalingList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadNodePoolAutoscalingList reads list of values of the ”node_pool_autoscaling' type from
+// readNodePoolAutoscalingList reads list of values of the ”node_pool_autoscaling' type from
 // the given iterator.
-func ReadNodePoolAutoscalingList(iterator *jsoniter.Iterator) []*NodePoolAutoscaling {
+func readNodePoolAutoscalingList(iterator *jsoniter.Iterator) []*NodePoolAutoscaling {
 	list := []*NodePoolAutoscaling{}
 	for iterator.ReadArray() {
-		item := ReadNodePoolAutoscaling(iterator)
+		item := readNodePoolAutoscaling(iterator)
 		list = append(list, item)
 	}
 	return list

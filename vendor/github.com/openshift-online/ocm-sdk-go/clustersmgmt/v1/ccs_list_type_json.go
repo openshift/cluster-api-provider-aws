@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalCCSList(list []*CCS, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteCCSList(list, stream)
+	writeCCSList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalCCSList(list []*CCS, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteCCSList writes a list of value of the 'CCS' type to
+// writeCCSList writes a list of value of the 'CCS' type to
 // the given stream.
-func WriteCCSList(list []*CCS, stream *jsoniter.Stream) {
+func writeCCSList(list []*CCS, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteCCS(value, stream)
+		writeCCS(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalCCSList(source interface{}) (items []*CCS, err error) {
 	if err != nil {
 		return
 	}
-	items = ReadCCSList(iterator)
+	items = readCCSList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadCCSList reads list of values of the ”CCS' type from
+// readCCSList reads list of values of the ”CCS' type from
 // the given iterator.
-func ReadCCSList(iterator *jsoniter.Iterator) []*CCS {
+func readCCSList(iterator *jsoniter.Iterator) []*CCS {
 	list := []*CCS{}
 	for iterator.ReadArray() {
-		item := ReadCCS(iterator)
+		item := readCCS(iterator)
 		list = append(list, item)
 	}
 	return list

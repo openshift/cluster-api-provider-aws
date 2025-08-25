@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalNotificationList(list []*Notification, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteNotificationList(list, stream)
+	writeNotificationList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalNotificationList(list []*Notification, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteNotificationList writes a list of value of the 'notification' type to
+// writeNotificationList writes a list of value of the 'notification' type to
 // the given stream.
-func WriteNotificationList(list []*Notification, stream *jsoniter.Stream) {
+func writeNotificationList(list []*Notification, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteNotification(value, stream)
+		writeNotification(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalNotificationList(source interface{}) (items []*Notification, err e
 	if err != nil {
 		return
 	}
-	items = ReadNotificationList(iterator)
+	items = readNotificationList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadNotificationList reads list of values of the ”notification' type from
+// readNotificationList reads list of values of the ”notification' type from
 // the given iterator.
-func ReadNotificationList(iterator *jsoniter.Iterator) []*Notification {
+func readNotificationList(iterator *jsoniter.Iterator) []*Notification {
 	list := []*Notification{}
 	for iterator.ReadArray() {
-		item := ReadNotification(iterator)
+		item := readNotification(iterator)
 		list = append(list, item)
 	}
 	return list

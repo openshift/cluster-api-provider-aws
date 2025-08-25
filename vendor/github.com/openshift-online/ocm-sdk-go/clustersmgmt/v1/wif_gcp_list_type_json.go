@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalWifGcpList(list []*WifGcp, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteWifGcpList(list, stream)
+	writeWifGcpList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalWifGcpList(list []*WifGcp, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteWifGcpList writes a list of value of the 'wif_gcp' type to
+// writeWifGcpList writes a list of value of the 'wif_gcp' type to
 // the given stream.
-func WriteWifGcpList(list []*WifGcp, stream *jsoniter.Stream) {
+func writeWifGcpList(list []*WifGcp, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteWifGcp(value, stream)
+		writeWifGcp(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalWifGcpList(source interface{}) (items []*WifGcp, err error) {
 	if err != nil {
 		return
 	}
-	items = ReadWifGcpList(iterator)
+	items = readWifGcpList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadWifGcpList reads list of values of the ”wif_gcp' type from
+// readWifGcpList reads list of values of the ”wif_gcp' type from
 // the given iterator.
-func ReadWifGcpList(iterator *jsoniter.Iterator) []*WifGcp {
+func readWifGcpList(iterator *jsoniter.Iterator) []*WifGcp {
 	list := []*WifGcp{}
 	for iterator.ReadArray() {
-		item := ReadWifGcp(iterator)
+		item := readWifGcp(iterator)
 		list = append(list, item)
 	}
 	return list

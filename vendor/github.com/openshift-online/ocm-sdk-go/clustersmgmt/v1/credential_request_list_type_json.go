@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalCredentialRequestList(list []*CredentialRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteCredentialRequestList(list, stream)
+	writeCredentialRequestList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalCredentialRequestList(list []*CredentialRequest, writer io.Writer) e
 	return stream.Error
 }
 
-// WriteCredentialRequestList writes a list of value of the 'credential_request' type to
+// writeCredentialRequestList writes a list of value of the 'credential_request' type to
 // the given stream.
-func WriteCredentialRequestList(list []*CredentialRequest, stream *jsoniter.Stream) {
+func writeCredentialRequestList(list []*CredentialRequest, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteCredentialRequest(value, stream)
+		writeCredentialRequest(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalCredentialRequestList(source interface{}) (items []*CredentialRequ
 	if err != nil {
 		return
 	}
-	items = ReadCredentialRequestList(iterator)
+	items = readCredentialRequestList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadCredentialRequestList reads list of values of the ”credential_request' type from
+// readCredentialRequestList reads list of values of the ”credential_request' type from
 // the given iterator.
-func ReadCredentialRequestList(iterator *jsoniter.Iterator) []*CredentialRequest {
+func readCredentialRequestList(iterator *jsoniter.Iterator) []*CredentialRequest {
 	list := []*CredentialRequest{}
 	for iterator.ReadArray() {
-		item := ReadCredentialRequest(iterator)
+		item := readCredentialRequest(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -120,9 +120,6 @@ func (c *Client) addOperationGetIpamDiscoveredResourceCidrsMiddlewares(stack *mi
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -133,15 +130,6 @@ func (c *Client) addOperationGetIpamDiscoveredResourceCidrsMiddlewares(stack *mi
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpGetIpamDiscoveredResourceCidrsValidationMiddleware(stack); err != nil {
@@ -165,20 +153,16 @@ func (c *Client) addOperationGetIpamDiscoveredResourceCidrsMiddlewares(stack *mi
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
-		return err
-	}
 	return nil
 }
+
+// GetIpamDiscoveredResourceCidrsAPIClient is a client that implements the
+// GetIpamDiscoveredResourceCidrs operation.
+type GetIpamDiscoveredResourceCidrsAPIClient interface {
+	GetIpamDiscoveredResourceCidrs(context.Context, *GetIpamDiscoveredResourceCidrsInput, ...func(*Options)) (*GetIpamDiscoveredResourceCidrsOutput, error)
+}
+
+var _ GetIpamDiscoveredResourceCidrsAPIClient = (*Client)(nil)
 
 // GetIpamDiscoveredResourceCidrsPaginatorOptions is the paginator options for
 // GetIpamDiscoveredResourceCidrs
@@ -247,9 +231,6 @@ func (p *GetIpamDiscoveredResourceCidrsPaginator) NextPage(ctx context.Context, 
 	}
 	params.MaxResults = limit
 
-	optFns = append([]func(*Options){
-		addIsPaginatorUserAgent,
-	}, optFns...)
 	result, err := p.client.GetIpamDiscoveredResourceCidrs(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -268,14 +249,6 @@ func (p *GetIpamDiscoveredResourceCidrsPaginator) NextPage(ctx context.Context, 
 
 	return result, nil
 }
-
-// GetIpamDiscoveredResourceCidrsAPIClient is a client that implements the
-// GetIpamDiscoveredResourceCidrs operation.
-type GetIpamDiscoveredResourceCidrsAPIClient interface {
-	GetIpamDiscoveredResourceCidrs(context.Context, *GetIpamDiscoveredResourceCidrsInput, ...func(*Options)) (*GetIpamDiscoveredResourceCidrsOutput, error)
-}
-
-var _ GetIpamDiscoveredResourceCidrsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opGetIpamDiscoveredResourceCidrs(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

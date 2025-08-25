@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAzureControlPlaneManagedIdentityList(list []*AzureControlPlaneManagedIdentity, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAzureControlPlaneManagedIdentityList(list, stream)
+	writeAzureControlPlaneManagedIdentityList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAzureControlPlaneManagedIdentityList(list []*AzureControlPlaneManage
 	return stream.Error
 }
 
-// WriteAzureControlPlaneManagedIdentityList writes a list of value of the 'azure_control_plane_managed_identity' type to
+// writeAzureControlPlaneManagedIdentityList writes a list of value of the 'azure_control_plane_managed_identity' type to
 // the given stream.
-func WriteAzureControlPlaneManagedIdentityList(list []*AzureControlPlaneManagedIdentity, stream *jsoniter.Stream) {
+func writeAzureControlPlaneManagedIdentityList(list []*AzureControlPlaneManagedIdentity, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteAzureControlPlaneManagedIdentity(value, stream)
+		writeAzureControlPlaneManagedIdentity(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAzureControlPlaneManagedIdentityList(source interface{}) (items []
 	if err != nil {
 		return
 	}
-	items = ReadAzureControlPlaneManagedIdentityList(iterator)
+	items = readAzureControlPlaneManagedIdentityList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAzureControlPlaneManagedIdentityList reads list of values of the ”azure_control_plane_managed_identity' type from
+// readAzureControlPlaneManagedIdentityList reads list of values of the ”azure_control_plane_managed_identity' type from
 // the given iterator.
-func ReadAzureControlPlaneManagedIdentityList(iterator *jsoniter.Iterator) []*AzureControlPlaneManagedIdentity {
+func readAzureControlPlaneManagedIdentityList(iterator *jsoniter.Iterator) []*AzureControlPlaneManagedIdentity {
 	list := []*AzureControlPlaneManagedIdentity{}
 	for iterator.ReadArray() {
-		item := ReadAzureControlPlaneManagedIdentity(iterator)
+		item := readAzureControlPlaneManagedIdentity(iterator)
 		list = append(list, item)
 	}
 	return list

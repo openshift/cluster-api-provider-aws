@@ -91,20 +91,14 @@ func (m *crdMigrator) run(ctx context.Context, newCRD *apiextensionsv1.CustomRes
 
 	// Get the current CRD.
 	currentCRD := &apiextensionsv1.CustomResourceDefinition{}
-	crdNotFound := false
 	if err := retryWithExponentialBackoff(ctx, newReadBackoff(), func(ctx context.Context) error {
-		err := m.Client.Get(ctx, client.ObjectKeyFromObject(newCRD), currentCRD)
-		if apierrors.IsNotFound(err) {
-			crdNotFound = true
-			return nil
-		}
-		return err
+		return m.Client.Get(ctx, client.ObjectKeyFromObject(newCRD), currentCRD)
 	}); err != nil {
+		// Return if the CRD doesn't exist yet. We only have to migrate if the CRD exists already.
+		if apierrors.IsNotFound(err) {
+			return false, nil
+		}
 		return false, err
-	}
-	// Return if the CRD doesn't exist yet. We only have to migrate if the CRD exists already.
-	if crdNotFound {
-		return false, nil
 	}
 
 	// Get the storage version of the current CRD.

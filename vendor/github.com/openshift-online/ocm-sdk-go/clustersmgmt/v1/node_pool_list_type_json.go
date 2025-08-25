@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalNodePoolList(list []*NodePool, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteNodePoolList(list, stream)
+	writeNodePoolList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalNodePoolList(list []*NodePool, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteNodePoolList writes a list of value of the 'node_pool' type to
+// writeNodePoolList writes a list of value of the 'node_pool' type to
 // the given stream.
-func WriteNodePoolList(list []*NodePool, stream *jsoniter.Stream) {
+func writeNodePoolList(list []*NodePool, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteNodePool(value, stream)
+		writeNodePool(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalNodePoolList(source interface{}) (items []*NodePool, err error) {
 	if err != nil {
 		return
 	}
-	items = ReadNodePoolList(iterator)
+	items = readNodePoolList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadNodePoolList reads list of values of the ”node_pool' type from
+// readNodePoolList reads list of values of the ”node_pool' type from
 // the given iterator.
-func ReadNodePoolList(iterator *jsoniter.Iterator) []*NodePool {
+func readNodePoolList(iterator *jsoniter.Iterator) []*NodePool {
 	list := []*NodePool{}
 	for iterator.ReadArray() {
-		item := ReadNodePool(iterator)
+		item := readNodePool(iterator)
 		list = append(list, item)
 	}
 	return list

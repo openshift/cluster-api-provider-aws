@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalQuotaAuthorizationResponseList(list []*QuotaAuthorizationResponse, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteQuotaAuthorizationResponseList(list, stream)
+	writeQuotaAuthorizationResponseList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalQuotaAuthorizationResponseList(list []*QuotaAuthorizationResponse, w
 	return stream.Error
 }
 
-// WriteQuotaAuthorizationResponseList writes a list of value of the 'quota_authorization_response' type to
+// writeQuotaAuthorizationResponseList writes a list of value of the 'quota_authorization_response' type to
 // the given stream.
-func WriteQuotaAuthorizationResponseList(list []*QuotaAuthorizationResponse, stream *jsoniter.Stream) {
+func writeQuotaAuthorizationResponseList(list []*QuotaAuthorizationResponse, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteQuotaAuthorizationResponse(value, stream)
+		writeQuotaAuthorizationResponse(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalQuotaAuthorizationResponseList(source interface{}) (items []*Quota
 	if err != nil {
 		return
 	}
-	items = ReadQuotaAuthorizationResponseList(iterator)
+	items = readQuotaAuthorizationResponseList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadQuotaAuthorizationResponseList reads list of values of the ”quota_authorization_response' type from
+// readQuotaAuthorizationResponseList reads list of values of the ”quota_authorization_response' type from
 // the given iterator.
-func ReadQuotaAuthorizationResponseList(iterator *jsoniter.Iterator) []*QuotaAuthorizationResponse {
+func readQuotaAuthorizationResponseList(iterator *jsoniter.Iterator) []*QuotaAuthorizationResponse {
 	list := []*QuotaAuthorizationResponse{}
 	for iterator.ReadArray() {
-		item := ReadQuotaAuthorizationResponse(iterator)
+		item := readQuotaAuthorizationResponse(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -49,7 +49,7 @@ func readVersionsListResponse(response *VersionsListResponse, reader io.Reader) 
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadVersionList(iterator)
+			items := readVersionList(iterator)
 			response.items = &VersionList{
 				items: items,
 			}

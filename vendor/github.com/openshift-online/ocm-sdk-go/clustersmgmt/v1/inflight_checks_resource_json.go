@@ -49,7 +49,7 @@ func readInflightChecksListResponse(response *InflightChecksListResponse, reader
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadInflightCheckList(iterator)
+			items := readInflightCheckList(iterator)
 			response.items = &InflightCheckList{
 				items: items,
 			}

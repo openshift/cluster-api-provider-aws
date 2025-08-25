@@ -29,7 +29,7 @@ import (
 // MarshalLDAPIdentityProvider writes a value of the 'LDAP_identity_provider' type to the given writer.
 func MarshalLDAPIdentityProvider(object *LDAPIdentityProvider, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteLDAPIdentityProvider(object, stream)
+	writeLDAPIdentityProvider(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalLDAPIdentityProvider(object *LDAPIdentityProvider, writer io.Writer)
 	return stream.Error
 }
 
-// WriteLDAPIdentityProvider writes a value of the 'LDAP_identity_provider' type to the given stream.
-func WriteLDAPIdentityProvider(object *LDAPIdentityProvider, stream *jsoniter.Stream) {
+// writeLDAPIdentityProvider writes a value of the 'LDAP_identity_provider' type to the given stream.
+func writeLDAPIdentityProvider(object *LDAPIdentityProvider, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -66,7 +66,7 @@ func WriteLDAPIdentityProvider(object *LDAPIdentityProvider, stream *jsoniter.St
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("attributes")
-		WriteLDAPAttributes(object.attributes, stream)
+		writeLDAPAttributes(object.attributes, stream)
 		count++
 	}
 	present_ = object.bitmap_&8 != 0
@@ -105,13 +105,13 @@ func UnmarshalLDAPIdentityProvider(source interface{}) (object *LDAPIdentityProv
 	if err != nil {
 		return
 	}
-	object = ReadLDAPIdentityProvider(iterator)
+	object = readLDAPIdentityProvider(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadLDAPIdentityProvider reads a value of the 'LDAP_identity_provider' type from the given iterator.
-func ReadLDAPIdentityProvider(iterator *jsoniter.Iterator) *LDAPIdentityProvider {
+// readLDAPIdentityProvider reads a value of the 'LDAP_identity_provider' type from the given iterator.
+func readLDAPIdentityProvider(iterator *jsoniter.Iterator) *LDAPIdentityProvider {
 	object := &LDAPIdentityProvider{}
 	for {
 		field := iterator.ReadObject()
@@ -128,7 +128,7 @@ func ReadLDAPIdentityProvider(iterator *jsoniter.Iterator) *LDAPIdentityProvider
 			object.url = value
 			object.bitmap_ |= 2
 		case "attributes":
-			value := ReadLDAPAttributes(iterator)
+			value := readLDAPAttributes(iterator)
 			object.attributes = value
 			object.bitmap_ |= 4
 		case "bind_dn":

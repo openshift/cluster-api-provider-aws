@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAWSList(list []*AWS, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAWSList(list, stream)
+	writeAWSList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAWSList(list []*AWS, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteAWSList writes a list of value of the 'AWS' type to
+// writeAWSList writes a list of value of the 'AWS' type to
 // the given stream.
-func WriteAWSList(list []*AWS, stream *jsoniter.Stream) {
+func writeAWSList(list []*AWS, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteAWS(value, stream)
+		writeAWS(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAWSList(source interface{}) (items []*AWS, err error) {
 	if err != nil {
 		return
 	}
-	items = ReadAWSList(iterator)
+	items = readAWSList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAWSList reads list of values of the ”AWS' type from
+// readAWSList reads list of values of the ”AWS' type from
 // the given iterator.
-func ReadAWSList(iterator *jsoniter.Iterator) []*AWS {
+func readAWSList(iterator *jsoniter.Iterator) []*AWS {
 	list := []*AWS{}
 	for iterator.ReadArray() {
-		item := ReadAWS(iterator)
+		item := readAWS(iterator)
 		list = append(list, item)
 	}
 	return list

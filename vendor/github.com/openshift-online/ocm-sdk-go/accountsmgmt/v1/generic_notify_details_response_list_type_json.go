@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalGenericNotifyDetailsResponseList(list []*GenericNotifyDetailsResponse, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteGenericNotifyDetailsResponseList(list, stream)
+	writeGenericNotifyDetailsResponseList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalGenericNotifyDetailsResponseList(list []*GenericNotifyDetailsRespons
 	return stream.Error
 }
 
-// WriteGenericNotifyDetailsResponseList writes a list of value of the 'generic_notify_details_response' type to
+// writeGenericNotifyDetailsResponseList writes a list of value of the 'generic_notify_details_response' type to
 // the given stream.
-func WriteGenericNotifyDetailsResponseList(list []*GenericNotifyDetailsResponse, stream *jsoniter.Stream) {
+func writeGenericNotifyDetailsResponseList(list []*GenericNotifyDetailsResponse, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteGenericNotifyDetailsResponse(value, stream)
+		writeGenericNotifyDetailsResponse(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalGenericNotifyDetailsResponseList(source interface{}) (items []*Gen
 	if err != nil {
 		return
 	}
-	items = ReadGenericNotifyDetailsResponseList(iterator)
+	items = readGenericNotifyDetailsResponseList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadGenericNotifyDetailsResponseList reads list of values of the ”generic_notify_details_response' type from
+// readGenericNotifyDetailsResponseList reads list of values of the ”generic_notify_details_response' type from
 // the given iterator.
-func ReadGenericNotifyDetailsResponseList(iterator *jsoniter.Iterator) []*GenericNotifyDetailsResponse {
+func readGenericNotifyDetailsResponseList(iterator *jsoniter.Iterator) []*GenericNotifyDetailsResponse {
 	list := []*GenericNotifyDetailsResponse{}
 	for iterator.ReadArray() {
-		item := ReadGenericNotifyDetailsResponse(iterator)
+		item := readGenericNotifyDetailsResponse(iterator)
 		list = append(list, item)
 	}
 	return list

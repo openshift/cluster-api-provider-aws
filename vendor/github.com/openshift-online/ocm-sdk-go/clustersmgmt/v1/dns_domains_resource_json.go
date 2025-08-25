@@ -57,7 +57,7 @@ func readDNSDomainsListResponse(response *DNSDomainsListResponse, reader io.Read
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadDNSDomainList(iterator)
+			items := readDNSDomainList(iterator)
 			response.items = &DNSDomainList{
 				items: items,
 			}

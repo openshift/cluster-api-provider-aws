@@ -11,13 +11,11 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// This action is deprecated.
-//
-// Describes the ClassicLink DNS support status of one or more VPCs. If enabled,
-// the DNS hostname of a linked EC2-Classic instance resolves to its private IP
-// address when addressed from an instance in the VPC to which it's linked.
-// Similarly, the DNS hostname of an instance in a VPC resolves to its private IP
-// address when addressed from a linked EC2-Classic instance.
+// This action is deprecated. Describes the ClassicLink DNS support status of one
+// or more VPCs. If enabled, the DNS hostname of a linked EC2-Classic instance
+// resolves to its private IP address when addressed from an instance in the VPC to
+// which it's linked. Similarly, the DNS hostname of an instance in a VPC resolves
+// to its private IP address when addressed from a linked EC2-Classic instance.
 func (c *Client) DescribeVpcClassicLinkDnsSupport(ctx context.Context, params *DescribeVpcClassicLinkDnsSupportInput, optFns ...func(*Options)) (*DescribeVpcClassicLinkDnsSupportOutput, error) {
 	if params == nil {
 		params = &DescribeVpcClassicLinkDnsSupportInput{}
@@ -37,9 +35,8 @@ type DescribeVpcClassicLinkDnsSupportInput struct {
 
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. For more
-	// information, see [Pagination].
-	//
-	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
+	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
+	// .
 	MaxResults *int32
 
 	// The token returned from a previous paginated request. Pagination continues from
@@ -110,9 +107,6 @@ func (c *Client) addOperationDescribeVpcClassicLinkDnsSupportMiddlewares(stack *
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -123,15 +117,6 @@ func (c *Client) addOperationDescribeVpcClassicLinkDnsSupportMiddlewares(stack *
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeVpcClassicLinkDnsSupport(options.Region), middleware.Before); err != nil {
@@ -152,29 +137,24 @@ func (c *Client) addOperationDescribeVpcClassicLinkDnsSupportMiddlewares(stack *
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
-		return err
-	}
 	return nil
 }
+
+// DescribeVpcClassicLinkDnsSupportAPIClient is a client that implements the
+// DescribeVpcClassicLinkDnsSupport operation.
+type DescribeVpcClassicLinkDnsSupportAPIClient interface {
+	DescribeVpcClassicLinkDnsSupport(context.Context, *DescribeVpcClassicLinkDnsSupportInput, ...func(*Options)) (*DescribeVpcClassicLinkDnsSupportOutput, error)
+}
+
+var _ DescribeVpcClassicLinkDnsSupportAPIClient = (*Client)(nil)
 
 // DescribeVpcClassicLinkDnsSupportPaginatorOptions is the paginator options for
 // DescribeVpcClassicLinkDnsSupport
 type DescribeVpcClassicLinkDnsSupportPaginatorOptions struct {
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. For more
-	// information, see [Pagination].
-	//
-	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
+	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
+	// .
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token
@@ -237,9 +217,6 @@ func (p *DescribeVpcClassicLinkDnsSupportPaginator) NextPage(ctx context.Context
 	}
 	params.MaxResults = limit
 
-	optFns = append([]func(*Options){
-		addIsPaginatorUserAgent,
-	}, optFns...)
 	result, err := p.client.DescribeVpcClassicLinkDnsSupport(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -258,14 +235,6 @@ func (p *DescribeVpcClassicLinkDnsSupportPaginator) NextPage(ctx context.Context
 
 	return result, nil
 }
-
-// DescribeVpcClassicLinkDnsSupportAPIClient is a client that implements the
-// DescribeVpcClassicLinkDnsSupport operation.
-type DescribeVpcClassicLinkDnsSupportAPIClient interface {
-	DescribeVpcClassicLinkDnsSupport(context.Context, *DescribeVpcClassicLinkDnsSupportInput, ...func(*Options)) (*DescribeVpcClassicLinkDnsSupportOutput, error)
-}
-
-var _ DescribeVpcClassicLinkDnsSupportAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeVpcClassicLinkDnsSupport(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

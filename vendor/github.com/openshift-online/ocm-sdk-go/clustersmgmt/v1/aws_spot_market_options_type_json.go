@@ -29,7 +29,7 @@ import (
 // MarshalAWSSpotMarketOptions writes a value of the 'AWS_spot_market_options' type to the given writer.
 func MarshalAWSSpotMarketOptions(object *AWSSpotMarketOptions, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAWSSpotMarketOptions(object, stream)
+	writeAWSSpotMarketOptions(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAWSSpotMarketOptions(object *AWSSpotMarketOptions, writer io.Writer)
 	return stream.Error
 }
 
-// WriteAWSSpotMarketOptions writes a value of the 'AWS_spot_market_options' type to the given stream.
-func WriteAWSSpotMarketOptions(object *AWSSpotMarketOptions, stream *jsoniter.Stream) {
+// writeAWSSpotMarketOptions writes a value of the 'AWS_spot_market_options' type to the given stream.
+func writeAWSSpotMarketOptions(object *AWSSpotMarketOptions, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -83,13 +83,13 @@ func UnmarshalAWSSpotMarketOptions(source interface{}) (object *AWSSpotMarketOpt
 	if err != nil {
 		return
 	}
-	object = ReadAWSSpotMarketOptions(iterator)
+	object = readAWSSpotMarketOptions(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAWSSpotMarketOptions reads a value of the 'AWS_spot_market_options' type from the given iterator.
-func ReadAWSSpotMarketOptions(iterator *jsoniter.Iterator) *AWSSpotMarketOptions {
+// readAWSSpotMarketOptions reads a value of the 'AWS_spot_market_options' type from the given iterator.
+func readAWSSpotMarketOptions(iterator *jsoniter.Iterator) *AWSSpotMarketOptions {
 	object := &AWSSpotMarketOptions{}
 	for {
 		field := iterator.ReadObject()

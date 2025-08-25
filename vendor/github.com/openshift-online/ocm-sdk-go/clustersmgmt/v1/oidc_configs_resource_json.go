@@ -57,7 +57,7 @@ func readOidcConfigsListResponse(response *OidcConfigsListResponse, reader io.Re
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadOidcConfigList(iterator)
+			items := readOidcConfigList(iterator)
 			response.items = &OidcConfigList{
 				items: items,
 			}

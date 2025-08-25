@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalGitlabIdentityProviderList(list []*GitlabIdentityProvider, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteGitlabIdentityProviderList(list, stream)
+	writeGitlabIdentityProviderList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalGitlabIdentityProviderList(list []*GitlabIdentityProvider, writer io
 	return stream.Error
 }
 
-// WriteGitlabIdentityProviderList writes a list of value of the 'gitlab_identity_provider' type to
+// writeGitlabIdentityProviderList writes a list of value of the 'gitlab_identity_provider' type to
 // the given stream.
-func WriteGitlabIdentityProviderList(list []*GitlabIdentityProvider, stream *jsoniter.Stream) {
+func writeGitlabIdentityProviderList(list []*GitlabIdentityProvider, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteGitlabIdentityProvider(value, stream)
+		writeGitlabIdentityProvider(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalGitlabIdentityProviderList(source interface{}) (items []*GitlabIde
 	if err != nil {
 		return
 	}
-	items = ReadGitlabIdentityProviderList(iterator)
+	items = readGitlabIdentityProviderList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadGitlabIdentityProviderList reads list of values of the ”gitlab_identity_provider' type from
+// readGitlabIdentityProviderList reads list of values of the ”gitlab_identity_provider' type from
 // the given iterator.
-func ReadGitlabIdentityProviderList(iterator *jsoniter.Iterator) []*GitlabIdentityProvider {
+func readGitlabIdentityProviderList(iterator *jsoniter.Iterator) []*GitlabIdentityProvider {
 	list := []*GitlabIdentityProvider{}
 	for iterator.ReadArray() {
-		item := ReadGitlabIdentityProvider(iterator)
+		item := readGitlabIdentityProvider(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -29,7 +29,7 @@ import (
 // MarshalAutoscalerResourceLimits writes a value of the 'autoscaler_resource_limits' type to the given writer.
 func MarshalAutoscalerResourceLimits(object *AutoscalerResourceLimits, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAutoscalerResourceLimits(object, stream)
+	writeAutoscalerResourceLimits(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalAutoscalerResourceLimits(object *AutoscalerResourceLimits, writer io
 	return stream.Error
 }
 
-// WriteAutoscalerResourceLimits writes a value of the 'autoscaler_resource_limits' type to the given stream.
-func WriteAutoscalerResourceLimits(object *AutoscalerResourceLimits, stream *jsoniter.Stream) {
+// writeAutoscalerResourceLimits writes a value of the 'autoscaler_resource_limits' type to the given stream.
+func writeAutoscalerResourceLimits(object *AutoscalerResourceLimits, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -48,7 +48,7 @@ func WriteAutoscalerResourceLimits(object *AutoscalerResourceLimits, stream *jso
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("gpus")
-		WriteAutoscalerResourceLimitsGPULimitList(object.gpus, stream)
+		writeAutoscalerResourceLimitsGPULimitList(object.gpus, stream)
 		count++
 	}
 	present_ = object.bitmap_&2 != 0 && object.cores != nil
@@ -57,7 +57,7 @@ func WriteAutoscalerResourceLimits(object *AutoscalerResourceLimits, stream *jso
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("cores")
-		WriteResourceRange(object.cores, stream)
+		writeResourceRange(object.cores, stream)
 		count++
 	}
 	present_ = object.bitmap_&4 != 0
@@ -75,7 +75,7 @@ func WriteAutoscalerResourceLimits(object *AutoscalerResourceLimits, stream *jso
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("memory")
-		WriteResourceRange(object.memory, stream)
+		writeResourceRange(object.memory, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -87,13 +87,13 @@ func UnmarshalAutoscalerResourceLimits(source interface{}) (object *AutoscalerRe
 	if err != nil {
 		return
 	}
-	object = ReadAutoscalerResourceLimits(iterator)
+	object = readAutoscalerResourceLimits(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAutoscalerResourceLimits reads a value of the 'autoscaler_resource_limits' type from the given iterator.
-func ReadAutoscalerResourceLimits(iterator *jsoniter.Iterator) *AutoscalerResourceLimits {
+// readAutoscalerResourceLimits reads a value of the 'autoscaler_resource_limits' type from the given iterator.
+func readAutoscalerResourceLimits(iterator *jsoniter.Iterator) *AutoscalerResourceLimits {
 	object := &AutoscalerResourceLimits{}
 	for {
 		field := iterator.ReadObject()
@@ -102,11 +102,11 @@ func ReadAutoscalerResourceLimits(iterator *jsoniter.Iterator) *AutoscalerResour
 		}
 		switch field {
 		case "gpus":
-			value := ReadAutoscalerResourceLimitsGPULimitList(iterator)
+			value := readAutoscalerResourceLimitsGPULimitList(iterator)
 			object.gpus = value
 			object.bitmap_ |= 1
 		case "cores":
-			value := ReadResourceRange(iterator)
+			value := readResourceRange(iterator)
 			object.cores = value
 			object.bitmap_ |= 2
 		case "max_nodes_total":
@@ -114,7 +114,7 @@ func ReadAutoscalerResourceLimits(iterator *jsoniter.Iterator) *AutoscalerResour
 			object.maxNodesTotal = value
 			object.bitmap_ |= 4
 		case "memory":
-			value := ReadResourceRange(iterator)
+			value := readResourceRange(iterator)
 			object.memory = value
 			object.bitmap_ |= 8
 		default:

@@ -2,16 +2,44 @@ package types // import "github.com/docker/docker/api/types"
 
 import (
 	"bufio"
-	"context"
 	"io"
 	"net"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/registry"
+	units "github.com/docker/go-units"
 )
 
-// NewHijackedResponse initializes a [HijackedResponse] type.
+// ContainerExecInspect holds information returned by exec inspect.
+type ContainerExecInspect struct {
+	ExecID      string `json:"ID"`
+	ContainerID string
+	Running     bool
+	ExitCode    int
+	Pid         int
+}
+
+// CopyToContainerOptions holds information
+// about files to copy into a container
+type CopyToContainerOptions struct {
+	AllowOverwriteDirWithFile bool
+	CopyUIDGID                bool
+}
+
+// EventsOptions holds parameters to filter events with.
+type EventsOptions struct {
+	Since   string
+	Until   string
+	Filters filters.Args
+}
+
+// NetworkListOptions holds parameters to filter the list of networks with.
+type NetworkListOptions struct {
+	Filters filters.Args
+}
+
+// NewHijackedResponse intializes a HijackedResponse type
 func NewHijackedResponse(conn net.Conn, mediaType string) HijackedResponse {
 	return HijackedResponse{Conn: conn, Reader: bufio.NewReader(conn), mediaType: mediaType}
 }
@@ -73,7 +101,7 @@ type ImageBuildOptions struct {
 	NetworkMode    string
 	ShmSize        int64
 	Dockerfile     string
-	Ulimits        []*container.Ulimit
+	Ulimits        []*units.Ulimit
 	// BuildArgs needs to be a *string instead of just a string so that
 	// we can tell the difference between "" (empty string) and no value
 	// at all (nil). See the parsing of buildArgs in
@@ -94,7 +122,7 @@ type ImageBuildOptions struct {
 	Target      string
 	SessionID   string
 	Platform    string
-	// Version specifies the version of the underlying builder to use
+	// Version specifies the version of the unerlying builder to use
 	Version BuilderVersion
 	// BuildID is an optional identifier that can be passed together with the
 	// build request. The same identifier can be used to gracefully cancel the
@@ -127,6 +155,35 @@ const (
 type ImageBuildResponse struct {
 	Body   io.ReadCloser
 	OSType string
+}
+
+// ImageImportSource holds source information for ImageImport
+type ImageImportSource struct {
+	Source     io.Reader // Source is the data to send to the server to create this image from. You must set SourceName to "-" to leverage this.
+	SourceName string    // SourceName is the name of the image to pull. Set to "-" to leverage the Source attribute.
+}
+
+// ImageLoadResponse returns information to the client about a load process.
+type ImageLoadResponse struct {
+	// Body must be closed to avoid a resource leak
+	Body io.ReadCloser
+	JSON bool
+}
+
+// RequestPrivilegeFunc is a function interface that
+// clients can supply to retry operations after
+// getting an authorization error.
+// This function returns the registry authentication
+// header value in base 64 format, or an error
+// if the privilege request fails.
+type RequestPrivilegeFunc func() (string, error)
+
+// ImageSearchOptions holds parameters to search images with.
+type ImageSearchOptions struct {
+	RegistryAuth  string
+	PrivilegeFunc RequestPrivilegeFunc
+	Filters       filters.Args
+	Limit         int
 }
 
 // NodeListOptions holds parameters to list nodes with.
@@ -227,19 +284,12 @@ type PluginDisableOptions struct {
 
 // PluginInstallOptions holds parameters to install a plugin.
 type PluginInstallOptions struct {
-	Disabled             bool
-	AcceptAllPermissions bool
-	RegistryAuth         string // RegistryAuth is the base64 encoded credentials for the registry
-	RemoteRef            string // RemoteRef is the plugin name on the registry
-
-	// PrivilegeFunc is a function that clients can supply to retry operations
-	// after getting an authorization error. This function returns the registry
-	// authentication header value in base64 encoded format, or an error if the
-	// privilege request fails.
-	//
-	// For details, refer to [github.com/docker/docker/api/types/registry.RequestAuthConfig].
-	PrivilegeFunc         func(context.Context) (string, error)
-	AcceptPermissionsFunc func(context.Context, PluginPrivileges) (bool, error)
+	Disabled              bool
+	AcceptAllPermissions  bool
+	RegistryAuth          string // RegistryAuth is the base64 encoded credentials for the registry
+	RemoteRef             string // RemoteRef is the plugin name on the registry
+	PrivilegeFunc         RequestPrivilegeFunc
+	AcceptPermissionsFunc func(PluginPrivileges) (bool, error)
 	Args                  []string
 }
 

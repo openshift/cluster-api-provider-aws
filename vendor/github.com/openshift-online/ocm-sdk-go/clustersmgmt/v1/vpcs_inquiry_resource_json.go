@@ -49,7 +49,7 @@ func readVpcsInquirySearchResponse(response *VpcsInquirySearchResponse, reader i
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadCloudVPCList(iterator)
+			items := readCloudVPCList(iterator)
 			response.items = &CloudVPCList{
 				items: items,
 			}

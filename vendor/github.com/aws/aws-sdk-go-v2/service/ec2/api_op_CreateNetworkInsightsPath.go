@@ -11,13 +11,10 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Creates a path to analyze for reachability.
-//
-// Reachability Analyzer enables you to analyze and debug network reachability
-// between two resources in your virtual private cloud (VPC). For more information,
-// see the [Reachability Analyzer Guide].
-//
-// [Reachability Analyzer Guide]: https://docs.aws.amazon.com/vpc/latest/reachability/
+// Creates a path to analyze for reachability. Reachability Analyzer enables you
+// to analyze and debug network reachability between two resources in your virtual
+// private cloud (VPC). For more information, see the Reachability Analyzer Guide (https://docs.aws.amazon.com/vpc/latest/reachability/)
+// .
 func (c *Client) CreateNetworkInsightsPath(ctx context.Context, params *CreateNetworkInsightsPathInput, optFns ...func(*Options)) (*CreateNetworkInsightsPathOutput, error) {
 	if params == nil {
 		params = &CreateNetworkInsightsPathInput{}
@@ -36,9 +33,8 @@ func (c *Client) CreateNetworkInsightsPath(ctx context.Context, params *CreateNe
 type CreateNetworkInsightsPathInput struct {
 
 	// Unique, case-sensitive identifier that you provide to ensure the idempotency of
-	// the request. For more information, see [How to ensure idempotency].
-	//
-	// [How to ensure idempotency]: https://docs.aws.amazon.com/ec2/latest/devguide/ec2-api-idempotency.html
+	// the request. For more information, see How to ensure idempotency (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Run_Instance_Idempotency.html)
+	// .
 	//
 	// This member is required.
 	ClientToken *string
@@ -143,9 +139,6 @@ func (c *Client) addOperationCreateNetworkInsightsPathMiddlewares(stack *middlew
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -156,15 +149,6 @@ func (c *Client) addOperationCreateNetworkInsightsPathMiddlewares(stack *middlew
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addIdempotencyToken_opCreateNetworkInsightsPathMiddleware(stack, options); err != nil {
@@ -189,18 +173,6 @@ func (c *Client) addOperationCreateNetworkInsightsPathMiddlewares(stack *middlew
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
-		return err
-	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

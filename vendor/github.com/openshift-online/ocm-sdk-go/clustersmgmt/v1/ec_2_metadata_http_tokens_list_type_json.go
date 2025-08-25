@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalEc2MetadataHttpTokensList(list []Ec2MetadataHttpTokens, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteEc2MetadataHttpTokensList(list, stream)
+	writeEc2MetadataHttpTokensList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,9 +38,9 @@ func MarshalEc2MetadataHttpTokensList(list []Ec2MetadataHttpTokens, writer io.Wr
 	return stream.Error
 }
 
-// WriteEc2MetadataHttpTokensList writes a list of value of the 'ec_2_metadata_http_tokens' type to
+// writeEc2MetadataHttpTokensList writes a list of value of the 'ec_2_metadata_http_tokens' type to
 // the given stream.
-func WriteEc2MetadataHttpTokensList(list []Ec2MetadataHttpTokens, stream *jsoniter.Stream) {
+func writeEc2MetadataHttpTokensList(list []Ec2MetadataHttpTokens, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -58,14 +58,14 @@ func UnmarshalEc2MetadataHttpTokensList(source interface{}) (items []Ec2Metadata
 	if err != nil {
 		return
 	}
-	items = ReadEc2MetadataHttpTokensList(iterator)
+	items = readEc2MetadataHttpTokensList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadEc2MetadataHttpTokensList reads list of values of the ”ec_2_metadata_http_tokens' type from
+// readEc2MetadataHttpTokensList reads list of values of the ”ec_2_metadata_http_tokens' type from
 // the given iterator.
-func ReadEc2MetadataHttpTokensList(iterator *jsoniter.Iterator) []Ec2MetadataHttpTokens {
+func readEc2MetadataHttpTokensList(iterator *jsoniter.Iterator) []Ec2MetadataHttpTokens {
 	list := []Ec2MetadataHttpTokens{}
 	for iterator.ReadArray() {
 		text := iterator.ReadString()

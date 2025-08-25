@@ -30,7 +30,7 @@ import (
 // MarshalService writes a value of the 'service' type to the given writer.
 func MarshalService(object *Service, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteService(object, stream)
+	writeService(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func MarshalService(object *Service, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteService writes a value of the 'service' type to the given stream.
-func WriteService(object *Service, stream *jsoniter.Stream) {
+// writeService writes a value of the 'service' type to the given stream.
+func writeService(object *Service, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -72,7 +72,7 @@ func WriteService(object *Service, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("application")
-		WriteApplication(object.application, stream)
+		writeApplication(object.application, stream)
 		count++
 	}
 	present_ = object.bitmap_&16 != 0
@@ -135,7 +135,7 @@ func WriteService(object *Service, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("owners")
-		WriteOwnerList(object.owners, stream)
+		writeOwnerList(object.owners, stream)
 		count++
 	}
 	present_ = object.bitmap_&2048 != 0
@@ -201,13 +201,13 @@ func UnmarshalService(source interface{}) (object *Service, err error) {
 	if err != nil {
 		return
 	}
-	object = ReadService(iterator)
+	object = readService(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadService reads a value of the 'service' type from the given iterator.
-func ReadService(iterator *jsoniter.Iterator) *Service {
+// readService reads a value of the 'service' type from the given iterator.
+func readService(iterator *jsoniter.Iterator) *Service {
 	object := &Service{}
 	for {
 		field := iterator.ReadObject()
@@ -227,7 +227,7 @@ func ReadService(iterator *jsoniter.Iterator) *Service {
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
 		case "application":
-			value := ReadApplication(iterator)
+			value := readApplication(iterator)
 			object.application = value
 			object.bitmap_ |= 8
 		case "created_at":
@@ -264,7 +264,7 @@ func ReadService(iterator *jsoniter.Iterator) *Service {
 			object.name = value
 			object.bitmap_ |= 512
 		case "owners":
-			value := ReadOwnerList(iterator)
+			value := readOwnerList(iterator)
 			object.owners = value
 			object.bitmap_ |= 1024
 		case "private":

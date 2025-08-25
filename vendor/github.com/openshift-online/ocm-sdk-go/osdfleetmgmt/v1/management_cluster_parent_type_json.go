@@ -29,7 +29,7 @@ import (
 // MarshalManagementClusterParent writes a value of the 'management_cluster_parent' type to the given writer.
 func MarshalManagementClusterParent(object *ManagementClusterParent, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteManagementClusterParent(object, stream)
+	writeManagementClusterParent(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalManagementClusterParent(object *ManagementClusterParent, writer io.W
 	return stream.Error
 }
 
-// WriteManagementClusterParent writes a value of the 'management_cluster_parent' type to the given stream.
-func WriteManagementClusterParent(object *ManagementClusterParent, stream *jsoniter.Stream) {
+// writeManagementClusterParent writes a value of the 'management_cluster_parent' type to the given stream.
+func writeManagementClusterParent(object *ManagementClusterParent, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	var present_ bool
@@ -87,13 +87,13 @@ func UnmarshalManagementClusterParent(source interface{}) (object *ManagementClu
 	if err != nil {
 		return
 	}
-	object = ReadManagementClusterParent(iterator)
+	object = readManagementClusterParent(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadManagementClusterParent reads a value of the 'management_cluster_parent' type from the given iterator.
-func ReadManagementClusterParent(iterator *jsoniter.Iterator) *ManagementClusterParent {
+// readManagementClusterParent reads a value of the 'management_cluster_parent' type from the given iterator.
+func readManagementClusterParent(iterator *jsoniter.Iterator) *ManagementClusterParent {
 	object := &ManagementClusterParent{}
 	for {
 		field := iterator.ReadObject()

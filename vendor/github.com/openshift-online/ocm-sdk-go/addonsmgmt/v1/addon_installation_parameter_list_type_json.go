@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAddonInstallationParameterList(list []*AddonInstallationParameter, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAddonInstallationParameterList(list, stream)
+	writeAddonInstallationParameterList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAddonInstallationParameterList(list []*AddonInstallationParameter, w
 	return stream.Error
 }
 
-// WriteAddonInstallationParameterList writes a list of value of the 'addon_installation_parameter' type to
+// writeAddonInstallationParameterList writes a list of value of the 'addon_installation_parameter' type to
 // the given stream.
-func WriteAddonInstallationParameterList(list []*AddonInstallationParameter, stream *jsoniter.Stream) {
+func writeAddonInstallationParameterList(list []*AddonInstallationParameter, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteAddonInstallationParameter(value, stream)
+		writeAddonInstallationParameter(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAddonInstallationParameterList(source interface{}) (items []*Addon
 	if err != nil {
 		return
 	}
-	items = ReadAddonInstallationParameterList(iterator)
+	items = readAddonInstallationParameterList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAddonInstallationParameterList reads list of values of the ”addon_installation_parameter' type from
+// readAddonInstallationParameterList reads list of values of the ”addon_installation_parameter' type from
 // the given iterator.
-func ReadAddonInstallationParameterList(iterator *jsoniter.Iterator) []*AddonInstallationParameter {
+func readAddonInstallationParameterList(iterator *jsoniter.Iterator) []*AddonInstallationParameter {
 	list := []*AddonInstallationParameter{}
 	for iterator.ReadArray() {
-		item := ReadAddonInstallationParameter(iterator)
+		item := readAddonInstallationParameter(iterator)
 		list = append(list, item)
 	}
 	return list

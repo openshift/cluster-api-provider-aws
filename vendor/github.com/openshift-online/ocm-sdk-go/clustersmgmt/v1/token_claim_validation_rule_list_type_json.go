@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalTokenClaimValidationRuleList(list []*TokenClaimValidationRule, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteTokenClaimValidationRuleList(list, stream)
+	writeTokenClaimValidationRuleList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalTokenClaimValidationRuleList(list []*TokenClaimValidationRule, write
 	return stream.Error
 }
 
-// WriteTokenClaimValidationRuleList writes a list of value of the 'token_claim_validation_rule' type to
+// writeTokenClaimValidationRuleList writes a list of value of the 'token_claim_validation_rule' type to
 // the given stream.
-func WriteTokenClaimValidationRuleList(list []*TokenClaimValidationRule, stream *jsoniter.Stream) {
+func writeTokenClaimValidationRuleList(list []*TokenClaimValidationRule, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteTokenClaimValidationRule(value, stream)
+		writeTokenClaimValidationRule(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalTokenClaimValidationRuleList(source interface{}) (items []*TokenCl
 	if err != nil {
 		return
 	}
-	items = ReadTokenClaimValidationRuleList(iterator)
+	items = readTokenClaimValidationRuleList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadTokenClaimValidationRuleList reads list of values of the ”token_claim_validation_rule' type from
+// readTokenClaimValidationRuleList reads list of values of the ”token_claim_validation_rule' type from
 // the given iterator.
-func ReadTokenClaimValidationRuleList(iterator *jsoniter.Iterator) []*TokenClaimValidationRule {
+func readTokenClaimValidationRuleList(iterator *jsoniter.Iterator) []*TokenClaimValidationRule {
 	list := []*TokenClaimValidationRule{}
 	for iterator.ReadArray() {
-		item := ReadTokenClaimValidationRule(iterator)
+		item := readTokenClaimValidationRule(iterator)
 		list = append(list, item)
 	}
 	return list

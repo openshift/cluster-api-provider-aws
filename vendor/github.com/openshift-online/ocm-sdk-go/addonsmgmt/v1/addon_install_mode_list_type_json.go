@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAddonInstallModeList(list []AddonInstallMode, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAddonInstallModeList(list, stream)
+	writeAddonInstallModeList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,9 +38,9 @@ func MarshalAddonInstallModeList(list []AddonInstallMode, writer io.Writer) erro
 	return stream.Error
 }
 
-// WriteAddonInstallModeList writes a list of value of the 'addon_install_mode' type to
+// writeAddonInstallModeList writes a list of value of the 'addon_install_mode' type to
 // the given stream.
-func WriteAddonInstallModeList(list []AddonInstallMode, stream *jsoniter.Stream) {
+func writeAddonInstallModeList(list []AddonInstallMode, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -58,14 +58,14 @@ func UnmarshalAddonInstallModeList(source interface{}) (items []AddonInstallMode
 	if err != nil {
 		return
 	}
-	items = ReadAddonInstallModeList(iterator)
+	items = readAddonInstallModeList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAddonInstallModeList reads list of values of the ”addon_install_mode' type from
+// readAddonInstallModeList reads list of values of the ”addon_install_mode' type from
 // the given iterator.
-func ReadAddonInstallModeList(iterator *jsoniter.Iterator) []AddonInstallMode {
+func readAddonInstallModeList(iterator *jsoniter.Iterator) []AddonInstallMode {
 	list := []AddonInstallMode{}
 	for iterator.ReadArray() {
 		text := iterator.ReadString()

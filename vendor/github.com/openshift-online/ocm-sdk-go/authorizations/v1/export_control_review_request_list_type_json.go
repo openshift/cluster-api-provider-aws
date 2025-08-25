@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalExportControlReviewRequestList(list []*ExportControlReviewRequest, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteExportControlReviewRequestList(list, stream)
+	writeExportControlReviewRequestList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalExportControlReviewRequestList(list []*ExportControlReviewRequest, w
 	return stream.Error
 }
 
-// WriteExportControlReviewRequestList writes a list of value of the 'export_control_review_request' type to
+// writeExportControlReviewRequestList writes a list of value of the 'export_control_review_request' type to
 // the given stream.
-func WriteExportControlReviewRequestList(list []*ExportControlReviewRequest, stream *jsoniter.Stream) {
+func writeExportControlReviewRequestList(list []*ExportControlReviewRequest, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteExportControlReviewRequest(value, stream)
+		writeExportControlReviewRequest(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalExportControlReviewRequestList(source interface{}) (items []*Expor
 	if err != nil {
 		return
 	}
-	items = ReadExportControlReviewRequestList(iterator)
+	items = readExportControlReviewRequestList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadExportControlReviewRequestList reads list of values of the ”export_control_review_request' type from
+// readExportControlReviewRequestList reads list of values of the ”export_control_review_request' type from
 // the given iterator.
-func ReadExportControlReviewRequestList(iterator *jsoniter.Iterator) []*ExportControlReviewRequest {
+func readExportControlReviewRequestList(iterator *jsoniter.Iterator) []*ExportControlReviewRequest {
 	list := []*ExportControlReviewRequest{}
 	for iterator.ReadArray() {
-		item := ReadExportControlReviewRequest(iterator)
+		item := readExportControlReviewRequest(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -49,7 +49,7 @@ func readUsersListResponse(response *UsersListResponse, reader io.Reader) error 
 			value := iterator.ReadInt()
 			response.total = &value
 		case "items":
-			items := ReadUserList(iterator)
+			items := readUserList(iterator)
 			response.items = &UserList{
 				items: items,
 			}

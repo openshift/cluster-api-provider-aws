@@ -19,7 +19,7 @@ package v1beta1
 import (
 	"fmt"
 
-	ekstypes "github.com/aws/aws-sdk-go-v2/service/eks/types"
+	"github.com/aws/aws-sdk-go/service/eks"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
@@ -51,16 +51,16 @@ func (s *ControlPlaneLoggingSpec) IsLogEnabled(logName string) bool {
 		return false
 	}
 
-	switch ekstypes.LogType(logName) {
-	case ekstypes.LogTypeApi:
+	switch logName {
+	case eks.LogTypeApi:
 		return s.APIServer
-	case ekstypes.LogTypeAudit:
+	case eks.LogTypeAudit:
 		return s.Audit
-	case ekstypes.LogTypeAuthenticator:
+	case eks.LogTypeAuthenticator:
 		return s.Authenticator
-	case ekstypes.LogTypeControllerManager:
+	case eks.LogTypeControllerManager:
 		return s.ControllerManager
-	case ekstypes.LogTypeScheduler:
+	case eks.LogTypeScheduler:
 		return s.Scheduler
 	default:
 		return false

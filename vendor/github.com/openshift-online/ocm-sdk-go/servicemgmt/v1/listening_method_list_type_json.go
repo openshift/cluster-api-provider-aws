@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalListeningMethodList(list []ListeningMethod, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteListeningMethodList(list, stream)
+	writeListeningMethodList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,9 +38,9 @@ func MarshalListeningMethodList(list []ListeningMethod, writer io.Writer) error 
 	return stream.Error
 }
 
-// WriteListeningMethodList writes a list of value of the 'listening_method' type to
+// writeListeningMethodList writes a list of value of the 'listening_method' type to
 // the given stream.
-func WriteListeningMethodList(list []ListeningMethod, stream *jsoniter.Stream) {
+func writeListeningMethodList(list []ListeningMethod, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -58,14 +58,14 @@ func UnmarshalListeningMethodList(source interface{}) (items []ListeningMethod, 
 	if err != nil {
 		return
 	}
-	items = ReadListeningMethodList(iterator)
+	items = readListeningMethodList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadListeningMethodList reads list of values of the ”listening_method' type from
+// readListeningMethodList reads list of values of the ”listening_method' type from
 // the given iterator.
-func ReadListeningMethodList(iterator *jsoniter.Iterator) []ListeningMethod {
+func readListeningMethodList(iterator *jsoniter.Iterator) []ListeningMethod {
 	list := []ListeningMethod{}
 	for iterator.ReadArray() {
 		text := iterator.ReadString()

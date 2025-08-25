@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalValueUnitList(list []*ValueUnit, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteValueUnitList(list, stream)
+	writeValueUnitList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalValueUnitList(list []*ValueUnit, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteValueUnitList writes a list of value of the 'value_unit' type to
+// writeValueUnitList writes a list of value of the 'value_unit' type to
 // the given stream.
-func WriteValueUnitList(list []*ValueUnit, stream *jsoniter.Stream) {
+func writeValueUnitList(list []*ValueUnit, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteValueUnit(value, stream)
+		writeValueUnit(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalValueUnitList(source interface{}) (items []*ValueUnit, err error) 
 	if err != nil {
 		return
 	}
-	items = ReadValueUnitList(iterator)
+	items = readValueUnitList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadValueUnitList reads list of values of the ”value_unit' type from
+// readValueUnitList reads list of values of the ”value_unit' type from
 // the given iterator.
-func ReadValueUnitList(iterator *jsoniter.Iterator) []*ValueUnit {
+func readValueUnitList(iterator *jsoniter.Iterator) []*ValueUnit {
 	list := []*ValueUnit{}
 	for iterator.ReadArray() {
-		item := ReadValueUnit(iterator)
+		item := readValueUnit(iterator)
 		list = append(list, item)
 	}
 	return list

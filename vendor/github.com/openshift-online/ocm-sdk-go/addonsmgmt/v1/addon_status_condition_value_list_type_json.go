@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAddonStatusConditionValueList(list []AddonStatusConditionValue, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAddonStatusConditionValueList(list, stream)
+	writeAddonStatusConditionValueList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,9 +38,9 @@ func MarshalAddonStatusConditionValueList(list []AddonStatusConditionValue, writ
 	return stream.Error
 }
 
-// WriteAddonStatusConditionValueList writes a list of value of the 'addon_status_condition_value' type to
+// writeAddonStatusConditionValueList writes a list of value of the 'addon_status_condition_value' type to
 // the given stream.
-func WriteAddonStatusConditionValueList(list []AddonStatusConditionValue, stream *jsoniter.Stream) {
+func writeAddonStatusConditionValueList(list []AddonStatusConditionValue, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
@@ -58,14 +58,14 @@ func UnmarshalAddonStatusConditionValueList(source interface{}) (items []AddonSt
 	if err != nil {
 		return
 	}
-	items = ReadAddonStatusConditionValueList(iterator)
+	items = readAddonStatusConditionValueList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAddonStatusConditionValueList reads list of values of the ”addon_status_condition_value' type from
+// readAddonStatusConditionValueList reads list of values of the ”addon_status_condition_value' type from
 // the given iterator.
-func ReadAddonStatusConditionValueList(iterator *jsoniter.Iterator) []AddonStatusConditionValue {
+func readAddonStatusConditionValueList(iterator *jsoniter.Iterator) []AddonStatusConditionValue {
 	list := []AddonStatusConditionValue{}
 	for iterator.ReadArray() {
 		text := iterator.ReadString()

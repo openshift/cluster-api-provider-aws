@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalTemplateParameterList(list []*TemplateParameter, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteTemplateParameterList(list, stream)
+	writeTemplateParameterList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalTemplateParameterList(list []*TemplateParameter, writer io.Writer) e
 	return stream.Error
 }
 
-// WriteTemplateParameterList writes a list of value of the 'template_parameter' type to
+// writeTemplateParameterList writes a list of value of the 'template_parameter' type to
 // the given stream.
-func WriteTemplateParameterList(list []*TemplateParameter, stream *jsoniter.Stream) {
+func writeTemplateParameterList(list []*TemplateParameter, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteTemplateParameter(value, stream)
+		writeTemplateParameter(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalTemplateParameterList(source interface{}) (items []*TemplateParame
 	if err != nil {
 		return
 	}
-	items = ReadTemplateParameterList(iterator)
+	items = readTemplateParameterList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadTemplateParameterList reads list of values of the ”template_parameter' type from
+// readTemplateParameterList reads list of values of the ”template_parameter' type from
 // the given iterator.
-func ReadTemplateParameterList(iterator *jsoniter.Iterator) []*TemplateParameter {
+func readTemplateParameterList(iterator *jsoniter.Iterator) []*TemplateParameter {
 	list := []*TemplateParameter{}
 	for iterator.ReadArray() {
-		item := ReadTemplateParameter(iterator)
+		item := readTemplateParameter(iterator)
 		list = append(list, item)
 	}
 	return list

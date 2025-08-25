@@ -31,7 +31,7 @@ import (
 // MarshalClusterResources writes a value of the 'cluster_resources' type to the given writer.
 func MarshalClusterResources(object *ClusterResources, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteClusterResources(object, stream)
+	writeClusterResources(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -39,8 +39,8 @@ func MarshalClusterResources(object *ClusterResources, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteClusterResources writes a value of the 'cluster_resources' type to the given stream.
-func WriteClusterResources(object *ClusterResources, stream *jsoniter.Stream) {
+// writeClusterResources writes a value of the 'cluster_resources' type to the given stream.
+func writeClusterResources(object *ClusterResources, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -123,13 +123,13 @@ func UnmarshalClusterResources(source interface{}) (object *ClusterResources, er
 	if err != nil {
 		return
 	}
-	object = ReadClusterResources(iterator)
+	object = readClusterResources(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadClusterResources reads a value of the 'cluster_resources' type from the given iterator.
-func ReadClusterResources(iterator *jsoniter.Iterator) *ClusterResources {
+// readClusterResources reads a value of the 'cluster_resources' type from the given iterator.
+func readClusterResources(iterator *jsoniter.Iterator) *ClusterResources {
 	object := &ClusterResources{}
 	for {
 		field := iterator.ReadObject()

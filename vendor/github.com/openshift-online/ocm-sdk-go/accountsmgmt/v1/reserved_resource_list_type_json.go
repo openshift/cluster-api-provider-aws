@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalReservedResourceList(list []*ReservedResource, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteReservedResourceList(list, stream)
+	writeReservedResourceList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalReservedResourceList(list []*ReservedResource, writer io.Writer) err
 	return stream.Error
 }
 
-// WriteReservedResourceList writes a list of value of the 'reserved_resource' type to
+// writeReservedResourceList writes a list of value of the 'reserved_resource' type to
 // the given stream.
-func WriteReservedResourceList(list []*ReservedResource, stream *jsoniter.Stream) {
+func writeReservedResourceList(list []*ReservedResource, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteReservedResource(value, stream)
+		writeReservedResource(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalReservedResourceList(source interface{}) (items []*ReservedResourc
 	if err != nil {
 		return
 	}
-	items = ReadReservedResourceList(iterator)
+	items = readReservedResourceList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadReservedResourceList reads list of values of the ”reserved_resource' type from
+// readReservedResourceList reads list of values of the ”reserved_resource' type from
 // the given iterator.
-func ReadReservedResourceList(iterator *jsoniter.Iterator) []*ReservedResource {
+func readReservedResourceList(iterator *jsoniter.Iterator) []*ReservedResource {
 	list := []*ReservedResource{}
 	for iterator.ReadArray() {
-		item := ReadReservedResource(iterator)
+		item := readReservedResource(iterator)
 		list = append(list, item)
 	}
 	return list

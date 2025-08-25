@@ -20,11 +20,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/autoscaling"
-	autoscalingtypes "github.com/aws/aws-sdk-go-v2/service/autoscaling/types"
-	"github.com/aws/aws-sdk-go-v2/service/eks"
-	ekstypes "github.com/aws/aws-sdk-go-v2/service/eks/types"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/autoscaling"
+	"github.com/aws/aws-sdk-go/service/eks"
+	"github.com/aws/aws-sdk-go/service/eks/eksiface"
 	"github.com/pkg/errors"
 	"k8s.io/utils/ptr"
 
@@ -39,10 +38,10 @@ const (
 	eksClusterAutoscalerEnabledTag = "k8s.io/cluster-autoscaler/enabled"
 )
 
-func (s *Service) reconcileTags(ctx context.Context, cluster *ekstypes.Cluster) error {
+func (s *Service) reconcileTags(cluster *eks.Cluster) error {
 	clusterTags := converters.MapPtrToMap(cluster.Tags)
 	buildParams := s.getEKSTagParams(*cluster.Arn)
-	tagsBuilder := tags.New(buildParams, tags.WithEKS(ctx, s.EKSClient))
+	tagsBuilder := tags.New(buildParams, tags.WithEKS(s.EKSClient))
 	if err := tagsBuilder.Ensure(clusterTags); err != nil {
 		return fmt.Errorf("failed ensuring tags on cluster: %w", err)
 	}
@@ -111,12 +110,12 @@ func getASGTagUpdates(clusterName string, currentTags map[string]string, tags ma
 	return tagsToDelete, tagsToAdd
 }
 
-func (s *NodegroupService) reconcileTags(ctx context.Context, ng *ekstypes.Nodegroup) error {
+func (s *NodegroupService) reconcileTags(ng *eks.Nodegroup) error {
 	tags := ngTags(s.scope.ClusterName(), s.scope.AdditionalTags())
-	return updateTags(ctx, s.EKSClient, ng.NodegroupArn, ng.Tags, tags)
+	return updateTags(s.EKSClient, ng.NodegroupArn, aws.StringValueMap(ng.Tags), tags)
 }
 
-func tagDescriptionsToMap(input []autoscalingtypes.TagDescription) map[string]string {
+func tagDescriptionsToMap(input []*autoscaling.TagDescription) map[string]string {
 	tags := make(map[string]string)
 	for _, v := range input {
 		tags[*v.Key] = *v.Value
@@ -124,9 +123,9 @@ func tagDescriptionsToMap(input []autoscalingtypes.TagDescription) map[string]st
 	return tags
 }
 
-func (s *NodegroupService) reconcileASGTags(ctx context.Context, ng *ekstypes.Nodegroup) error {
+func (s *NodegroupService) reconcileASGTags(ng *eks.Nodegroup) error {
 	s.scope.Info("Reconciling ASG tags", "cluster-name", s.scope.ClusterName(), "nodegroup-name", *ng.NodegroupName)
-	asg, err := s.describeASGs(ctx, ng)
+	asg, err := s.describeASGs(ng)
 	if err != nil {
 		return errors.Wrap(err, "failed to describe ASG for nodegroup")
 	}
@@ -141,7 +140,7 @@ func (s *NodegroupService) reconcileASGTags(ctx context.Context, ng *ekstypes.No
 			// https://stackoverflow.com/questions/62446118/implicit-memory-aliasing-in-for-loop
 			kCopy := k
 			vCopy := v
-			input.Tags = append(input.Tags, autoscalingtypes.Tag{
+			input.Tags = append(input.Tags, &autoscaling.Tag{
 				Key:               &kCopy,
 				PropagateAtLaunch: aws.Bool(true),
 				ResourceId:        asg.AutoScalingGroupName,
@@ -149,7 +148,7 @@ func (s *NodegroupService) reconcileASGTags(ctx context.Context, ng *ekstypes.No
 				Value:             &vCopy,
 			})
 		}
-		_, err = s.AutoscalingClient.CreateOrUpdateTags(ctx, input)
+		_, err = s.AutoscalingClient.CreateOrUpdateTagsWithContext(context.TODO(), input)
 		if err != nil {
 			return errors.Wrap(err, "failed to add tags to nodegroup's AutoScalingGroup")
 		}
@@ -161,13 +160,13 @@ func (s *NodegroupService) reconcileASGTags(ctx context.Context, ng *ekstypes.No
 			// The k/vCopy is used to address the "Implicit memory aliasing in for loop" issue
 			// https://stackoverflow.com/questions/62446118/implicit-memory-aliasing-in-for-loop
 			kCopy := k
-			input.Tags = append(input.Tags, autoscalingtypes.Tag{
+			input.Tags = append(input.Tags, &autoscaling.Tag{
 				Key:          &kCopy,
 				ResourceId:   asg.AutoScalingGroupName,
 				ResourceType: ptr.To[string]("auto-scaling-group"),
 			})
 		}
-		_, err = s.AutoscalingClient.DeleteTags(ctx, input)
+		_, err = s.AutoscalingClient.DeleteTagsWithContext(context.TODO(), input)
 		if err != nil {
 			return errors.Wrap(err, "failed to delete tags to nodegroup's AutoScalingGroup")
 		}
@@ -176,20 +175,20 @@ func (s *NodegroupService) reconcileASGTags(ctx context.Context, ng *ekstypes.No
 	return nil
 }
 
-func (s *FargateService) reconcileTags(ctx context.Context, fp *ekstypes.FargateProfile) error {
+func (s *FargateService) reconcileTags(fp *eks.FargateProfile) error {
 	tags := ngTags(s.scope.ClusterName(), s.scope.AdditionalTags())
-	return updateTags(ctx, s.EKSClient, fp.FargateProfileArn, fp.Tags, tags)
+	return updateTags(s.EKSClient, fp.FargateProfileArn, aws.StringValueMap(fp.Tags), tags)
 }
 
-func updateTags(ctx context.Context, client EKSAPI, arn *string, existingTags, desiredTags map[string]string) error {
+func updateTags(client eksiface.EKSAPI, arn *string, existingTags, desiredTags map[string]string) error {
 	untagKeys, newTags := getTagUpdates(existingTags, desiredTags)
 
 	if len(newTags) > 0 {
 		tagInput := &eks.TagResourceInput{
 			ResourceArn: arn,
-			Tags:        newTags,
+			Tags:        aws.StringMap(newTags),
 		}
-		_, err := client.TagResource(ctx, tagInput)
+		_, err := client.TagResource(tagInput)
 		if err != nil {
 			return err
 		}
@@ -198,9 +197,9 @@ func updateTags(ctx context.Context, client EKSAPI, arn *string, existingTags, d
 	if len(untagKeys) > 0 {
 		untagInput := &eks.UntagResourceInput{
 			ResourceArn: arn,
-			TagKeys:     untagKeys,
+			TagKeys:     aws.StringSlice(untagKeys),
 		}
-		_, err := client.UntagResource(ctx, untagInput)
+		_, err := client.UntagResource(untagInput)
 		if err != nil {
 			return err
 		}

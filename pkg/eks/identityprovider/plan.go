@@ -20,15 +20,15 @@ package identityprovider
 import (
 	"context"
 
-	ekstypes "github.com/aws/aws-sdk-go-v2/service/eks/types"
+	"github.com/aws/aws-sdk-go/service/eks"
+	"github.com/aws/aws-sdk-go/service/eks/eksiface"
 
-	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/eks"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/logger"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/planner"
 )
 
 // NewPlan creates plan to manage EKS OIDC identity provider association.
-func NewPlan(clusterName string, currentIdentityProvider, desiredIdentityProvider *OidcIdentityProviderConfig, client eks.Client, log logger.Wrapper) planner.Plan {
+func NewPlan(clusterName string, currentIdentityProvider, desiredIdentityProvider *OidcIdentityProviderConfig, client eksiface.EKSAPI, log logger.Wrapper) planner.Plan {
 	return &plan{
 		currentIdentityProvider: currentIdentityProvider,
 		desiredIdentityProvider: desiredIdentityProvider,
@@ -42,7 +42,7 @@ func NewPlan(clusterName string, currentIdentityProvider, desiredIdentityProvide
 type plan struct {
 	currentIdentityProvider *OidcIdentityProviderConfig
 	desiredIdentityProvider *OidcIdentityProviderConfig
-	eksClient               eks.Client
+	eksClient               eksiface.EKSAPI
 	log                     logger.Wrapper
 	clusterName             string
 }
@@ -59,7 +59,7 @@ func (p *plan) Create(_ context.Context) ([]planner.Procedure, error) {
 	if p.desiredIdentityProvider == nil {
 		// disassociation will also trigger deletion hence
 		// we do nothing in case of ConfigStatusDeleting as it will happen eventually
-		if p.currentIdentityProvider.Status == string(ekstypes.ConfigStatusActive) {
+		if p.currentIdentityProvider.Status == eks.ConfigStatusActive {
 			procedures = append(procedures, &DisassociateIdentityProviderConfig{plan: p})
 		}
 
@@ -82,10 +82,10 @@ func (p *plan) Create(_ context.Context) ([]planner.Procedure, error) {
 			procedures = append(procedures, &RemoveIdentityProviderTagsProcedure{plan: p})
 		}
 		switch p.currentIdentityProvider.Status {
-		case string(ekstypes.ConfigStatusActive):
+		case eks.ConfigStatusActive:
 			// config active no work to be done
 			return procedures, nil
-		case string(ekstypes.ConfigStatusCreating):
+		case eks.ConfigStatusCreating:
 			// no change need wait for association to complete
 			procedures = append(procedures, &WaitIdentityProviderAssociatedProcedure{plan: p})
 		}

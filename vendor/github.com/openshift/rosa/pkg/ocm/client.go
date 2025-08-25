@@ -17,7 +17,6 @@ limitations under the License.
 package ocm
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -56,7 +55,7 @@ func NewClientWithConnection(connection *sdk.Connection) *Client {
 	}
 }
 
-func CreateNewClientOrExit(logger *logrus.Logger, reporter reporter.Logger) *Client {
+func CreateNewClientOrExit(logger *logrus.Logger, reporter *reporter.Object) *Client {
 	client, err := NewClient().
 		Logger(logger).
 		Build()
@@ -170,8 +169,7 @@ func (b *ClientBuilder) Build() (result *Client, err error) {
 	// Persist tokens in the configuration file, the SDK may have refreshed them
 	err = config.PersistTokens(b.cfg, accessToken, refreshToken)
 	if err != nil {
-		b.logger.Warn(context.TODO(),
-			fmt.Sprintf("error creating connection. Can't persist tokens to config: %v", err))
+		return nil, fmt.Errorf("error creating connection. Can't persist tokens to config: %s", err)
 	}
 
 	return &Client{
@@ -203,8 +201,7 @@ func (c *Client) KeepTokensAlive() error {
 
 	err = config.PersistTokens(nil, accessToken, refreshToken)
 	if err != nil {
-		c.ocm.Logger().Warn(context.TODO(),
-			fmt.Sprintf("error creating connection. Can't persist tokens to config: %v", err))
+		return fmt.Errorf("Can't persist tokens to config: %v", err)
 	}
 
 	return nil

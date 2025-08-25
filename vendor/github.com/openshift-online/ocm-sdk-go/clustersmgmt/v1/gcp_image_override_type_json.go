@@ -29,7 +29,7 @@ import (
 // MarshalGCPImageOverride writes a value of the 'GCP_image_override' type to the given writer.
 func MarshalGCPImageOverride(object *GCPImageOverride, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteGCPImageOverride(object, stream)
+	writeGCPImageOverride(object, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func MarshalGCPImageOverride(object *GCPImageOverride, writer io.Writer) error {
 	return stream.Error
 }
 
-// WriteGCPImageOverride writes a value of the 'GCP_image_override' type to the given stream.
-func WriteGCPImageOverride(object *GCPImageOverride, stream *jsoniter.Stream) {
+// writeGCPImageOverride writes a value of the 'GCP_image_override' type to the given stream.
+func writeGCPImageOverride(object *GCPImageOverride, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
 	stream.WriteObjectField("kind")
@@ -71,7 +71,7 @@ func WriteGCPImageOverride(object *GCPImageOverride, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("billing_model")
-		WriteBillingModelItem(object.billingModel, stream)
+		writeBillingModelItem(object.billingModel, stream)
 		count++
 	}
 	present_ = object.bitmap_&16 != 0
@@ -89,7 +89,7 @@ func WriteGCPImageOverride(object *GCPImageOverride, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("product")
-		WriteProduct(object.product, stream)
+		writeProduct(object.product, stream)
 		count++
 	}
 	present_ = object.bitmap_&64 != 0
@@ -110,13 +110,13 @@ func UnmarshalGCPImageOverride(source interface{}) (object *GCPImageOverride, er
 	if err != nil {
 		return
 	}
-	object = ReadGCPImageOverride(iterator)
+	object = readGCPImageOverride(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadGCPImageOverride reads a value of the 'GCP_image_override' type from the given iterator.
-func ReadGCPImageOverride(iterator *jsoniter.Iterator) *GCPImageOverride {
+// readGCPImageOverride reads a value of the 'GCP_image_override' type from the given iterator.
+func readGCPImageOverride(iterator *jsoniter.Iterator) *GCPImageOverride {
 	object := &GCPImageOverride{}
 	for {
 		field := iterator.ReadObject()
@@ -136,7 +136,7 @@ func ReadGCPImageOverride(iterator *jsoniter.Iterator) *GCPImageOverride {
 			object.href = iterator.ReadString()
 			object.bitmap_ |= 4
 		case "billing_model":
-			value := ReadBillingModelItem(iterator)
+			value := readBillingModelItem(iterator)
 			object.billingModel = value
 			object.bitmap_ |= 8
 		case "image_id":
@@ -144,7 +144,7 @@ func ReadGCPImageOverride(iterator *jsoniter.Iterator) *GCPImageOverride {
 			object.imageID = value
 			object.bitmap_ |= 16
 		case "product":
-			value := ReadProduct(iterator)
+			value := readProduct(iterator)
 			object.product = value
 			object.bitmap_ |= 32
 		case "project_id":

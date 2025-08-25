@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalBillingModelItemList(list []*BillingModelItem, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteBillingModelItemList(list, stream)
+	writeBillingModelItemList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalBillingModelItemList(list []*BillingModelItem, writer io.Writer) err
 	return stream.Error
 }
 
-// WriteBillingModelItemList writes a list of value of the 'billing_model_item' type to
+// writeBillingModelItemList writes a list of value of the 'billing_model_item' type to
 // the given stream.
-func WriteBillingModelItemList(list []*BillingModelItem, stream *jsoniter.Stream) {
+func writeBillingModelItemList(list []*BillingModelItem, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteBillingModelItem(value, stream)
+		writeBillingModelItem(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalBillingModelItemList(source interface{}) (items []*BillingModelIte
 	if err != nil {
 		return
 	}
-	items = ReadBillingModelItemList(iterator)
+	items = readBillingModelItemList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadBillingModelItemList reads list of values of the ”billing_model_item' type from
+// readBillingModelItemList reads list of values of the ”billing_model_item' type from
 // the given iterator.
-func ReadBillingModelItemList(iterator *jsoniter.Iterator) []*BillingModelItem {
+func readBillingModelItemList(iterator *jsoniter.Iterator) []*BillingModelItem {
 	list := []*BillingModelItem{}
 	for iterator.ReadArray() {
-		item := ReadBillingModelItem(iterator)
+		item := readBillingModelItem(iterator)
 		list = append(list, item)
 	}
 	return list

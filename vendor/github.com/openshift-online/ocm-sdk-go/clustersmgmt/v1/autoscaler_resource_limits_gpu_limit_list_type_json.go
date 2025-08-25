@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAutoscalerResourceLimitsGPULimitList(list []*AutoscalerResourceLimitsGPULimit, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAutoscalerResourceLimitsGPULimitList(list, stream)
+	writeAutoscalerResourceLimitsGPULimitList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAutoscalerResourceLimitsGPULimitList(list []*AutoscalerResourceLimit
 	return stream.Error
 }
 
-// WriteAutoscalerResourceLimitsGPULimitList writes a list of value of the 'autoscaler_resource_limits_GPU_limit' type to
+// writeAutoscalerResourceLimitsGPULimitList writes a list of value of the 'autoscaler_resource_limits_GPU_limit' type to
 // the given stream.
-func WriteAutoscalerResourceLimitsGPULimitList(list []*AutoscalerResourceLimitsGPULimit, stream *jsoniter.Stream) {
+func writeAutoscalerResourceLimitsGPULimitList(list []*AutoscalerResourceLimitsGPULimit, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteAutoscalerResourceLimitsGPULimit(value, stream)
+		writeAutoscalerResourceLimitsGPULimit(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAutoscalerResourceLimitsGPULimitList(source interface{}) (items []
 	if err != nil {
 		return
 	}
-	items = ReadAutoscalerResourceLimitsGPULimitList(iterator)
+	items = readAutoscalerResourceLimitsGPULimitList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAutoscalerResourceLimitsGPULimitList reads list of values of the ”autoscaler_resource_limits_GPU_limit' type from
+// readAutoscalerResourceLimitsGPULimitList reads list of values of the ”autoscaler_resource_limits_GPU_limit' type from
 // the given iterator.
-func ReadAutoscalerResourceLimitsGPULimitList(iterator *jsoniter.Iterator) []*AutoscalerResourceLimitsGPULimit {
+func readAutoscalerResourceLimitsGPULimitList(iterator *jsoniter.Iterator) []*AutoscalerResourceLimitsGPULimit {
 	list := []*AutoscalerResourceLimitsGPULimit{}
 	for iterator.ReadArray() {
-		item := ReadAutoscalerResourceLimitsGPULimit(iterator)
+		item := readAutoscalerResourceLimitsGPULimit(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalContractDimensionList(list []*ContractDimension, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteContractDimensionList(list, stream)
+	writeContractDimensionList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalContractDimensionList(list []*ContractDimension, writer io.Writer) e
 	return stream.Error
 }
 
-// WriteContractDimensionList writes a list of value of the 'contract_dimension' type to
+// writeContractDimensionList writes a list of value of the 'contract_dimension' type to
 // the given stream.
-func WriteContractDimensionList(list []*ContractDimension, stream *jsoniter.Stream) {
+func writeContractDimensionList(list []*ContractDimension, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteContractDimension(value, stream)
+		writeContractDimension(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalContractDimensionList(source interface{}) (items []*ContractDimens
 	if err != nil {
 		return
 	}
-	items = ReadContractDimensionList(iterator)
+	items = readContractDimensionList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadContractDimensionList reads list of values of the ”contract_dimension' type from
+// readContractDimensionList reads list of values of the ”contract_dimension' type from
 // the given iterator.
-func ReadContractDimensionList(iterator *jsoniter.Iterator) []*ContractDimension {
+func readContractDimensionList(iterator *jsoniter.Iterator) []*ContractDimension {
 	list := []*ContractDimension{}
 	for iterator.ReadArray() {
-		item := ReadContractDimension(iterator)
+		item := readContractDimension(iterator)
 		list = append(list, item)
 	}
 	return list

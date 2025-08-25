@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAWSInfrastructureAccessRoleList(list []*AWSInfrastructureAccessRole, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAWSInfrastructureAccessRoleList(list, stream)
+	writeAWSInfrastructureAccessRoleList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAWSInfrastructureAccessRoleList(list []*AWSInfrastructureAccessRole,
 	return stream.Error
 }
 
-// WriteAWSInfrastructureAccessRoleList writes a list of value of the 'AWS_infrastructure_access_role' type to
+// writeAWSInfrastructureAccessRoleList writes a list of value of the 'AWS_infrastructure_access_role' type to
 // the given stream.
-func WriteAWSInfrastructureAccessRoleList(list []*AWSInfrastructureAccessRole, stream *jsoniter.Stream) {
+func writeAWSInfrastructureAccessRoleList(list []*AWSInfrastructureAccessRole, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteAWSInfrastructureAccessRole(value, stream)
+		writeAWSInfrastructureAccessRole(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAWSInfrastructureAccessRoleList(source interface{}) (items []*AWSI
 	if err != nil {
 		return
 	}
-	items = ReadAWSInfrastructureAccessRoleList(iterator)
+	items = readAWSInfrastructureAccessRoleList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAWSInfrastructureAccessRoleList reads list of values of the ”AWS_infrastructure_access_role' type from
+// readAWSInfrastructureAccessRoleList reads list of values of the ”AWS_infrastructure_access_role' type from
 // the given iterator.
-func ReadAWSInfrastructureAccessRoleList(iterator *jsoniter.Iterator) []*AWSInfrastructureAccessRole {
+func readAWSInfrastructureAccessRoleList(iterator *jsoniter.Iterator) []*AWSInfrastructureAccessRole {
 	list := []*AWSInfrastructureAccessRole{}
 	for iterator.ReadArray() {
-		item := ReadAWSInfrastructureAccessRole(iterator)
+		item := readAWSInfrastructureAccessRole(iterator)
 		list = append(list, item)
 	}
 	return list

@@ -24,7 +24,7 @@ type Row struct {
 	Style   string
 }
 
-func R(args ...any) *Row {
+func R(args ...interface{}) *Row {
 	r := &Row{
 		Divider: "-",
 	}
@@ -94,7 +94,7 @@ type Cell struct {
 	Align    AlignType
 }
 
-func C(contents string, args ...any) Cell {
+func C(contents string, args ...interface{}) Cell {
 	c := Cell{
 		Contents: strings.Split(contents, "\n"),
 	}
@@ -354,3 +354,4 @@ func sum(s []int) int {
 	}
 	return out
 }
+

@@ -30,7 +30,7 @@ import (
 // the given writer.
 func MarshalAWSSTSAccountRoleList(list []*AWSSTSAccountRole, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	WriteAWSSTSAccountRoleList(list, stream)
+	writeAWSSTSAccountRoleList(list, stream)
 	err := stream.Flush()
 	if err != nil {
 		return err
@@ -38,15 +38,15 @@ func MarshalAWSSTSAccountRoleList(list []*AWSSTSAccountRole, writer io.Writer) e
 	return stream.Error
 }
 
-// WriteAWSSTSAccountRoleList writes a list of value of the 'AWSSTS_account_role' type to
+// writeAWSSTSAccountRoleList writes a list of value of the 'AWSSTS_account_role' type to
 // the given stream.
-func WriteAWSSTSAccountRoleList(list []*AWSSTSAccountRole, stream *jsoniter.Stream) {
+func writeAWSSTSAccountRoleList(list []*AWSSTSAccountRole, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		WriteAWSSTSAccountRole(value, stream)
+		writeAWSSTSAccountRole(value, stream)
 	}
 	stream.WriteArrayEnd()
 }
@@ -58,17 +58,17 @@ func UnmarshalAWSSTSAccountRoleList(source interface{}) (items []*AWSSTSAccountR
 	if err != nil {
 		return
 	}
-	items = ReadAWSSTSAccountRoleList(iterator)
+	items = readAWSSTSAccountRoleList(iterator)
 	err = iterator.Error
 	return
 }
 
-// ReadAWSSTSAccountRoleList reads list of values of the ”AWSSTS_account_role' type from
+// readAWSSTSAccountRoleList reads list of values of the ”AWSSTS_account_role' type from
 // the given iterator.
-func ReadAWSSTSAccountRoleList(iterator *jsoniter.Iterator) []*AWSSTSAccountRole {
+func readAWSSTSAccountRoleList(iterator *jsoniter.Iterator) []*AWSSTSAccountRole {
 	list := []*AWSSTSAccountRole{}
 	for iterator.ReadArray() {
-		item := ReadAWSSTSAccountRole(iterator)
+		item := readAWSSTSAccountRole(iterator)
 		list = append(list, item)
 	}
 	return list

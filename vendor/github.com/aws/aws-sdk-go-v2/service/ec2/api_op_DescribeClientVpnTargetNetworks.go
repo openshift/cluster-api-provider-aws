@@ -44,11 +44,8 @@ type DescribeClientVpnTargetNetworksInput struct {
 	DryRun *bool
 
 	// One or more filters. Filter names and values are case-sensitive.
-	//
 	//   - association-id - The ID of the association.
-	//
 	//   - target-network-id - The ID of the subnet specified as the target network.
-	//
 	//   - vpc-id - The ID of the VPC in which the target network is located.
 	Filters []types.Filter
 
@@ -121,9 +118,6 @@ func (c *Client) addOperationDescribeClientVpnTargetNetworksMiddlewares(stack *m
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
-	if err = addSpanRetryLoop(stack, options); err != nil {
-		return err
-	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -134,15 +128,6 @@ func (c *Client) addOperationDescribeClientVpnTargetNetworksMiddlewares(stack *m
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
-		return err
-	}
-	if err = addTimeOffsetBuild(stack, c); err != nil {
-		return err
-	}
-	if err = addUserAgentRetryMode(stack, options); err != nil {
-		return err
-	}
-	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeClientVpnTargetNetworksValidationMiddleware(stack); err != nil {
@@ -166,20 +151,16 @@ func (c *Client) addOperationDescribeClientVpnTargetNetworksMiddlewares(stack *m
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanInitializeEnd(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
-		return err
-	}
 	return nil
 }
+
+// DescribeClientVpnTargetNetworksAPIClient is a client that implements the
+// DescribeClientVpnTargetNetworks operation.
+type DescribeClientVpnTargetNetworksAPIClient interface {
+	DescribeClientVpnTargetNetworks(context.Context, *DescribeClientVpnTargetNetworksInput, ...func(*Options)) (*DescribeClientVpnTargetNetworksOutput, error)
+}
+
+var _ DescribeClientVpnTargetNetworksAPIClient = (*Client)(nil)
 
 // DescribeClientVpnTargetNetworksPaginatorOptions is the paginator options for
 // DescribeClientVpnTargetNetworks
@@ -249,9 +230,6 @@ func (p *DescribeClientVpnTargetNetworksPaginator) NextPage(ctx context.Context,
 	}
 	params.MaxResults = limit
 
-	optFns = append([]func(*Options){
-		addIsPaginatorUserAgent,
-	}, optFns...)
 	result, err := p.client.DescribeClientVpnTargetNetworks(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -270,14 +248,6 @@ func (p *DescribeClientVpnTargetNetworksPaginator) NextPage(ctx context.Context,
 
 	return result, nil
 }
-
-// DescribeClientVpnTargetNetworksAPIClient is a client that implements the
-// DescribeClientVpnTargetNetworks operation.
-type DescribeClientVpnTargetNetworksAPIClient interface {
-	DescribeClientVpnTargetNetworks(context.Context, *DescribeClientVpnTargetNetworksInput, ...func(*Options)) (*DescribeClientVpnTargetNetworksOutput, error)
-}
-
-var _ DescribeClientVpnTargetNetworksAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeClientVpnTargetNetworks(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

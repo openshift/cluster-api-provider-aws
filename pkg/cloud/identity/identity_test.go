@@ -17,17 +17,18 @@ limitations under the License.
 package identity
 
 import (
-	"context"
 	"testing"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/sts"
-	ststypes "github.com/aws/aws-sdk-go-v2/service/sts/types"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
 	. "github.com/onsi/gomega"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/utils/ptr"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/services/sts/mock_stsiface"
@@ -46,7 +47,7 @@ func TestAWSStaticPrincipalTypeProvider(t *testing.T) {
 
 	staticProvider := NewAWSStaticPrincipalTypeProvider(&infrav1.AWSClusterStaticIdentity{}, secret)
 
-	stsMock := mock_stsiface.NewMockSTSClient(mockCtrl)
+	stsMock := mock_stsiface.NewMockSTSAPI(mockCtrl)
 	roleIdentity := &infrav1.AWSClusterRoleIdentity{
 		Spec: infrav1.AWSClusterRoleIdentitySpec{
 			AWSRoleSpec: infrav1.AWSRoleSpec{
@@ -56,8 +57,6 @@ func TestAWSStaticPrincipalTypeProvider(t *testing.T) {
 			},
 		},
 	}
-
-	expiresAt := time.Now()
 
 	roleProvider := &AWSRolePrincipalTypeProvider{
 		credentials:    nil,
@@ -88,60 +87,56 @@ func TestAWSStaticPrincipalTypeProvider(t *testing.T) {
 	testCases := []struct {
 		name      string
 		provider  AWSPrincipalTypeProvider
-		expect    func(m *mock_stsiface.MockSTSClientMockRecorder)
+		expect    func(m *mock_stsiface.MockSTSAPIMockRecorder)
 		expectErr bool
-		value     aws.Credentials
+		value     credentials.Value
 	}{
 		{
 			name:      "Static provider successfully retrieves",
 			provider:  staticProvider,
-			expect:    func(m *mock_stsiface.MockSTSClientMockRecorder) {},
+			expect:    func(m *mock_stsiface.MockSTSAPIMockRecorder) {},
 			expectErr: false,
-			value: aws.Credentials{
+			value: credentials.Value{
 				AccessKeyID:     "static-AccessKeyID",
 				SecretAccessKey: "static-SecretAccessKey",
-				Source:          "StaticCredentials",
-				CanExpire:       false,
-				Expires:         time.Time{},
+				ProviderName:    "StaticProvider",
 			},
 		},
 		{
 			name:     "Role provider with static provider source successfully retrieves",
 			provider: roleProvider,
-			expect: func(m *mock_stsiface.MockSTSClientMockRecorder) {
-				m.AssumeRole(gomock.Any(), &sts.AssumeRoleInput{
+			expect: func(m *mock_stsiface.MockSTSAPIMockRecorder) {
+				m.AssumeRoleWithContext(gomock.Any(), &sts.AssumeRoleInput{
 					RoleArn:         aws.String(roleIdentity.Spec.RoleArn),
 					RoleSessionName: aws.String(roleIdentity.Spec.SessionName),
-					DurationSeconds: aws.Int32(roleIdentity.Spec.DurationSeconds),
+					DurationSeconds: ptr.To[int64](int64(roleIdentity.Spec.DurationSeconds)),
 				}).Return(&sts.AssumeRoleOutput{
-					Credentials: &ststypes.Credentials{
+					Credentials: &sts.Credentials{
 						AccessKeyId:     aws.String("assumedAccessKeyId"),
 						SecretAccessKey: aws.String("assumedSecretAccessKey"),
 						SessionToken:    aws.String("assumedSessionToken"),
-						Expiration:      aws.Time(expiresAt),
+						Expiration:      aws.Time(time.Now()),
 					},
 				}, nil)
 			},
 			expectErr: false,
-			value: aws.Credentials{
+			value: credentials.Value{
 				AccessKeyID:     "assumedAccessKeyId",
 				SecretAccessKey: "assumedSecretAccessKey",
 				SessionToken:    "assumedSessionToken",
-				Source:          "AssumeRoleProvider",
-				CanExpire:       true,
-				Expires:         expiresAt,
+				ProviderName:    "AssumeRoleProvider",
 			},
 		},
 		{
 			name:     "Role provider with role provider source successfully retrieves",
 			provider: roleProvider2,
-			expect: func(m *mock_stsiface.MockSTSClientMockRecorder) {
-				m.AssumeRole(gomock.Any(), &sts.AssumeRoleInput{
+			expect: func(m *mock_stsiface.MockSTSAPIMockRecorder) {
+				m.AssumeRoleWithContext(gomock.Any(), &sts.AssumeRoleInput{
 					RoleArn:         aws.String(roleIdentity.Spec.RoleArn),
 					RoleSessionName: aws.String(roleIdentity.Spec.SessionName),
-					DurationSeconds: aws.Int32(roleIdentity.Spec.DurationSeconds),
+					DurationSeconds: ptr.To[int64](int64(roleIdentity.Spec.DurationSeconds)),
 				}).Return(&sts.AssumeRoleOutput{
-					Credentials: &ststypes.Credentials{
+					Credentials: &sts.Credentials{
 						AccessKeyId:     aws.String("assumedAccessKeyId"),
 						SecretAccessKey: aws.String("assumedSecretAccessKey"),
 						SessionToken:    aws.String("assumedSessionToken"),
@@ -149,28 +144,41 @@ func TestAWSStaticPrincipalTypeProvider(t *testing.T) {
 					},
 				}, nil)
 
-				m.AssumeRole(gomock.Any(), &sts.AssumeRoleInput{
+				m.AssumeRoleWithContext(gomock.Any(), &sts.AssumeRoleInput{
 					RoleArn:         aws.String(roleIdentity2.Spec.RoleArn),
 					RoleSessionName: aws.String(roleIdentity2.Spec.SessionName),
-					DurationSeconds: aws.Int32(roleIdentity2.Spec.DurationSeconds),
+					DurationSeconds: ptr.To[int64](int64(roleIdentity2.Spec.DurationSeconds)),
 				}).Return(&sts.AssumeRoleOutput{
-					Credentials: &ststypes.Credentials{
+					Credentials: &sts.Credentials{
 						AccessKeyId:     aws.String("assumedAccessKeyId2"),
 						SecretAccessKey: aws.String("assumedSecretAccessKey2"),
 						SessionToken:    aws.String("assumedSessionToken2"),
-						Expiration:      aws.Time(expiresAt),
+						Expiration:      aws.Time(time.Now()),
 					},
 				}, nil)
 			},
 			expectErr: false,
-			value: aws.Credentials{
+			value: credentials.Value{
 				AccessKeyID:     "assumedAccessKeyId2",
 				SecretAccessKey: "assumedSecretAccessKey2",
 				SessionToken:    "assumedSessionToken2",
-				Source:          "AssumeRoleProvider",
-				CanExpire:       true,
-				Expires:         expiresAt,
+				ProviderName:    "AssumeRoleProvider",
 			},
+		},
+		{
+			name:     "Role provider with role provider source fails to retrieve when the source's source cannot assume source",
+			provider: roleProvider2,
+			expect: func(m *mock_stsiface.MockSTSAPIMockRecorder) {
+				roleProvider.credentials.Expire()
+				roleProvider2.credentials.Expire()
+				// AssumeRoleWithContext() call is not needed for roleIdentity as it has unexpired credentials
+				m.AssumeRoleWithContext(gomock.Any(), &sts.AssumeRoleInput{
+					RoleArn:         aws.String(roleIdentity.Spec.RoleArn),
+					RoleSessionName: aws.String(roleIdentity.Spec.SessionName),
+					DurationSeconds: ptr.To[int64](int64(roleIdentity.Spec.DurationSeconds)),
+				}).Return(&sts.AssumeRoleOutput{}, errors.New("Not authorized to assume role"))
+			},
+			expectErr: true,
 		},
 	}
 
@@ -179,7 +187,7 @@ func TestAWSStaticPrincipalTypeProvider(t *testing.T) {
 			g := NewWithT(t)
 
 			tc.expect(stsMock.EXPECT())
-			value, err := tc.provider.Retrieve(context.TODO())
+			value, err := tc.provider.Retrieve()
 			if tc.expectErr {
 				g.Expect(err).ToNot(BeNil())
 				return
