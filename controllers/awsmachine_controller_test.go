@@ -22,7 +22,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/elb"
 	"github.com/golang/mock/gomock"
@@ -574,7 +573,6 @@ func mockedCreateInstanceCalls(m *mocks.MockEC2APIMockRecorder) {
 			CreationDate: aws.String("2019-02-08T17:02:31.000Z"),
 		},
 	}}, nil)
-	m.RunInstances(gomock.Any()).Return(nil, awserr.New("DryRunOperation", "", nil))
 	m.RunInstances(gomock.Any()).Return(&ec2.Reservation{
 		Instances: []*ec2.Instance{
 			{
