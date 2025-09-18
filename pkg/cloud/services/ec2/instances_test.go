@@ -378,9 +378,6 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					}, nil)
-				m.
-					RunInstancesWithContext(context.TODO(), gomock.Any()).
-					Return(nil, awserr.New("DryRunOperation", "", nil))
 				m. // TODO: Restore these parameters, but with the tags as well
 					RunInstancesWithContext(context.TODO(), gomock.Any()).
 					Return(&ec2.Reservation{
@@ -511,9 +508,6 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					}, nil)
-				m.
-					RunInstancesWithContext(context.TODO(), gomock.Any()).
-					Return(nil, awserr.New("DryRunOperation", "", nil))
 				m.
 					RunInstancesWithContext(context.TODO(), gomock.Any()).
 					Return(&ec2.Reservation{
@@ -676,9 +670,6 @@ func TestCreateInstance(t *testing.T) {
 						},
 					},
 				}, nil)
-				m.
-					RunInstancesWithContext(context.TODO(), gomock.Any()).
-					Return(nil, awserr.New("DryRunOperation", "", nil))
 				m.
 					RunInstancesWithContext(context.TODO(), &ec2.RunInstancesInput{
 						ImageId:      aws.String("abc"),
@@ -933,9 +924,6 @@ func TestCreateInstance(t *testing.T) {
 					},
 				}, nil)
 				m.
-					RunInstancesWithContext(context.TODO(), gomock.Any()).
-					Return(nil, awserr.New("DryRunOperation", "", nil))
-				m.
 					RunInstancesWithContext(context.TODO(), &ec2.RunInstancesInput{
 						ImageId:      aws.String("abc"),
 						InstanceType: aws.String("m5.2xlarge"),
@@ -1182,9 +1170,6 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					}, nil)
-				m.
-					RunInstancesWithContext(context.TODO(), gomock.Any()).
-					Return(nil, awserr.New("DryRunOperation", "", nil))
 				m. // TODO: Restore these parameters, but with the tags as well
 					RunInstancesWithContext(context.TODO(), gomock.Any()).
 					Return(&ec2.Reservation{
@@ -1338,9 +1323,6 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					}, nil)
-				m.
-					RunInstancesWithContext(context.TODO(), gomock.Any()).
-					Return(nil, awserr.New("DryRunOperation", "", nil))
 				m. // TODO: Restore these parameters, but with the tags as well
 					RunInstancesWithContext(context.TODO(), gomock.Any()).
 					Return(&ec2.Reservation{
@@ -1495,9 +1477,6 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					}, nil)
-				m.
-					RunInstancesWithContext(context.TODO(), gomock.Any()).
-					Return(nil, awserr.New("DryRunOperation", "", nil))
 				m. // TODO: Restore these parameters, but with the tags as well
 					RunInstancesWithContext(context.TODO(), gomock.Any()).
 					Return(&ec2.Reservation{
@@ -1627,9 +1606,6 @@ func TestCreateInstance(t *testing.T) {
 					}, nil)
 				m.
 					RunInstancesWithContext(context.TODO(), gomock.Any()).
-					Return(nil, awserr.New("DryRunOperation", "", nil))
-				m.
-					RunInstancesWithContext(context.TODO(), gomock.Any()).
 					Return(&ec2.Reservation{
 						Instances: []*ec2.Instance{
 							{
@@ -1754,9 +1730,6 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					}, nil)
-				m.
-					RunInstancesWithContext(context.TODO(), gomock.Any()).
-					Return(nil, awserr.New("DryRunOperation", "", nil))
 				m.
 					RunInstancesWithContext(context.TODO(), gomock.Any()).
 					Return(&ec2.Reservation{
@@ -1945,9 +1918,6 @@ func TestCreateInstance(t *testing.T) {
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.
-					RunInstancesWithContext(context.TODO(), gomock.Any()).
-					Return(nil, awserr.New("DryRunOperation", "", nil))
 				m.
 					RunInstancesWithContext(context.TODO(), gomock.Any()).
 					Return(&ec2.Reservation{
@@ -2288,9 +2258,6 @@ func TestCreateInstance(t *testing.T) {
 					}, nil)
 				m.
 					RunInstancesWithContext(context.TODO(), gomock.Any()).
-					Return(nil, awserr.New("DryRunOperation", "", nil))
-				m.
-					RunInstancesWithContext(context.TODO(), gomock.Any()).
 					Return(&ec2.Reservation{
 						Instances: []*ec2.Instance{
 							{
@@ -2418,9 +2385,6 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					}, nil)
-				m.
-					RunInstancesWithContext(context.TODO(), gomock.Any()).
-					Return(nil, awserr.New("DryRunOperation", "", nil))
 				m.
 					RunInstancesWithContext(context.TODO(), gomock.Any()).
 					Do(func(_ context.Context, in *ec2.RunInstancesInput, _ ...request.Option) {
@@ -2672,9 +2636,6 @@ func TestCreateInstance(t *testing.T) {
 					}, nil)
 				m.
 					RunInstancesWithContext(context.TODO(), gomock.Any()).
-					Return(nil, awserr.New("DryRunOperation", "", nil))
-				m.
-					RunInstancesWithContext(context.TODO(), gomock.Any()).
 					Return(&ec2.Reservation{
 						Instances: []*ec2.Instance{
 							{
@@ -2812,9 +2773,6 @@ func TestCreateInstance(t *testing.T) {
 					}, nil)
 				m.
 					RunInstancesWithContext(context.TODO(), gomock.Any()).
-					Return(nil, awserr.New("DryRunOperation", "", nil))
-				m.
-					RunInstancesWithContext(context.TODO(), gomock.Any()).
 					Do(func(_ context.Context, in *ec2.RunInstancesInput, _ ...request.Option) {
 						if len(in.NetworkInterfaces) == 0 {
 							t.Fatalf("expected a NetworkInterface to be defined")
@@ -2947,9 +2905,6 @@ func TestCreateInstance(t *testing.T) {
 					}, nil)
 				m.
 					RunInstancesWithContext(context.TODO(), gomock.Any()).
-					Return(nil, awserr.New("DryRunOperation", "", nil))
-				m.
-					RunInstancesWithContext(context.TODO(), gomock.Any()).
 					Return(&ec2.Reservation{
 						Instances: []*ec2.Instance{
 							{
@@ -3066,9 +3021,6 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					}, nil)
-				m.
-					RunInstancesWithContext(context.TODO(), gomock.Any()).
-					Return(nil, awserr.New("DryRunOperation", "", nil))
 				m.
 					RunInstancesWithContext(context.TODO(), gomock.Any()).
 					Do(func(_ context.Context, in *ec2.RunInstancesInput, _ ...request.Option) {
@@ -3286,9 +3238,6 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					}, nil)
-				m.
-					RunInstancesWithContext(context.TODO(), gomock.Any()).
-					Return(nil, awserr.New("DryRunOperation", "", nil))
 				m. // TODO: Restore these parameters, but with the tags as well
 					RunInstancesWithContext(context.TODO(), gomock.Any()).
 					Return(&ec2.Reservation{
@@ -3397,9 +3346,6 @@ func TestCreateInstance(t *testing.T) {
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.
-					RunInstancesWithContext(context.TODO(), gomock.Any()).
-					Return(nil, awserr.New("DryRunOperation", "", nil))
 				m. // TODO: Restore these parameters, but with the tags as well
 					RunInstancesWithContext(context.TODO(), gomock.Eq(&ec2.RunInstancesInput{
 						ImageId:      aws.String("abc"),
@@ -3614,9 +3560,6 @@ func TestCreateInstance(t *testing.T) {
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.
-					RunInstancesWithContext(context.TODO(), gomock.Any()).
-					Return(nil, awserr.New("DryRunOperation", "", nil))
 				m. // TODO: Restore these parameters, but with the tags as well
 					RunInstancesWithContext(context.TODO(), gomock.Eq(&ec2.RunInstancesInput{
 						ImageId:      aws.String("abc"),
@@ -3851,9 +3794,6 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					}, nil)
-				m.
-					RunInstancesWithContext(context.TODO(), gomock.Any()).
-					Return(nil, awserr.New("DryRunOperation", "", nil))
 				m. // TODO: Restore these parameters, but with the tags as well
 					RunInstancesWithContext(context.TODO(), gomock.Eq(&ec2.RunInstancesInput{
 						ImageId:      aws.String("abc"),
@@ -4050,9 +3990,6 @@ func TestCreateInstance(t *testing.T) {
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.
-					RunInstancesWithContext(context.TODO(), gomock.Any()).
-					Return(nil, awserr.New("DryRunOperation", "", nil))
 				m. // TODO: Restore these parameters, but with the tags as well
 					RunInstancesWithContext(context.TODO(), gomock.Eq(&ec2.RunInstancesInput{
 						ImageId:      aws.String("abc"),
@@ -4375,9 +4312,6 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					}, nil)
-				m.
-					RunInstancesWithContext(context.TODO(), gomock.Any()).
-					Return(nil, awserr.New("DryRunOperation", "", nil))
 				m. // TODO: Restore these parameters, but with the tags as well
 					RunInstancesWithContext(context.TODO(), gomock.Any()).
 					DoAndReturn(func(ctx context.Context, input *ec2.RunInstancesInput, requestOptions ...request.Option) (*ec2.Reservation, error) {
@@ -4511,9 +4445,6 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					}, nil)
-				m.
-					RunInstancesWithContext(context.TODO(), gomock.Any()).
-					Return(nil, awserr.New("DryRunOperation", "", nil))
 				m. // TODO: Restore these parameters, but with the tags as well
 					RunInstancesWithContext(context.TODO(), gomock.Any()).
 					DoAndReturn(func(ctx context.Context, input *ec2.RunInstancesInput, requestOptions ...request.Option) (*ec2.Reservation, error) {
@@ -4648,9 +4579,6 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					}, nil)
-				m.
-					RunInstancesWithContext(context.TODO(), gomock.Any()).
-					Return(nil, awserr.New("DryRunOperation", "", nil))
 				m. // TODO: Restore these parameters, but with the tags as well
 					RunInstancesWithContext(context.TODO(), gomock.Any()).
 					DoAndReturn(func(ctx context.Context, input *ec2.RunInstancesInput, requestOptions ...request.Option) (*ec2.Reservation, error) {
@@ -4785,9 +4713,6 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					}, nil)
-				m.
-					RunInstancesWithContext(context.TODO(), gomock.Any()).
-					Return(nil, awserr.New("DryRunOperation", "", nil))
 				m. // TODO: Restore these parameters, but with the tags as well
 					RunInstancesWithContext(context.TODO(), gomock.Any()).
 					DoAndReturn(func(ctx context.Context, input *ec2.RunInstancesInput, requestOptions ...request.Option) (*ec2.Reservation, error) {
@@ -4919,9 +4844,6 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					}, nil)
-				m.
-					RunInstancesWithContext(context.TODO(), gomock.Any()).
-					Return(nil, awserr.New("DryRunOperation", "", nil))
 				m. // TODO: Restore these parameters, but with the tags as well
 					RunInstancesWithContext(context.TODO(), gomock.Any()).
 					DoAndReturn(func(ctx context.Context, input *ec2.RunInstancesInput, requestOptions ...request.Option) (*ec2.Reservation, error) {
@@ -5053,9 +4975,6 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					}, nil)
-				m.
-					RunInstancesWithContext(context.TODO(), gomock.Any()).
-					Return(nil, awserr.New("DryRunOperation", "", nil))
 				m. // TODO: Restore these parameters, but with the tags as well
 					RunInstancesWithContext(context.TODO(), gomock.Any()).
 					DoAndReturn(func(ctx context.Context, input *ec2.RunInstancesInput, requestOptions ...request.Option) (*ec2.Reservation, error) {
@@ -5160,9 +5079,6 @@ func TestCreateInstance(t *testing.T) {
 				},
 			},
 			expect: func(m *mocks.MockEC2APIMockRecorder) {
-				m.
-					RunInstancesWithContext(context.TODO(), gomock.Any()).
-					Return(nil, awserr.New("DryRunOperation", "", nil))
 				m. // TODO: Restore these parameters, but with the tags as well
 					RunInstancesWithContext(context.TODO(), gomock.Any()).
 					Return(&ec2.Reservation{
