@@ -20,7 +20,7 @@ package v1alpha3
 
 type DeviceClassExpansion interface{}
 
-type DeviceTaintRuleExpansion interface{}
+type PodSchedulingContextExpansion interface{}
 
 type ResourceClaimExpansion interface{}
 

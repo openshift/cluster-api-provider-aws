@@ -864,11 +864,6 @@ func (in *KubeadmConfigSpec) DeepCopyInto(out *KubeadmConfigSpec) {
 			}
 		}
 	}
-	if in.BootCommands != nil {
-		in, out := &in.BootCommands, &out.BootCommands
-		*out = make([]string, len(*in))
-		copy(*out, *in)
-	}
 	if in.PreKubeadmCommands != nil {
 		in, out := &in.PreKubeadmCommands, &out.PreKubeadmCommands
 		*out = make([]string, len(*in))

@@ -52,13 +52,10 @@ var (
 // MachineHealthCheckSpec defines the desired state of MachineHealthCheck.
 type MachineHealthCheckSpec struct {
 	// clusterName is the name of the Cluster this object belongs to.
-	// +required
 	// +kubebuilder:validation:MinLength=1
-	// +kubebuilder:validation:MaxLength=63
 	ClusterName string `json:"clusterName"`
 
-	// selector is a label selector to match machines whose health will be exercised
-	// +required
+	// Label selector to match machines whose health will be exercised
 	Selector metav1.LabelSelector `json:"selector"`
 
 	// unhealthyConditions contains a list of the conditions that determine
@@ -66,11 +63,9 @@ type MachineHealthCheckSpec struct {
 	// logical OR, i.e. if any of the conditions is met, the node is unhealthy.
 	//
 	// +optional
-	// +kubebuilder:validation:MaxItems=100
 	UnhealthyConditions []UnhealthyCondition `json:"unhealthyConditions,omitempty"`
 
-	// maxUnhealthy specifies the maximum number of unhealthy machines allowed.
-	// Any further remediation is only allowed if at most "maxUnhealthy" machines selected by
+	// Any further remediation is only allowed if at most "MaxUnhealthy" machines selected by
 	// "selector" are not healthy.
 	//
 	// Deprecated: This field is deprecated and is going to be removed in the next apiVersion. Please see https://github.com/kubernetes-sigs/cluster-api/issues/10722 for more details.
@@ -78,9 +73,8 @@ type MachineHealthCheckSpec struct {
 	// +optional
 	MaxUnhealthy *intstr.IntOrString `json:"maxUnhealthy,omitempty"`
 
-	// unhealthyRange specifies the range of unhealthy machines allowed.
 	// Any further remediation is only allowed if the number of machines selected by "selector" as not healthy
-	// is within the range of "unhealthyRange". Takes precedence over maxUnhealthy.
+	// is within the range of "UnhealthyRange". Takes precedence over MaxUnhealthy.
 	// Eg. "[3-5]" - This means that remediation will be allowed only when:
 	// (a) there are at least 3 unhealthy machines (and)
 	// (b) there are at most 5 unhealthy machines
@@ -89,8 +83,6 @@ type MachineHealthCheckSpec struct {
 	//
 	// +optional
 	// +kubebuilder:validation:Pattern=^\[[0-9]+-[0-9]+\]$
-	// +kubebuilder:validation:MinLength=1
-	// +kubebuilder:validation:MaxLength=32
 	UnhealthyRange *string `json:"unhealthyRange,omitempty"`
 
 	// nodeStartupTimeout allows to set the maximum time for MachineHealthCheck
@@ -126,23 +118,14 @@ type MachineHealthCheckSpec struct {
 // specified as a duration.  When the named condition has been in the given
 // status for at least the timeout value, a node is considered unhealthy.
 type UnhealthyCondition struct {
-	// type of Node condition
 	// +kubebuilder:validation:Type=string
 	// +kubebuilder:validation:MinLength=1
-	// +required
 	Type corev1.NodeConditionType `json:"type"`
 
-	// status of the condition, one of True, False, Unknown.
 	// +kubebuilder:validation:Type=string
 	// +kubebuilder:validation:MinLength=1
-	// +required
 	Status corev1.ConditionStatus `json:"status"`
 
-	// timeout is the duration that a node must be in a given status for,
-	// after which the node is considered unhealthy.
-	// For example, with a value of "1h", the node must match the status
-	// for at least 1 hour before being considered unhealthy.
-	// +required
 	Timeout metav1.Duration `json:"timeout"`
 }
 
@@ -152,12 +135,12 @@ type UnhealthyCondition struct {
 
 // MachineHealthCheckStatus defines the observed state of MachineHealthCheck.
 type MachineHealthCheckStatus struct {
-	// expectedMachines is the total number of machines counted by this machine health check
+	// total number of machines counted by this machine health check
 	// +kubebuilder:validation:Minimum=0
 	// +optional
 	ExpectedMachines int32 `json:"expectedMachines"`
 
-	// currentHealthy is the total number of healthy machines counted by this machine health check
+	// total number of healthy machines counted by this machine health check
 	// +kubebuilder:validation:Minimum=0
 	// +optional
 	CurrentHealthy int32 `json:"currentHealthy"`
@@ -174,9 +157,6 @@ type MachineHealthCheckStatus struct {
 
 	// targets shows the current list of machines the machine health check is watching
 	// +optional
-	// +kubebuilder:validation:MaxItems=10000
-	// +kubebuilder:validation:items:MinLength=1
-	// +kubebuilder:validation:items:MaxLength=253
 	Targets []string `json:"targets,omitempty"`
 
 	// conditions defines current service state of the MachineHealthCheck.
@@ -214,18 +194,13 @@ type MachineHealthCheckV1Beta2Status struct {
 
 // MachineHealthCheck is the Schema for the machinehealthchecks API.
 type MachineHealthCheck struct {
-	metav1.TypeMeta `json:",inline"`
-	// metadata is the standard object's metadata.
-	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
-	// +optional
+	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	// spec is the specification of machine health check policy
-	// +optional
+	// Specification of machine health check policy
 	Spec MachineHealthCheckSpec `json:"spec,omitempty"`
 
-	// status is the most recently observed status of MachineHealthCheck resource
-	// +optional
+	// Most recently observed status of MachineHealthCheck resource
 	Status MachineHealthCheckStatus `json:"status,omitempty"`
 }
 
@@ -260,12 +235,8 @@ func (m *MachineHealthCheck) SetV1Beta2Conditions(conditions []metav1.Condition)
 // MachineHealthCheckList contains a list of MachineHealthCheck.
 type MachineHealthCheckList struct {
 	metav1.TypeMeta `json:",inline"`
-	// metadata is the standard list's metadata.
-	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#lists-and-simple-kinds
-	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
-	// items is the list of MachineHealthChecks.
-	Items []MachineHealthCheck `json:"items"`
+	Items           []MachineHealthCheck `json:"items"`
 }
 
 func init() {

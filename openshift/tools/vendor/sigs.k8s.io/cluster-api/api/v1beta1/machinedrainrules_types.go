@@ -79,7 +79,6 @@ type MachineDrainRuleSpec struct {
 	// +listType=atomic
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=32
-	// +kubebuilder:validation:XValidation:rule="self.all(x, self.exists_one(y, x == y))",message="entries in machines must be unique"
 	Machines []MachineDrainRuleMachineSelector `json:"machines,omitempty"`
 
 	// pods defines to which Pods this MachineDrainRule should be applied.
@@ -111,7 +110,6 @@ type MachineDrainRuleSpec struct {
 	// +listType=atomic
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:MaxItems=32
-	// +kubebuilder:validation:XValidation:rule="self.all(x, self.exists_one(y, x == y))",message="entries in pods must be unique"
 	Pods []MachineDrainRulePodSelector `json:"pods,omitempty"`
 }
 
@@ -205,8 +203,6 @@ type MachineDrainRulePodSelector struct {
 type MachineDrainRule struct {
 	metav1.TypeMeta `json:",inline"`
 
-	// metadata is the standard object's metadata.
-	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	// +required
 	metav1.ObjectMeta `json:"metadata"`
 
@@ -221,12 +217,11 @@ type MachineDrainRule struct {
 type MachineDrainRuleList struct {
 	metav1.TypeMeta `json:",inline"`
 
-	// metadata is the standard list's metadata.
-	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#lists-and-simple-kinds
 	// +required
 	metav1.ListMeta `json:"metadata"`
 
 	// items contains the items of the MachineDrainRuleList.
+	// +required
 	Items []MachineDrainRule `json:"items"`
 }
 
