@@ -20,6 +20,7 @@ import (
 	"sync"
 	"time"
 
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/utils/clock"
 )
 
@@ -93,8 +94,9 @@ func newQueueWithConfig(config QueueConfig, updatePeriod time.Duration) *Type {
 func newQueue(c clock.WithTicker, metrics queueMetrics, updatePeriod time.Duration) *Type {
 	t := &Type{
 		clock:                      c,
-		dirty:                      set{},
-		processing:                 set{},
+		queue:                      queue,
+		dirty:                      sets.Set[T]{},
+		processing:                 sets.Set[T]{},
 		cond:                       sync.NewCond(&sync.Mutex{}),
 		metrics:                    metrics,
 		unfinishedWorkUpdatePeriod: updatePeriod,
@@ -119,13 +121,13 @@ type Type struct {
 	queue []t
 
 	// dirty defines all of the items that need to be processed.
-	dirty set
+	dirty sets.Set[t]
 
 	// Things that are currently being processed are in the processing set.
 	// These things may be simultaneously in the dirty set. When we finish
 	// processing something and remove it from this set, we'll check if
 	// it's in the dirty set, and if so, add it to the queue.
-	processing set
+	processing sets.Set[t]
 
 	cond *sync.Cond
 
@@ -138,42 +140,28 @@ type Type struct {
 	clock                      clock.WithTicker
 }
 
-type empty struct{}
-type t interface{}
-type set map[t]empty
-
-func (s set) has(item t) bool {
-	_, exists := s[item]
-	return exists
-}
-
-func (s set) insert(item t) {
-	s[item] = empty{}
-}
-
-func (s set) delete(item t) {
-	delete(s, item)
-}
-
-func (s set) len() int {
-	return len(s)
-}
-
-// Add marks item as needing processing.
-func (q *Type) Add(item interface{}) {
+// Add marks item as needing processing. When the queue is shutdown new
+// items will silently be ignored and not queued or marked as dirty for
+// reprocessing.
+func (q *Typed[T]) Add(item T) {
 	q.cond.L.Lock()
 	defer q.cond.L.Unlock()
 	if q.shuttingDown {
 		return
 	}
-	if q.dirty.has(item) {
+	if q.dirty.Has(item) {
+		// the same item is added again before it is processed, call the Touch
+		// function if the queue cares about it (for e.g, reset its priority)
+		if !q.processing.Has(item) {
+			q.queue.Touch(item)
+		}
 		return
 	}
 
 	q.metrics.add(item)
 
-	q.dirty.insert(item)
-	if q.processing.has(item) {
+	q.dirty.Insert(item)
+	if q.processing.Has(item) {
 		return
 	}
 
@@ -211,8 +199,8 @@ func (q *Type) Get() (item interface{}, shutdown bool) {
 
 	q.metrics.get(item)
 
-	q.processing.insert(item)
-	q.dirty.delete(item)
+	q.processing.Insert(item)
+	q.dirty.Delete(item)
 
 	return item, false
 }
@@ -226,18 +214,19 @@ func (q *Type) Done(item interface{}) {
 
 	q.metrics.done(item)
 
-	q.processing.delete(item)
-	if q.dirty.has(item) {
-		q.queue = append(q.queue, item)
+	q.processing.Delete(item)
+	if q.dirty.Has(item) {
+		q.queue.Push(item)
 		q.cond.Signal()
-	} else if q.processing.len() == 0 {
+	} else if q.processing.Len() == 0 {
 		q.cond.Signal()
 	}
 }
 
-// ShutDown will cause q to ignore all new items added to it and
-// immediately instruct the worker goroutines to exit.
-func (q *Type) ShutDown() {
+// ShutDown will cause q to ignore all new items added to it. Worker
+// goroutines will continue processing items in the queue until it is
+// empty and then receive the shutdown signal.
+func (q *Typed[T]) ShutDown() {
 	q.cond.L.Lock()
 	defer q.cond.L.Unlock()
 
@@ -246,16 +235,13 @@ func (q *Type) ShutDown() {
 	q.cond.Broadcast()
 }
 
-// ShutDownWithDrain will cause q to ignore all new items added to it. As soon
-// as the worker goroutines have "drained", i.e: finished processing and called
-// Done on all existing items in the queue; they will be instructed to exit and
-// ShutDownWithDrain will return. Hence: a strict requirement for using this is;
-// your workers must ensure that Done is called on all items in the queue once
-// the shut down has been initiated, if that is not the case: this will block
-// indefinitely. It is, however, safe to call ShutDown after having called
-// ShutDownWithDrain, as to force the queue shut down to terminate immediately
-// without waiting for the drainage.
-func (q *Type) ShutDownWithDrain() {
+// ShutDownWithDrain is equivalent to ShutDown but waits until all items
+// in the queue have been processed.
+// ShutDown can be called after ShutDownWithDrain to force
+// ShutDownWithDrain to stop waiting.
+// Workers must call Done on an item after processing it, otherwise
+// ShutDownWithDrain will block indefinitely.
+func (q *Typed[T]) ShutDownWithDrain() {
 	q.cond.L.Lock()
 	defer q.cond.L.Unlock()
 
@@ -263,7 +249,7 @@ func (q *Type) ShutDownWithDrain() {
 	q.shuttingDown = true
 	q.cond.Broadcast()
 
-	for q.processing.len() != 0 && q.drain {
+	for q.processing.Len() != 0 && q.drain {
 		q.cond.Wait()
 	}
 }

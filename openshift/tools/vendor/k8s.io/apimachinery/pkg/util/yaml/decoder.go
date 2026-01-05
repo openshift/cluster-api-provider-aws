@@ -279,7 +279,38 @@ func (d *YAMLOrJSONDecoder) Decode(into interface{}) error {
 		if isJSON {
 			d.decoder = json.NewDecoder(buffer)
 		} else {
-			d.decoder = NewYAMLToJSONDecoder(buffer)
+			firstErr = err
+		}
+		if d.count > 1 {
+			// If we found 0 or 1 JSON object(s), this stream is still
+			// ambiguous.  But if we found more than 1 JSON object, then this
+			// is an unambiguous JSON stream, and we should not switch to YAML.
+			return err
+		}
+		// If JSON decoding hits the end of one object and then fails on the
+		// next, it leaves any leading whitespace in the buffer, which can
+		// confuse the YAML decoder. We just eat any whitespace we find, up to
+		// and including the first newline.
+		d.stream.Rewind()
+		if err := d.consumeWhitespace(); err == nil {
+			d.yaml = NewYAMLToJSONDecoder(d.stream)
+		}
+		d.json = nil
+	}
+	if d.yaml != nil {
+		err := d.yaml.Decode(into)
+		if err == nil {
+			d.count++
+			consumed := int64(d.yaml.InputOffset()) - d.yamlConsumed
+			d.stream.Consume(int(consumed))
+			d.yamlConsumed += consumed
+			return nil
+		}
+		if err == io.EOF { //nolint:errorlint
+			return err
+		}
+		if firstErr == nil {
+			firstErr = err
 		}
 	}
 	err := d.decoder.Decode(into)
@@ -289,7 +320,36 @@ func (d *YAMLOrJSONDecoder) Decode(into interface{}) error {
 			Err:    syntax,
 		}
 	}
-	return err
+	return fmt.Errorf("decoding failed as both JSON and YAML")
+}
+
+func (d *YAMLOrJSONDecoder) consumeWhitespace() error {
+	consumed := 0
+	for {
+		buf, err := d.stream.ReadN(4)
+		if err != nil && err == io.EOF { //nolint:errorlint
+			return err
+		}
+		r, sz := utf8.DecodeRune(buf)
+		if r == utf8.RuneError || sz == 0 {
+			return fmt.Errorf("invalid utf8 rune")
+		}
+		d.stream.RewindN(len(buf) - sz)
+		if !unicode.IsSpace(r) {
+			d.stream.RewindN(sz)
+			d.stream.Consume(consumed)
+			return nil
+		}
+		consumed += sz
+		if r == '\n' {
+			d.stream.Consume(consumed)
+			return nil
+		}
+		if err == io.EOF { //nolint:errorlint
+			break
+		}
+	}
+	return io.EOF
 }
 
 type Reader interface {
