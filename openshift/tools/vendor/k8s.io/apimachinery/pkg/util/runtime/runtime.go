@@ -86,13 +86,10 @@ func logPanic(r interface{}) {
 // should be packaged up into a testable and reusable object.
 var ErrorHandlers = []func(error){
 	logError,
-	(&rudimentaryErrorBackoff{
-		lastErrorTime: time.Now(),
-		// 1ms was the number folks were able to stomach as a global rate limit.
-		// If you need to log errors more than 1000 times a second you
-		// should probably consider fixing your code instead. :)
-		minPeriod: time.Millisecond,
-	}).OnError,
+	// 1ms was the number folks were able to stomach as a global rate limit.
+	// If you need to log errors more than 1000 times a second, you
+	// should probably consider fixing your code instead. :)
+	backoffError(1 * time.Millisecond),
 }
 
 // HandlerError is a method to invoke when a non-user facing piece of code cannot
@@ -113,6 +110,18 @@ func HandleError(err error) {
 // logError prints an error with the call stack of the location it was reported
 func logError(err error) {
 	klog.ErrorDepth(2, err)
+}
+
+// backoffError blocks if it is called more often than the minPeriod.
+func backoffError(minPeriod time.Duration) ErrorHandler {
+	r := &rudimentaryErrorBackoff{
+		lastErrorTime: time.Now(),
+		minPeriod:     minPeriod,
+	}
+
+	return func(ctx context.Context, err error, msg string, keysAndValues ...interface{}) {
+		r.OnError()
+	}
 }
 
 type rudimentaryErrorBackoff struct {
