@@ -23,4 +23,11 @@ update-manifests-gen:
 .PHONY: ocp-manifests
 ocp-manifests: $(RELEASE_DIR) ## Builds openshift specific manifests
 	# Generate provider manifests.
-	cd tools && $(MANIFESTS_GEN) --provider-name "aws" --provider-type "InfrastructureProvider" --provider-version "${PROVIDER_VERSION}" --base-path "../../" --manifests-path "../manifests"
+	cd tools && $(MANIFESTS_GEN) --manifests-path "../capi-operator-manifests" --kustomize-dir="../../openshift" \
+		--name cluster-api-provider-aws \
+		--install-order 20 \
+		--attribute type=infrastructure \
+		--attribute version="${PROVIDER_VERSION}" \
+		--self-image-ref registry.ci.openshift.org/openshift:aws-cluster-api-controllers \
+		--platform AWS \
+		--protect-cluster-resource awscluster
