@@ -1,15 +1,8 @@
----
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    exclude.release.openshift.io/internal-openshift-hosted: "true"
-    include.release.openshift.io/self-managed-high-availability: "true"
-    include.release.openshift.io/single-node-developer: "true"
-    release.openshift.io/feature-set: CustomNoUpgrade,TechPreviewNoUpgrade
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
-    clusterctl.cluster.x-k8s.io: ""
   name: capa-metrics-service
   namespace: openshift-cluster-api
 spec:
@@ -24,14 +17,8 @@ spec:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  annotations:
-    exclude.release.openshift.io/internal-openshift-hosted: "true"
-    include.release.openshift.io/self-managed-high-availability: "true"
-    include.release.openshift.io/single-node-developer: "true"
-    release.openshift.io/feature-set: CustomNoUpgrade,TechPreviewNoUpgrade
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
-    clusterctl.cluster.x-k8s.io: ""
   name: capa-manager-role
 rules:
 - apiGroups:
@@ -280,15 +267,8 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  annotations:
-    exclude.release.openshift.io/internal-openshift-hosted: "true"
-    include.release.openshift.io/self-managed-high-availability: "true"
-    include.release.openshift.io/single-node-developer: "true"
-    release.openshift.io/feature-set: CustomNoUpgrade,TechPreviewNoUpgrade
-  creationTimestamp: null
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
-    clusterctl.cluster.x-k8s.io: ""
   name: capa-manager-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -302,14 +282,8 @@ subjects:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  annotations:
-    exclude.release.openshift.io/internal-openshift-hosted: "true"
-    include.release.openshift.io/self-managed-high-availability: "true"
-    include.release.openshift.io/single-node-developer: "true"
-    release.openshift.io/feature-set: CustomNoUpgrade,TechPreviewNoUpgrade
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
-    clusterctl.cluster.x-k8s.io: ""
     control-plane: controller-manager
   name: capa-controller-manager
   namespace: openshift-cluster-api
@@ -317,14 +291,8 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  annotations:
-    exclude.release.openshift.io/internal-openshift-hosted: "true"
-    include.release.openshift.io/self-managed-high-availability: "true"
-    include.release.openshift.io/single-node-developer: "true"
-    release.openshift.io/feature-set: CustomNoUpgrade,TechPreviewNoUpgrade
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
-    clusterctl.cluster.x-k8s.io: ""
   name: capa-leader-elect-role
   namespace: openshift-cluster-api
 rules:
@@ -370,15 +338,8 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  annotations:
-    exclude.release.openshift.io/internal-openshift-hosted: "true"
-    include.release.openshift.io/self-managed-high-availability: "true"
-    include.release.openshift.io/single-node-developer: "true"
-    release.openshift.io/feature-set: CustomNoUpgrade,TechPreviewNoUpgrade
-  creationTimestamp: null
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
-    clusterctl.cluster.x-k8s.io: ""
   name: capa-leader-elect-rolebinding
   namespace: openshift-cluster-api
 roleRef:
@@ -393,10 +354,8 @@ subjects:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  creationTimestamp: null
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
-    clusterctl.cluster.x-k8s.io: ""
     control-plane: capa-controller-manager
   name: capa-controller-manager
   namespace: openshift-cluster-api
@@ -412,7 +371,6 @@ spec:
       annotations:
         iam.amazonaws.com/role: ${AWS_CONTROLLER_IAM_ROLE:=""}
         target.workload.openshift.io/management: '{"effect": "PreferredDuringScheduling"}'
-      creationTimestamp: null
       labels:
         cluster.x-k8s.io/provider: infrastructure-aws
         control-plane: capa-controller-manager
@@ -440,7 +398,7 @@ spec:
         env:
         - name: AWS_SHARED_CREDENTIALS_FILE
           value: /home/.aws/credentials
-        image: to.be/replaced:v99
+        image: registry.ci.openshift.org/openshift:aws-cluster-api-controllers
         imagePullPolicy: Always
         livenessProbe:
           failureThreshold: 3
@@ -509,18 +467,12 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-    exclude.release.openshift.io/internal-openshift-hosted: "true"
-    include.release.openshift.io/self-managed-high-availability: "true"
-    include.release.openshift.io/single-node-developer: "true"
-    release.openshift.io/feature-set: CustomNoUpgrade,TechPreviewNoUpgrade
     service.beta.openshift.io/inject-cabundle: "true"
-  creationTimestamp: null
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
     cluster.x-k8s.io/v1alpha4: v1alpha4
     cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
-    clusterctl.cluster.x-k8s.io: ""
   name: awsmachines.infrastructure.cluster.x-k8s.io
 spec:
   conversion:
@@ -1883,30 +1835,18 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: null
-  storedVersions: null
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-    exclude.release.openshift.io/internal-openshift-hosted: "true"
-    include.release.openshift.io/self-managed-high-availability: "true"
-    include.release.openshift.io/single-node-developer: "true"
-    release.openshift.io/feature-set: CustomNoUpgrade,TechPreviewNoUpgrade
     service.beta.openshift.io/inject-cabundle: "true"
-  creationTimestamp: null
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
     cluster.x-k8s.io/v1alpha4: v1alpha4
     cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
-    clusterctl.cluster.x-k8s.io: ""
   name: awsclusters.infrastructure.cluster.x-k8s.io
 spec:
   conversion:
@@ -5078,29 +5018,17 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: null
-  storedVersions: null
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-    exclude.release.openshift.io/internal-openshift-hosted: "true"
-    include.release.openshift.io/self-managed-high-availability: "true"
-    include.release.openshift.io/single-node-developer: "true"
-    release.openshift.io/feature-set: CustomNoUpgrade,TechPreviewNoUpgrade
-  creationTimestamp: null
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
     cluster.x-k8s.io/v1alpha4: v1alpha4
     cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
-    clusterctl.cluster.x-k8s.io: ""
   name: awsfargateprofiles.infrastructure.cluster.x-k8s.io
 spec:
   group: infrastructure.cluster.x-k8s.io
@@ -5525,30 +5453,18 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: null
-  storedVersions: null
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-    exclude.release.openshift.io/internal-openshift-hosted: "true"
-    include.release.openshift.io/self-managed-high-availability: "true"
-    include.release.openshift.io/single-node-developer: "true"
-    release.openshift.io/feature-set: CustomNoUpgrade,TechPreviewNoUpgrade
     service.beta.openshift.io/inject-cabundle: "true"
-  creationTimestamp: null
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
     cluster.x-k8s.io/v1alpha4: v1alpha4
     cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
-    clusterctl.cluster.x-k8s.io: ""
   name: awsmachinetemplates.infrastructure.cluster.x-k8s.io
 spec:
   conversion:
@@ -6793,29 +6709,17 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: null
-  storedVersions: null
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-    exclude.release.openshift.io/internal-openshift-hosted: "true"
-    include.release.openshift.io/self-managed-high-availability: "true"
-    include.release.openshift.io/single-node-developer: "true"
-    release.openshift.io/feature-set: CustomNoUpgrade,TechPreviewNoUpgrade
-  creationTimestamp: null
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
     cluster.x-k8s.io/v1alpha4: v1alpha4
     cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
-    clusterctl.cluster.x-k8s.io: ""
   name: awsmachinepools.infrastructure.cluster.x-k8s.io
 spec:
   group: infrastructure.cluster.x-k8s.io
@@ -8194,29 +8098,17 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: null
-  storedVersions: null
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-    exclude.release.openshift.io/internal-openshift-hosted: "true"
-    include.release.openshift.io/self-managed-high-availability: "true"
-    include.release.openshift.io/single-node-developer: "true"
-    release.openshift.io/feature-set: CustomNoUpgrade,TechPreviewNoUpgrade
-  creationTimestamp: null
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
     cluster.x-k8s.io/v1alpha4: v1alpha4
     cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
-    clusterctl.cluster.x-k8s.io: ""
   name: awsmanagedmachinepools.infrastructure.cluster.x-k8s.io
 spec:
   group: infrastructure.cluster.x-k8s.io
@@ -9459,30 +9351,18 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: null
-  storedVersions: null
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-    exclude.release.openshift.io/internal-openshift-hosted: "true"
-    include.release.openshift.io/self-managed-high-availability: "true"
-    include.release.openshift.io/single-node-developer: "true"
-    release.openshift.io/feature-set: CustomNoUpgrade,TechPreviewNoUpgrade
     service.beta.openshift.io/inject-cabundle: "true"
-  creationTimestamp: null
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
     cluster.x-k8s.io/v1alpha4: v1alpha4
     cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
-    clusterctl.cluster.x-k8s.io: ""
     clusterctl.cluster.x-k8s.io/move-hierarchy: ""
   name: awsclusterroleidentities.infrastructure.cluster.x-k8s.io
 spec:
@@ -9819,29 +9699,17 @@ spec:
         type: object
     served: true
     storage: true
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: null
-  storedVersions: null
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-    exclude.release.openshift.io/internal-openshift-hosted: "true"
-    include.release.openshift.io/self-managed-high-availability: "true"
-    include.release.openshift.io/single-node-developer: "true"
-    release.openshift.io/feature-set: CustomNoUpgrade,TechPreviewNoUpgrade
-  creationTimestamp: null
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
     cluster.x-k8s.io/v1alpha4: v1alpha4
     cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
-    clusterctl.cluster.x-k8s.io: ""
     clusterctl.cluster.x-k8s.io/move-hierarchy: ""
   name: awsclusterstaticidentities.infrastructure.cluster.x-k8s.io
 spec:
@@ -10069,30 +9937,18 @@ spec:
         type: object
     served: true
     storage: true
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: null
-  storedVersions: null
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-    exclude.release.openshift.io/internal-openshift-hosted: "true"
-    include.release.openshift.io/self-managed-high-availability: "true"
-    include.release.openshift.io/single-node-developer: "true"
-    release.openshift.io/feature-set: CustomNoUpgrade,TechPreviewNoUpgrade
     service.beta.openshift.io/inject-cabundle: "true"
-  creationTimestamp: null
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
     cluster.x-k8s.io/v1alpha4: v1alpha4
     cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
-    clusterctl.cluster.x-k8s.io: ""
     clusterctl.cluster.x-k8s.io/move-hierarchy: ""
   name: awsclustercontrolleridentities.infrastructure.cluster.x-k8s.io
 spec:
@@ -10311,30 +10167,18 @@ spec:
         type: object
     served: true
     storage: true
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: null
-  storedVersions: null
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-    exclude.release.openshift.io/internal-openshift-hosted: "true"
-    include.release.openshift.io/self-managed-high-availability: "true"
-    include.release.openshift.io/single-node-developer: "true"
-    release.openshift.io/feature-set: CustomNoUpgrade,TechPreviewNoUpgrade
     service.beta.openshift.io/inject-cabundle: "true"
-  creationTimestamp: null
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
     cluster.x-k8s.io/v1alpha4: v1alpha4
     cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
-    clusterctl.cluster.x-k8s.io: ""
   name: awsclustertemplates.infrastructure.cluster.x-k8s.io
 spec:
   conversion:
@@ -12104,30 +11948,18 @@ spec:
     served: true
     storage: true
     subresources: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: null
-  storedVersions: null
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-    exclude.release.openshift.io/internal-openshift-hosted: "true"
-    include.release.openshift.io/self-managed-high-availability: "true"
-    include.release.openshift.io/single-node-developer: "true"
-    release.openshift.io/feature-set: CustomNoUpgrade,TechPreviewNoUpgrade
     service.beta.openshift.io/inject-cabundle: "true"
-  creationTimestamp: null
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
     cluster.x-k8s.io/v1alpha4: v1alpha4
     cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
-    clusterctl.cluster.x-k8s.io: ""
   name: awsmanagedcontrolplanes.controlplane.cluster.x-k8s.io
 spec:
   conversion:
@@ -16660,30 +16492,18 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: null
-  storedVersions: null
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-    exclude.release.openshift.io/internal-openshift-hosted: "true"
-    include.release.openshift.io/self-managed-high-availability: "true"
-    include.release.openshift.io/single-node-developer: "true"
-    release.openshift.io/feature-set: CustomNoUpgrade,TechPreviewNoUpgrade
     service.beta.openshift.io/inject-cabundle: "true"
-  creationTimestamp: null
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
     cluster.x-k8s.io/v1alpha4: v1alpha4
     cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
-    clusterctl.cluster.x-k8s.io: ""
   name: awsmanagedcontrolplanetemplates.controlplane.cluster.x-k8s.io
 spec:
   conversion:
@@ -17900,30 +17720,18 @@ spec:
         type: object
     served: true
     storage: true
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: null
-  storedVersions: null
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-    exclude.release.openshift.io/internal-openshift-hosted: "true"
-    include.release.openshift.io/self-managed-high-availability: "true"
-    include.release.openshift.io/single-node-developer: "true"
-    release.openshift.io/feature-set: CustomNoUpgrade,TechPreviewNoUpgrade
     service.beta.openshift.io/inject-cabundle: "true"
-  creationTimestamp: null
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
     cluster.x-k8s.io/v1alpha4: v1alpha4
     cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
-    clusterctl.cluster.x-k8s.io: ""
   name: awsmanagedclusters.infrastructure.cluster.x-k8s.io
 spec:
   group: infrastructure.cluster.x-k8s.io
@@ -18079,30 +17887,18 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: null
-  storedVersions: null
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-    exclude.release.openshift.io/internal-openshift-hosted: "true"
-    include.release.openshift.io/self-managed-high-availability: "true"
-    include.release.openshift.io/single-node-developer: "true"
-    release.openshift.io/feature-set: CustomNoUpgrade,TechPreviewNoUpgrade
     service.beta.openshift.io/inject-cabundle: "true"
-  creationTimestamp: null
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
     cluster.x-k8s.io/v1alpha4: v1alpha4
     cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
-    clusterctl.cluster.x-k8s.io: ""
   name: awsmanagedclustertemplates.infrastructure.cluster.x-k8s.io
 spec:
   group: infrastructure.cluster.x-k8s.io
@@ -18180,30 +17976,18 @@ spec:
         type: object
     served: true
     storage: true
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: null
-  storedVersions: null
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-    exclude.release.openshift.io/internal-openshift-hosted: "true"
-    include.release.openshift.io/self-managed-high-availability: "true"
-    include.release.openshift.io/single-node-developer: "true"
-    release.openshift.io/feature-set: CustomNoUpgrade,TechPreviewNoUpgrade
     service.beta.openshift.io/inject-cabundle: "true"
-  creationTimestamp: null
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
     cluster.x-k8s.io/v1alpha4: v1alpha4
     cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
-    clusterctl.cluster.x-k8s.io: ""
   name: eksconfigs.bootstrap.cluster.x-k8s.io
 spec:
   conversion:
@@ -18800,30 +18584,18 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: null
-  storedVersions: null
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-    exclude.release.openshift.io/internal-openshift-hosted: "true"
-    include.release.openshift.io/self-managed-high-availability: "true"
-    include.release.openshift.io/single-node-developer: "true"
-    release.openshift.io/feature-set: CustomNoUpgrade,TechPreviewNoUpgrade
     service.beta.openshift.io/inject-cabundle: "true"
-  creationTimestamp: null
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
     cluster.x-k8s.io/v1alpha4: v1alpha4
     cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
-    clusterctl.cluster.x-k8s.io: ""
   name: eksconfigtemplates.bootstrap.cluster.x-k8s.io
 spec:
   conversion:
@@ -19282,29 +19054,17 @@ spec:
         type: object
     served: true
     storage: true
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: null
-  storedVersions: null
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-    exclude.release.openshift.io/internal-openshift-hosted: "true"
-    include.release.openshift.io/self-managed-high-availability: "true"
-    include.release.openshift.io/single-node-developer: "true"
-    release.openshift.io/feature-set: CustomNoUpgrade,TechPreviewNoUpgrade
-  creationTimestamp: null
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
     cluster.x-k8s.io/v1alpha4: v1alpha4
     cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
-    clusterctl.cluster.x-k8s.io: ""
   name: rosacontrolplanes.controlplane.cluster.x-k8s.io
 spec:
   group: controlplane.cluster.x-k8s.io
@@ -20283,29 +20043,17 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: null
-  storedVersions: null
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-    exclude.release.openshift.io/internal-openshift-hosted: "true"
-    include.release.openshift.io/self-managed-high-availability: "true"
-    include.release.openshift.io/single-node-developer: "true"
-    release.openshift.io/feature-set: CustomNoUpgrade,TechPreviewNoUpgrade
-  creationTimestamp: null
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
     cluster.x-k8s.io/v1alpha4: v1alpha4
     cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
-    clusterctl.cluster.x-k8s.io: ""
   name: rosaclusters.infrastructure.cluster.x-k8s.io
 spec:
   group: infrastructure.cluster.x-k8s.io
@@ -20460,29 +20208,17 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: null
-  storedVersions: null
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-    exclude.release.openshift.io/internal-openshift-hosted: "true"
-    include.release.openshift.io/self-managed-high-availability: "true"
-    include.release.openshift.io/single-node-developer: "true"
-    release.openshift.io/feature-set: CustomNoUpgrade,TechPreviewNoUpgrade
-  creationTimestamp: null
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
     cluster.x-k8s.io/v1alpha4: v1alpha4
     cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
-    clusterctl.cluster.x-k8s.io: ""
   name: rosamachinepools.infrastructure.cluster.x-k8s.io
 spec:
   group: infrastructure.cluster.x-k8s.io
@@ -20801,30 +20537,18 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: null
-  storedVersions: null
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-    exclude.release.openshift.io/internal-openshift-hosted: "true"
-    include.release.openshift.io/self-managed-high-availability: "true"
-    include.release.openshift.io/single-node-developer: "true"
-    release.openshift.io/feature-set: CustomNoUpgrade,TechPreviewNoUpgrade
     service.beta.openshift.io/inject-cabundle: "true"
-  creationTimestamp: null
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
     cluster.x-k8s.io/v1alpha4: v1alpha4
     cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
-    clusterctl.cluster.x-k8s.io: ""
   name: rosaroleconfigs.infrastructure.cluster.x-k8s.io
 spec:
   group: infrastructure.cluster.x-k8s.io
@@ -21277,30 +21001,18 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: null
-  storedVersions: null
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-    exclude.release.openshift.io/internal-openshift-hosted: "true"
-    include.release.openshift.io/self-managed-high-availability: "true"
-    include.release.openshift.io/single-node-developer: "true"
-    release.openshift.io/feature-set: CustomNoUpgrade,TechPreviewNoUpgrade
     service.beta.openshift.io/inject-cabundle: "true"
-  creationTimestamp: null
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
     cluster.x-k8s.io/v1alpha3: v1alpha3
     cluster.x-k8s.io/v1alpha4: v1alpha4
     cluster.x-k8s.io/v1beta1: v1beta1_v1beta2
-    clusterctl.cluster.x-k8s.io: ""
   name: rosanetworks.infrastructure.cluster.x-k8s.io
 spec:
   group: infrastructure.cluster.x-k8s.io
@@ -21526,22 +21238,14 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: null
-  storedVersions: null
 ---
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
   annotations:
     service.beta.openshift.io/inject-cabundle: "true"
-  creationTimestamp: null
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
-    clusterctl.cluster.x-k8s.io: ""
   name: capa-mutating-webhook-configuration
 webhooks:
 - admissionReviewVersions:
@@ -21923,10 +21627,8 @@ kind: ValidatingWebhookConfiguration
 metadata:
   annotations:
     service.beta.openshift.io/inject-cabundle: "true"
-  creationTimestamp: null
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
-    clusterctl.cluster.x-k8s.io: ""
   name: capa-validating-webhook-configuration
 webhooks:
 - admissionReviewVersions:
@@ -22330,14 +22032,9 @@ apiVersion: v1
 kind: Service
 metadata:
   annotations:
-    exclude.release.openshift.io/internal-openshift-hosted: "true"
-    include.release.openshift.io/self-managed-high-availability: "true"
-    include.release.openshift.io/single-node-developer: "true"
-    release.openshift.io/feature-set: CustomNoUpgrade,TechPreviewNoUpgrade
     service.beta.openshift.io/serving-cert-secret-name: capa-webhook-service-cert
   labels:
     cluster.x-k8s.io/provider: infrastructure-aws
-    clusterctl.cluster.x-k8s.io: ""
   name: capa-webhook-service
   namespace: openshift-cluster-api
 spec:
