@@ -222,6 +222,19 @@ func IsDNS1123Subdomain(value string) []string {
 	return errs
 }
 
+// IsDNS1123SubdomainWithUnderscore tests for a string that conforms to the definition of a
+// subdomain in DNS (RFC 1123), but allows the use of an underscore in the string
+func IsDNS1123SubdomainWithUnderscore(value string) []string {
+	var errs []string
+	if len(value) > DNS1123SubdomainMaxLength {
+		errs = append(errs, MaxLenError(DNS1123SubdomainMaxLength))
+	}
+	if !dns1123SubdomainRegexpWithUnderscore.MatchString(value) {
+		errs = append(errs, RegexError(dns1123SubdomainErrorMsgFG, dns1123SubdomainFmtWithUnderscore, "example.com"))
+	}
+	return errs
+}
+
 const dns1035LabelFmt string = "[a-z]([-a-z0-9]*[a-z0-9])?"
 const dns1035LabelErrMsg string = "a DNS-1035 label must consist of lower case alphanumeric characters or '-', start with an alphabetic character, and end with an alphanumeric character"
 
