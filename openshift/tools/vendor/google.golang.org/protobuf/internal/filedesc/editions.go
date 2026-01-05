@@ -13,8 +13,10 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-var defaultsCache = make(map[Edition]EditionFeatures)
-var defaultsKeys = []Edition{}
+var (
+	defaultsCache = make(map[Edition]EditionFeatures)
+	defaultsKeys  = []Edition{}
+)
 
 func init() {
 	unmarshalEditionDefaults(editiondefaults.Defaults)
@@ -33,7 +35,7 @@ func unmarshalGoFeature(b []byte, parent EditionFeatures) EditionFeatures {
 			b = b[m:]
 			parent.GenerateLegacyUnmarshalJSON = protowire.DecodeBool(v)
 		default:
-			panic(fmt.Sprintf("unkown field number %d while unmarshalling GoFeatures", num))
+			panic(fmt.Sprintf("unknown field number %d while unmarshalling GoFeatures", num))
 		}
 	}
 	return parent
@@ -61,8 +63,14 @@ func unmarshalFeatureSet(b []byte, parent EditionFeatures) EditionFeatures {
 				parent.IsDelimitedEncoded = v == genid.FeatureSet_DELIMITED_enum_value
 			case genid.FeatureSet_JsonFormat_field_number:
 				parent.IsJSONCompliant = v == genid.FeatureSet_ALLOW_enum_value
+			case genid.FeatureSet_EnforceNamingStyle_field_number:
+				// EnforceNamingStyle is enforced in protoc, languages other than C++
+				// are not supposed to do anything with this feature.
+			case genid.FeatureSet_DefaultSymbolVisibility_field_number:
+				// DefaultSymbolVisibility is enforced in protoc, runtimes should not
+				// inspect this value.
 			default:
-				panic(fmt.Sprintf("unkown field number %d while unmarshalling FeatureSet", num))
+				panic(fmt.Sprintf("unknown field number %d while unmarshalling FeatureSet", num))
 			}
 		case protowire.BytesType:
 			v, m := protowire.ConsumeBytes(b)
@@ -136,7 +144,7 @@ func unmarshalEditionDefaults(b []byte) {
 			_, m := protowire.ConsumeVarint(b)
 			b = b[m:]
 		default:
-			panic(fmt.Sprintf("unkown field number %d while unmarshalling EditionDefault", num))
+			panic(fmt.Sprintf("unknown field number %d while unmarshalling EditionDefault", num))
 		}
 	}
 }
