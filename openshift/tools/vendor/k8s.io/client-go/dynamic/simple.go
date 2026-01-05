@@ -19,8 +19,6 @@ package dynamic
 import (
 	"context"
 	"fmt"
-	"net/http"
-
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -29,6 +27,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/util/apply"
+	"net/http"
 )
 
 type DynamicClient struct {
@@ -300,23 +300,7 @@ func (c *dynamicResourceClient) List(ctx context.Context, opts metav1.ListOption
 	if err := result.Error(); err != nil {
 		return nil, err
 	}
-	retBytes, err := result.Raw()
-	if err != nil {
-		return nil, err
-	}
-	uncastObj, err := runtime.Decode(unstructured.UnstructuredJSONScheme, retBytes)
-	if err != nil {
-		return nil, err
-	}
-	if list, ok := uncastObj.(*unstructured.UnstructuredList); ok {
-		return list, nil
-	}
-
-	list, err := uncastObj.(*unstructured.Unstructured).ToList()
-	if err != nil {
-		return nil, err
-	}
-	return list, nil
+	return &out, nil
 }
 
 func (c *dynamicResourceClient) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
