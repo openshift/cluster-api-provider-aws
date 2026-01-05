@@ -316,8 +316,9 @@ func (r *Request) NamespaceIfScoped(namespace string, scoped bool) *Request {
 	return r
 }
 
-// AbsPath overwrites an existing path with the segments provided. Trailing slashes are preserved
-// when a single segment is passed.
+// AbsPath overwrites an existing path with the segments provided.
+// Trailing slashes are preserved when a single segment is passed.
+// Any path in the request's REST client's base URL is preserved as a prefix.
 func (r *Request) AbsPath(segments ...string) *Request {
 	if r.err != nil {
 		return r
@@ -330,8 +331,8 @@ func (r *Request) AbsPath(segments ...string) *Request {
 	return r
 }
 
-// RequestURI overwrites existing path and parameters with the value of the provided server relative
-// URI.
+// RequestURI overwrites existing path and parameters with the value of the provided server relative URI.
+// This is equivalent to clearing params, then calling AbsPath() + Param() for each query parameter.
 func (r *Request) RequestURI(uri string) *Request {
 	if r.err != nil {
 		return r
@@ -341,14 +342,17 @@ func (r *Request) RequestURI(uri string) *Request {
 		r.err = err
 		return r
 	}
-	r.pathPrefix = locator.Path
+	// AbsPath handles prepending r.c.base.Path, if set
+	r.AbsPath(locator.Path)
 	if len(locator.Query()) > 0 {
-		if r.params == nil {
-			r.params = make(url.Values)
-		}
+		// clear any existing params
+		r.params = make(url.Values)
 		for k, v := range locator.Query() {
 			r.params[k] = v
 		}
+	} else {
+		// clear any existing params
+		r.params = nil
 	}
 	return r
 }
@@ -701,6 +705,10 @@ func (b *throttledLogger) Infof(message string, args ...interface{}) {
 // Watch attempts to begin watching the requested location.
 // Returns a watch.Interface, or an error.
 func (r *Request) Watch(ctx context.Context) (watch.Interface, error) {
+	if r.body == nil {
+		logBody(klog.FromContext(ctx), 2, "Request Body", r.bodyBytes)
+	}
+
 	// We specifically don't want to rate limit watches, so we
 	// don't use r.rateLimiter here.
 	if r.err != nil {
@@ -768,7 +776,7 @@ func (r *Request) Watch(ctx context.Context) (watch.Interface, error) {
 	}
 }
 
-func (r *Request) newStreamWatcher(resp *http.Response) (watch.Interface, error) {
+func (r *Request) newStreamWatcher(ctx context.Context, resp *http.Response) (watch.Interface, error) {
 	contentType := resp.Header.Get("Content-Type")
 	mediaType, params, err := mime.ParseMediaType(contentType)
 	if err != nil {
