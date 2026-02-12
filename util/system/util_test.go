@@ -25,6 +25,12 @@ import (
 )
 
 func TestGetManagerNamespace(t *testing.T) {
+	// Override inClusterNamespacePath so the test exercises the env var
+	// fallback even when running inside a pod (e.g. OpenShift CI).
+	origPath := inClusterNamespacePath
+	inClusterNamespacePath = "/nonexistent"
+	t.Cleanup(func() { inClusterNamespacePath = origPath })
+
 	cases := []struct {
 		Name      string
 		runBefore func()
