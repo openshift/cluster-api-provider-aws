@@ -24,6 +24,9 @@ bin
 envfile
 .envrc
 
+# For Konflux
+!vendor/github.com/subosito/gotenv/.env
+
 # kubeconfigs
 kind.kubeconfig
 minikube.kubeconfig
