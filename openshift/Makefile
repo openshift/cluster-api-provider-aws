@@ -3,9 +3,6 @@ TOOLS_DIR := tools
 
 include provider-version.mk
 
-$(RELEASE_DIR):
-	mkdir -p $(RELEASE_DIR)/
-
 MANIFESTS_GEN := go run ./vendor/github.com/openshift/cluster-capi-operator/manifests-gen/
 
 .PHONY: verify
@@ -21,7 +18,7 @@ update-manifests-gen:
 	cd tools && go get github.com/openshift/cluster-capi-operator/manifests-gen && go mod tidy && go mod vendor
 
 .PHONY: ocp-manifests
-ocp-manifests: $(RELEASE_DIR) ## Builds openshift specific manifests
+ocp-manifests: ## Builds openshift specific manifests
 	# Generate provider manifests.
 	cd tools && $(MANIFESTS_GEN) --manifests-path "../capi-operator-manifests" --kustomize-dir="../../openshift" \
 		--name cluster-api-provider-aws \
