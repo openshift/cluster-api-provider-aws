@@ -16,8 +16,9 @@ package http2 // import "golang.org/x/net/http2"
 import (
 	"bufio"
 	"crypto/tls"
+	"errors"
 	"fmt"
-	"io"
+	"net"
 	"net/http"
 	"os"
 	"sort"
@@ -53,6 +54,9 @@ func init() {
 		VerboseLogs = true
 		logFrameWrites = true
 		logFrameReads = true
+	}
+	if strings.Contains(e, "http2xconnect=1") {
+		disableExtendedConnectProtocol = false
 	}
 }
 
@@ -145,6 +149,10 @@ func (s Setting) Valid() error {
 		if s.Val < 16384 || s.Val > 1<<24-1 {
 			return ConnectionError(ErrCodeProtocol)
 		}
+	case SettingEnableConnectProtocol:
+		if s.Val != 1 && s.Val != 0 {
+			return ConnectionError(ErrCodeProtocol)
+		}
 	}
 	return nil
 }
@@ -154,21 +162,23 @@ func (s Setting) Valid() error {
 type SettingID uint16
 
 const (
-	SettingHeaderTableSize      SettingID = 0x1
-	SettingEnablePush           SettingID = 0x2
-	SettingMaxConcurrentStreams SettingID = 0x3
-	SettingInitialWindowSize    SettingID = 0x4
-	SettingMaxFrameSize         SettingID = 0x5
-	SettingMaxHeaderListSize    SettingID = 0x6
+	SettingHeaderTableSize       SettingID = 0x1
+	SettingEnablePush            SettingID = 0x2
+	SettingMaxConcurrentStreams  SettingID = 0x3
+	SettingInitialWindowSize     SettingID = 0x4
+	SettingMaxFrameSize          SettingID = 0x5
+	SettingMaxHeaderListSize     SettingID = 0x6
+	SettingEnableConnectProtocol SettingID = 0x8
 )
 
 var settingName = map[SettingID]string{
-	SettingHeaderTableSize:      "HEADER_TABLE_SIZE",
-	SettingEnablePush:           "ENABLE_PUSH",
-	SettingMaxConcurrentStreams: "MAX_CONCURRENT_STREAMS",
-	SettingInitialWindowSize:    "INITIAL_WINDOW_SIZE",
-	SettingMaxFrameSize:         "MAX_FRAME_SIZE",
-	SettingMaxHeaderListSize:    "MAX_HEADER_LIST_SIZE",
+	SettingHeaderTableSize:       "HEADER_TABLE_SIZE",
+	SettingEnablePush:            "ENABLE_PUSH",
+	SettingMaxConcurrentStreams:  "MAX_CONCURRENT_STREAMS",
+	SettingInitialWindowSize:     "INITIAL_WINDOW_SIZE",
+	SettingMaxFrameSize:          "MAX_FRAME_SIZE",
+	SettingMaxHeaderListSize:     "MAX_HEADER_LIST_SIZE",
+	SettingEnableConnectProtocol: "ENABLE_CONNECT_PROTOCOL",
 }
 
 func (s SettingID) String() string {
@@ -279,7 +289,7 @@ func (w *bufferedWriter) Available() int {
 func (w *bufferedWriter) Write(p []byte) (n int, err error) {
 	if w.bw == nil {
 		bw := bufWriterPool.Get().(*bufio.Writer)
-		bw.Reset(w.w)
+		bw.Reset((*bufferedWriterTimeoutWriter)(w))
 		w.bw = bw
 	}
 	return w.bw.Write(p)
@@ -391,23 +401,6 @@ func (s *sorter) SortStrings(ss []string) {
 	s.v = ss
 	sort.Sort(s)
 	s.v = save
-}
-
-// validPseudoPath reports whether v is a valid :path pseudo-header
-// value. It must be either:
-//
-//   - a non-empty string starting with '/'
-//   - the string '*', for OPTIONS requests.
-//
-// For now this is only used a quick check for deciding when to clean
-// up Opaque URLs before sending requests from the Transport.
-// See golang.org/issue/16847
-//
-// We used to enforce that the path also didn't start with "//", but
-// Google's GFE accepts such paths and Chrome sends them, so ignore
-// that part of the spec. See golang.org/issue/19103.
-func validPseudoPath(v string) bool {
-	return (len(v) > 0 && v[0] == '/') || v == "*"
 }
 
 // incomparable is a zero-width, non-comparable type. Adding it to a struct

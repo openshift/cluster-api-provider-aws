@@ -50,26 +50,8 @@ type Options struct {
 	// Cache, if provided, is used to read objects from the cache.
 	Cache *CacheOptions
 
-	// WarningHandler is used to configure the warning handler responsible for
-	// surfacing and handling warnings messages sent by the API server.
-	WarningHandler WarningHandlerOptions
-
 	// DryRun instructs the client to only perform dry run requests.
 	DryRun *bool
-}
-
-// WarningHandlerOptions are options for configuring a
-// warning handler for the client which is responsible
-// for surfacing API Server warnings.
-type WarningHandlerOptions struct {
-	// SuppressWarnings decides if the warnings from the
-	// API server are suppressed or surfaced in the client.
-	SuppressWarnings bool
-	// AllowDuplicateLogs does not deduplicate the to-be
-	// logged surfaced warnings messages. See
-	// log.WarningHandlerOptions for considerations
-	// regarding deduplication
-	AllowDuplicateLogs bool
 }
 
 // CacheOptions are options for creating a cache-backed client.
