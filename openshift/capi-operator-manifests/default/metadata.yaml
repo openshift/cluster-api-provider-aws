@@ -1,6 +1,6 @@
 attributes:
   type: infrastructure
-  version: v2.10.0
+  version: v2.10.1
 installOrder: 20
 name: cluster-api-provider-aws
 ocpPlatform: AWS
