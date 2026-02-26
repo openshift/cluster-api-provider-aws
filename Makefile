@@ -132,7 +132,7 @@ EKS_SOURCE_TEMPLATE ?= eks/cluster-template-eks-control-plane-only.yaml
 
 # set up `setup-envtest` to install kubebuilder dependency
 export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.23.3
-SETUP_ENVTEST_VER := v0.0.0-20211110210527-619e6b92dab9
+SETUP_ENVTEST_VER := v0.0.0-20240813182054-0c7827e417ac
 SETUP_ENVTEST_BIN := setup-envtest
 SETUP_ENVTEST := $(abspath $(TOOLS_BIN_DIR)/$(SETUP_ENVTEST_BIN)-$(SETUP_ENVTEST_VER))
 SETUP_ENVTEST_PKG := sigs.k8s.io/controller-runtime/tools/setup-envtest
