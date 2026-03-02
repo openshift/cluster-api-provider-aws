@@ -523,6 +523,29 @@ type TCPInfo struct {
 	Total_rto_time       uint32
 }
 
+type TCPVegasInfo struct {
+	Enabled uint32
+	Rttcnt  uint32
+	Rtt     uint32
+	Minrtt  uint32
+}
+
+type TCPDCTCPInfo struct {
+	Enabled  uint16
+	Ce_state uint16
+	Alpha    uint32
+	Ab_ecn   uint32
+	Ab_tot   uint32
+}
+
+type TCPBBRInfo struct {
+	Bw_lo       uint32
+	Bw_hi       uint32
+	Min_rtt     uint32
+	Pacing_gain uint32
+	Cwnd_gain   uint32
+}
+
 type CanFilter struct {
 	Id   uint32
 	Mask uint32
@@ -564,6 +587,7 @@ const (
 	SizeofICMPv6Filter      = 0x20
 	SizeofUcred             = 0xc
 	SizeofTCPInfo           = 0xf8
+	SizeofTCPCCInfo         = 0x14
 	SizeofCanFilter         = 0x8
 	SizeofTCPRepairOpt      = 0x8
 )
@@ -1743,12 +1767,6 @@ const (
 	IFLA_IPVLAN_UNSPEC                         = 0x0
 	IFLA_IPVLAN_MODE                           = 0x1
 	IFLA_IPVLAN_FLAGS                          = 0x2
-	NETKIT_NEXT                                = -0x1
-	NETKIT_PASS                                = 0x0
-	NETKIT_DROP                                = 0x2
-	NETKIT_REDIRECT                            = 0x7
-	NETKIT_L2                                  = 0x0
-	NETKIT_L3                                  = 0x1
 	IFLA_NETKIT_UNSPEC                         = 0x0
 	IFLA_NETKIT_PEER_INFO                      = 0x1
 	IFLA_NETKIT_PRIMARY                        = 0x2
@@ -1787,6 +1805,7 @@ const (
 	IFLA_VXLAN_DF                              = 0x1d
 	IFLA_VXLAN_VNIFILTER                       = 0x1e
 	IFLA_VXLAN_LOCALBYPASS                     = 0x1f
+	IFLA_VXLAN_LABEL_POLICY                    = 0x20
 	IFLA_GENEVE_UNSPEC                         = 0x0
 	IFLA_GENEVE_ID                             = 0x1
 	IFLA_GENEVE_REMOTE                         = 0x2
@@ -1816,6 +1835,8 @@ const (
 	IFLA_GTP_ROLE                              = 0x4
 	IFLA_GTP_CREATE_SOCKETS                    = 0x5
 	IFLA_GTP_RESTART_COUNT                     = 0x6
+	IFLA_GTP_LOCAL                             = 0x7
+	IFLA_GTP_LOCAL6                            = 0x8
 	IFLA_BOND_UNSPEC                           = 0x0
 	IFLA_BOND_MODE                             = 0x1
 	IFLA_BOND_ACTIVE_SLAVE                     = 0x2
@@ -1848,6 +1869,7 @@ const (
 	IFLA_BOND_AD_LACP_ACTIVE                   = 0x1d
 	IFLA_BOND_MISSED_MAX                       = 0x1e
 	IFLA_BOND_NS_IP6_TARGET                    = 0x1f
+	IFLA_BOND_COUPLED_CONTROL                  = 0x20
 	IFLA_BOND_AD_INFO_UNSPEC                   = 0x0
 	IFLA_BOND_AD_INFO_AGGREGATOR               = 0x1
 	IFLA_BOND_AD_INFO_NUM_PORTS                = 0x2
@@ -1916,6 +1938,7 @@ const (
 	IFLA_HSR_SEQ_NR                            = 0x5
 	IFLA_HSR_VERSION                           = 0x6
 	IFLA_HSR_PROTOCOL                          = 0x7
+	IFLA_HSR_INTERLINK                         = 0x8
 	IFLA_STATS_UNSPEC                          = 0x0
 	IFLA_STATS_LINK_64                         = 0x1
 	IFLA_STATS_LINK_XSTATS                     = 0x2
@@ -1966,6 +1989,15 @@ const (
 	IFLA_DSA_UNSPEC                            = 0x0
 	IFLA_DSA_CONDUIT                           = 0x1
 	IFLA_DSA_MASTER                            = 0x1
+)
+
+const (
+	NETKIT_NEXT     = -0x1
+	NETKIT_PASS     = 0x0
+	NETKIT_DROP     = 0x2
+	NETKIT_REDIRECT = 0x7
+	NETKIT_L2       = 0x0
+	NETKIT_L3       = 0x1
 )
 
 const (
@@ -2513,7 +2545,7 @@ type XDPMmapOffsets struct {
 type XDPUmemReg struct {
 	Addr            uint64
 	Len             uint64
-	Chunk_size      uint32
+	Size            uint32
 	Headroom        uint32
 	Flags           uint32
 	Tx_metadata_len uint32
@@ -3530,7 +3562,7 @@ const (
 	DEVLINK_PORT_FN_ATTR_STATE                         = 0x2
 	DEVLINK_PORT_FN_ATTR_OPSTATE                       = 0x3
 	DEVLINK_PORT_FN_ATTR_CAPS                          = 0x4
-	DEVLINK_PORT_FUNCTION_ATTR_MAX                     = 0x5
+	DEVLINK_PORT_FUNCTION_ATTR_MAX                     = 0x6
 )
 
 type FsverityDigest struct {
@@ -3563,7 +3595,7 @@ const SizeofNhmsg = 0x8
 type NexthopGrp struct {
 	Id     uint32
 	Weight uint8
-	Resvd1 uint8
+	High   uint8
 	Resvd2 uint16
 }
 
@@ -3893,7 +3925,7 @@ const (
 	ETHTOOL_A_HEADER_DEV_INDEX                = 0x1
 	ETHTOOL_A_HEADER_DEV_NAME                 = 0x2
 	ETHTOOL_A_HEADER_FLAGS                    = 0x3
-	ETHTOOL_A_HEADER_MAX                      = 0x3
+	ETHTOOL_A_HEADER_MAX                      = 0x4
 	ETHTOOL_A_BITSET_BIT_UNSPEC               = 0x0
 	ETHTOOL_A_BITSET_BIT_INDEX                = 0x1
 	ETHTOOL_A_BITSET_BIT_NAME                 = 0x2
@@ -4035,7 +4067,7 @@ const (
 	ETHTOOL_A_COALESCE_RATE_SAMPLE_INTERVAL   = 0x17
 	ETHTOOL_A_COALESCE_USE_CQE_MODE_TX        = 0x18
 	ETHTOOL_A_COALESCE_USE_CQE_MODE_RX        = 0x19
-	ETHTOOL_A_COALESCE_MAX                    = 0x1c
+	ETHTOOL_A_COALESCE_MAX                    = 0x1e
 	ETHTOOL_A_PAUSE_UNSPEC                    = 0x0
 	ETHTOOL_A_PAUSE_HEADER                    = 0x1
 	ETHTOOL_A_PAUSE_AUTONEG                   = 0x2
@@ -4081,11 +4113,11 @@ const (
 	ETHTOOL_A_CABLE_RESULT_UNSPEC             = 0x0
 	ETHTOOL_A_CABLE_RESULT_PAIR               = 0x1
 	ETHTOOL_A_CABLE_RESULT_CODE               = 0x2
-	ETHTOOL_A_CABLE_RESULT_MAX                = 0x2
+	ETHTOOL_A_CABLE_RESULT_MAX                = 0x3
 	ETHTOOL_A_CABLE_FAULT_LENGTH_UNSPEC       = 0x0
 	ETHTOOL_A_CABLE_FAULT_LENGTH_PAIR         = 0x1
 	ETHTOOL_A_CABLE_FAULT_LENGTH_CM           = 0x2
-	ETHTOOL_A_CABLE_FAULT_LENGTH_MAX          = 0x2
+	ETHTOOL_A_CABLE_FAULT_LENGTH_MAX          = 0x3
 	ETHTOOL_A_CABLE_TEST_NTF_STATUS_UNSPEC    = 0x0
 	ETHTOOL_A_CABLE_TEST_NTF_STATUS_STARTED   = 0x1
 	ETHTOOL_A_CABLE_TEST_NTF_STATUS_COMPLETED = 0x2
@@ -4180,6 +4212,107 @@ type EthtoolDrvinfo struct {
 	Eedump_len   uint32
 	Regdump_len  uint32
 }
+
+type EthtoolTsInfo struct {
+	Cmd             uint32
+	So_timestamping uint32
+	Phc_index       int32
+	Tx_types        uint32
+	Tx_reserved     [3]uint32
+	Rx_filters      uint32
+	Rx_reserved     [3]uint32
+}
+
+type HwTstampConfig struct {
+	Flags     int32
+	Tx_type   int32
+	Rx_filter int32
+}
+
+const (
+	HWTSTAMP_FILTER_NONE            = 0x0
+	HWTSTAMP_FILTER_ALL             = 0x1
+	HWTSTAMP_FILTER_SOME            = 0x2
+	HWTSTAMP_FILTER_PTP_V1_L4_EVENT = 0x3
+	HWTSTAMP_FILTER_PTP_V2_L4_EVENT = 0x6
+	HWTSTAMP_FILTER_PTP_V2_L2_EVENT = 0x9
+	HWTSTAMP_FILTER_PTP_V2_EVENT    = 0xc
+)
+
+const (
+	HWTSTAMP_TX_OFF          = 0x0
+	HWTSTAMP_TX_ON           = 0x1
+	HWTSTAMP_TX_ONESTEP_SYNC = 0x2
+)
+
+type (
+	PtpClockCaps struct {
+		Max_adj            int32
+		N_alarm            int32
+		N_ext_ts           int32
+		N_per_out          int32
+		Pps                int32
+		N_pins             int32
+		Cross_timestamping int32
+		Adjust_phase       int32
+		Max_phase_adj      int32
+		Rsv                [11]int32
+	}
+	PtpClockTime struct {
+		Sec      int64
+		Nsec     uint32
+		Reserved uint32
+	}
+	PtpExttsEvent struct {
+		T     PtpClockTime
+		Index uint32
+		Flags uint32
+		Rsv   [2]uint32
+	}
+	PtpExttsRequest struct {
+		Index uint32
+		Flags uint32
+		Rsv   [2]uint32
+	}
+	PtpPeroutRequest struct {
+		StartOrPhase PtpClockTime
+		Period       PtpClockTime
+		Index        uint32
+		Flags        uint32
+		On           PtpClockTime
+	}
+	PtpPinDesc struct {
+		Name  [64]byte
+		Index uint32
+		Func  uint32
+		Chan  uint32
+		Rsv   [5]uint32
+	}
+	PtpSysOffset struct {
+		Samples uint32
+		Rsv     [3]uint32
+		Ts      [51]PtpClockTime
+	}
+	PtpSysOffsetExtended struct {
+		Samples uint32
+		Clockid int32
+		Rsv     [2]uint32
+		Ts      [25][3]PtpClockTime
+	}
+	PtpSysOffsetPrecise struct {
+		Device   PtpClockTime
+		Realtime PtpClockTime
+		Monoraw  PtpClockTime
+		Rsv      [4]uint32
+	}
+)
+
+const (
+	PTP_PF_NONE    = 0x0
+	PTP_PF_EXTTS   = 0x1
+	PTP_PF_PEROUT  = 0x2
+	PTP_PF_PHYSYNC = 0x3
+)
 
 type (
 	HIDRawReportDescriptor struct {
@@ -4362,6 +4495,7 @@ const (
 type LandlockRulesetAttr struct {
 	Access_fs  uint64
 	Access_net uint64
+	Scoped     uint64
 }
 
 type LandlockPathBeneathAttr struct {
@@ -5521,7 +5655,7 @@ const (
 	NL80211_MNTR_FLAG_CONTROL                               = 0x3
 	NL80211_MNTR_FLAG_COOK_FRAMES                           = 0x5
 	NL80211_MNTR_FLAG_FCSFAIL                               = 0x1
-	NL80211_MNTR_FLAG_MAX                                   = 0x6
+	NL80211_MNTR_FLAG_MAX                                   = 0x7
 	NL80211_MNTR_FLAG_OTHER_BSS                             = 0x4
 	NL80211_MNTR_FLAG_PLCPFAIL                              = 0x2
 	NL80211_MPATH_FLAG_ACTIVE                               = 0x1

@@ -29,6 +29,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/rand"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -49,13 +50,18 @@ import (
 
 	"golang.org/x/net/http/httpguts"
 	"golang.org/x/net/http2/hpack"
+	"golang.org/x/net/internal/httpcommon"
 )
 
 const (
-	prefaceTimeout         = 10 * time.Second
-	firstSettingsTimeout   = 2 * time.Second // should be in-flight with preface anyway
-	handlerChunkWriteSize  = 4 << 10
-	defaultMaxStreams      = 250 // TODO: make this 100 as the GFE seems to?
+	prefaceTimeout        = 10 * time.Second
+	firstSettingsTimeout  = 2 * time.Second // should be in-flight with preface anyway
+	handlerChunkWriteSize = 4 << 10
+	defaultMaxStreams     = 250 // TODO: make this 100 as the GFE seems to?
+
+	// maxQueuedControlFrames is the maximum number of control frames like
+	// SETTINGS, PING and RST_STREAM that will be queued for writing before
+	// the connection is closed to prevent memory exhaustion attacks.
 	maxQueuedControlFrames = 10000
 )
 
@@ -127,6 +133,22 @@ type Server struct {
 	// If zero or negative, there is no timeout.
 	IdleTimeout time.Duration
 
+	// ReadIdleTimeout is the timeout after which a health check using a ping
+	// frame will be carried out if no frame is received on the connection.
+	// If zero, no health check is performed.
+	ReadIdleTimeout time.Duration
+
+	// PingTimeout is the timeout after which the connection will be closed
+	// if a response to a ping is not received.
+	// If zero, a default of 15 seconds is used.
+	PingTimeout time.Duration
+
+	// WriteByteTimeout is the timeout after which a connection will be
+	// closed if no data can be written to it. The timeout begins when data is
+	// available to write, and is extended whenever any bytes are written.
+	// If zero or negative, there is no timeout.
+	WriteByteTimeout time.Duration
+
 	// MaxUploadBufferPerConnection is the size of the initial flow
 	// control window for each connections. The HTTP/2 spec does not
 	// allow this to be smaller than 65535 or larger than 2^32-1.
@@ -154,57 +176,6 @@ type Server struct {
 	// so that we don't embed a Mutex in this struct, which will make the
 	// struct non-copyable, which might break some callers.
 	state *serverInternalState
-}
-
-func (s *Server) initialConnRecvWindowSize() int32 {
-	if s.MaxUploadBufferPerConnection >= initialWindowSize {
-		return s.MaxUploadBufferPerConnection
-	}
-	return 1 << 20
-}
-
-func (s *Server) initialStreamRecvWindowSize() int32 {
-	if s.MaxUploadBufferPerStream > 0 {
-		return s.MaxUploadBufferPerStream
-	}
-	return 1 << 20
-}
-
-func (s *Server) maxReadFrameSize() uint32 {
-	if v := s.MaxReadFrameSize; v >= minMaxFrameSize && v <= maxFrameSize {
-		return v
-	}
-	return defaultMaxReadFrameSize
-}
-
-func (s *Server) maxConcurrentStreams() uint32 {
-	if v := s.MaxConcurrentStreams; v > 0 {
-		return v
-	}
-	return defaultMaxStreams
-}
-
-func (s *Server) maxDecoderHeaderTableSize() uint32 {
-	if v := s.MaxDecoderHeaderTableSize; v > 0 {
-		return v
-	}
-	return initialHeaderTableSize
-}
-
-func (s *Server) maxEncoderHeaderTableSize() uint32 {
-	if v := s.MaxEncoderHeaderTableSize; v > 0 {
-		return v
-	}
-	return initialHeaderTableSize
-}
-
-// maxQueuedControlFrames is the maximum number of control frames like
-// SETTINGS, PING and RST_STREAM that will be queued for writing before
-// the connection is closed to prevent memory exhaustion attacks.
-func (s *Server) maxQueuedControlFrames() int {
-	// TODO: if anybody asks, add a Server field, and remember to define the
-	// behavior of negative values.
-	return maxQueuedControlFrames
 }
 
 type serverInternalState struct {
@@ -331,7 +302,7 @@ func ConfigureServer(s *http.Server, conf *Server) error {
 	if s.TLSNextProto == nil {
 		s.TLSNextProto = map[string]func(*http.Server, *tls.Conn, http.Handler){}
 	}
-	protoHandler := func(hs *http.Server, c *tls.Conn, h http.Handler) {
+	protoHandler := func(hs *http.Server, c net.Conn, h http.Handler, sawClientPreface bool) {
 		if testHookOnConn != nil {
 			testHookOnConn()
 		}
@@ -348,12 +319,31 @@ func ConfigureServer(s *http.Server, conf *Server) error {
 			ctx = bc.BaseContext()
 		}
 		conf.ServeConn(c, &ServeConnOpts{
-			Context:    ctx,
-			Handler:    h,
-			BaseConfig: hs,
+			Context:          ctx,
+			Handler:          h,
+			BaseConfig:       hs,
+			SawClientPreface: sawClientPreface,
 		})
 	}
-	s.TLSNextProto[NextProtoTLS] = protoHandler
+	s.TLSNextProto[NextProtoTLS] = func(hs *http.Server, c *tls.Conn, h http.Handler) {
+		protoHandler(hs, c, h, false)
+	}
+	// The "unencrypted_http2" TLSNextProto key is used to pass off non-TLS HTTP/2 conns.
+	//
+	// A connection passed in this method has already had the HTTP/2 preface read from it.
+	s.TLSNextProto[nextProtoUnencryptedHTTP2] = func(hs *http.Server, c *tls.Conn, h http.Handler) {
+		nc, err := unencryptedNetConnFromTLSConn(c)
+		if err != nil {
+			if lg := hs.ErrorLog; lg != nil {
+				lg.Print(err)
+			} else {
+				log.Print(err)
+			}
+			go c.Close()
+			return
+		}
+		protoHandler(hs, nc, h, true)
+	}
 	return nil
 }
 
@@ -438,9 +428,11 @@ func (s *Server) serveConn(c net.Conn, opts *ServeConnOpts, newf func(*serverCon
 	baseCtx, cancel := serverConnBaseContext(c, opts)
 	defer cancel()
 
+	http1srv := opts.baseConfig()
+	conf := configFromServer(http1srv, s)
 	sc := &serverConn{
 		srv:                         s,
-		hs:                          opts.baseConfig(),
+		hs:                          http1srv,
 		conn:                        c,
 		baseCtx:                     baseCtx,
 		remoteAddrStr:               c.RemoteAddr().String(),
@@ -454,9 +446,12 @@ func (s *Server) serveConn(c net.Conn, opts *ServeConnOpts, newf func(*serverCon
 		bodyReadCh:                  make(chan bodyReadMsg),         // buffering doesn't matter either way
 		doneServing:                 make(chan struct{}),
 		clientMaxStreams:            math.MaxUint32, // Section 6.5.2: "Initially, there is no limit to this value"
-		advMaxStreams:               s.maxConcurrentStreams(),
+		advMaxStreams:               conf.MaxConcurrentStreams,
 		initialStreamSendWindowSize: initialWindowSize,
+		initialStreamRecvWindowSize: conf.MaxUploadBufferPerStream,
 		maxFrameSize:                initialMaxFrameSize,
+		pingTimeout:                 conf.PingTimeout,
+		countErrorFunc:              conf.CountError,
 		serveG:                      newGoroutineLock(),
 		pushEnabled:                 true,
 		sawClientPreface:            opts.SawClientPreface,
@@ -489,15 +484,15 @@ func (s *Server) serveConn(c net.Conn, opts *ServeConnOpts, newf func(*serverCon
 	sc.flow.add(initialWindowSize)
 	sc.inflow.init(initialWindowSize)
 	sc.hpackEncoder = hpack.NewEncoder(&sc.headerWriteBuf)
-	sc.hpackEncoder.SetMaxDynamicTableSizeLimit(s.maxEncoderHeaderTableSize())
+	sc.hpackEncoder.SetMaxDynamicTableSizeLimit(conf.MaxEncoderHeaderTableSize)
 
 	fr := NewFramer(sc.bw, c)
-	if s.CountError != nil {
-		fr.countError = s.CountError
+	if conf.CountError != nil {
+		fr.countError = conf.CountError
 	}
-	fr.ReadMetaHeaders = hpack.NewDecoder(s.maxDecoderHeaderTableSize(), nil)
+	fr.ReadMetaHeaders = hpack.NewDecoder(conf.MaxDecoderHeaderTableSize, nil)
 	fr.MaxHeaderListSize = sc.maxHeaderListSize()
-	fr.SetMaxReadFrameSize(s.maxReadFrameSize())
+	fr.SetMaxReadFrameSize(conf.MaxReadFrameSize)
 	sc.framer = fr
 
 	if tc, ok := c.(connectionStater); ok {
@@ -530,7 +525,7 @@ func (s *Server) serveConn(c net.Conn, opts *ServeConnOpts, newf func(*serverCon
 			// So for now, do nothing here again.
 		}
 
-		if !s.PermitProhibitedCipherSuites && isBadCipher(sc.tlsState.CipherSuite) {
+		if !conf.PermitProhibitedCipherSuites && isBadCipher(sc.tlsState.CipherSuite) {
 			// "Endpoints MAY choose to generate a connection error
 			// (Section 5.4.1) of type INADEQUATE_SECURITY if one of
 			// the prohibited cipher suites are negotiated."
@@ -567,7 +562,7 @@ func (s *Server) serveConn(c net.Conn, opts *ServeConnOpts, newf func(*serverCon
 		opts.UpgradeRequest = nil
 	}
 
-	sc.serve()
+	sc.serve(conf)
 }
 
 func serverConnBaseContext(c net.Conn, opts *ServeConnOpts) (ctx context.Context, cancel func()) {
@@ -607,6 +602,7 @@ type serverConn struct {
 	tlsState         *tls.ConnectionState   // shared by all handlers, like net/http
 	remoteAddrStr    string
 	writeSched       WriteScheduler
+	countErrorFunc   func(errType string)
 
 	// Everything following is owned by the serve loop; use serveG.check():
 	serveG                      goroutineLock // used to verify funcs are on serve()
@@ -626,6 +622,7 @@ type serverConn struct {
 	streams                     map[uint32]*stream
 	unstartedHandlers           []unstartedHandler
 	initialStreamSendWindowSize int32
+	initialStreamRecvWindowSize int32
 	maxFrameSize                int32
 	peerMaxHeaderListSize       uint32            // zero means unknown (default)
 	canonHeader                 map[string]string // http2-lower-case -> Go-Canonical-Case
@@ -636,6 +633,8 @@ type serverConn struct {
 	inGoAway                    bool              // we've started to or sent GOAWAY
 	inFrameScheduleLoop         bool              // whether we're in the scheduleFrameWrite loop
 	needToSendGoAway            bool              // we need to schedule a GOAWAY frame write
+	pingSent                    bool
+	sentPingData                [8]byte
 	goAwayCode                  ErrCode
 	shutdownTimer               *time.Timer // nil until used
 	idleTimer                   *time.Timer // nil if unused
@@ -656,11 +655,7 @@ func (sc *serverConn) maxHeaderListSize() uint32 {
 	if n <= 0 {
 		n = http.DefaultMaxHeaderBytes
 	}
-	// http2's count is in a slightly different unit and includes 32 bytes per pair.
-	// So, take the net/http.Server value and pad it up a bit, assuming 10 headers.
-	const perFieldOverhead = 32 // per http2 spec
-	const typicalHeaders = 10   // conservative
-	return uint32(n + typicalHeaders*perFieldOverhead)
+	return uint32(adjustHTTP1MaxHeaderSize(int64(n)))
 }
 
 func (sc *serverConn) curOpenStreams() uint32 {
@@ -816,8 +811,7 @@ const maxCachedCanonicalHeadersKeysSize = 2048
 
 func (sc *serverConn) canonicalHeader(v string) string {
 	sc.serveG.check()
-	buildCommonHeaderMapsOnce()
-	cv, ok := commonCanonHeader[v]
+	cv, ok := httpcommon.CachedCanonicalHeader(v)
 	if ok {
 		return cv
 	}
@@ -922,7 +916,7 @@ func (sc *serverConn) notePanic() {
 	}
 }
 
-func (sc *serverConn) serve() {
+func (sc *serverConn) serve(conf http2Config) {
 	sc.serveG.check()
 	defer sc.notePanic()
 	defer sc.conn.Close()
@@ -934,20 +928,24 @@ func (sc *serverConn) serve() {
 		sc.vlogf("http2: server connection from %v on %p", sc.conn.RemoteAddr(), sc.hs)
 	}
 
+	settings := writeSettings{
+		{SettingMaxFrameSize, conf.MaxReadFrameSize},
+		{SettingMaxConcurrentStreams, sc.advMaxStreams},
+		{SettingMaxHeaderListSize, sc.maxHeaderListSize()},
+		{SettingHeaderTableSize, conf.MaxDecoderHeaderTableSize},
+		{SettingInitialWindowSize, uint32(sc.initialStreamRecvWindowSize)},
+	}
+	if !disableExtendedConnectProtocol {
+		settings = append(settings, Setting{SettingEnableConnectProtocol, 1})
+	}
 	sc.writeFrame(FrameWriteRequest{
-		write: writeSettings{
-			{SettingMaxFrameSize, sc.srv.maxReadFrameSize()},
-			{SettingMaxConcurrentStreams, sc.advMaxStreams},
-			{SettingMaxHeaderListSize, sc.maxHeaderListSize()},
-			{SettingHeaderTableSize, sc.srv.maxDecoderHeaderTableSize()},
-			{SettingInitialWindowSize, uint32(sc.srv.initialStreamRecvWindowSize())},
-		},
+		write: settings,
 	})
 	sc.unackedSettings++
 
 	// Each connection starts with initialWindowSize inflow tokens.
 	// If a higher value is configured, we add more tokens.
-	if diff := sc.srv.initialConnRecvWindowSize() - initialWindowSize; diff > 0 {
+	if diff := conf.MaxUploadBufferPerConnection - initialWindowSize; diff > 0 {
 		sc.sendWindowUpdate(nil, int(diff))
 	}
 
@@ -1024,6 +1022,8 @@ func (sc *serverConn) serve() {
 				case idleTimerMsg:
 					sc.vlogf("connection is idle")
 					sc.goAway(ErrCodeNo)
+				case readIdleTimerMsg:
+					sc.handlePingTimer(lastFrameTime)
 				case shutdownTimerMsg:
 					sc.vlogf("GOAWAY close timer fired; closing conn from %v", sc.conn.RemoteAddr())
 					return
@@ -1046,7 +1046,7 @@ func (sc *serverConn) serve() {
 		// If the peer is causing us to generate a lot of control frames,
 		// but not reading them from us, assume they are trying to make us
 		// run out of memory.
-		if sc.queuedControlFrames > sc.srv.maxQueuedControlFrames() {
+		if sc.queuedControlFrames > maxQueuedControlFrames {
 			sc.vlogf("http2: too many control frames in send queue, closing connection")
 			return
 		}
@@ -1097,6 +1097,7 @@ type serverMessage int
 var (
 	settingsTimerMsg    = new(serverMessage)
 	idleTimerMsg        = new(serverMessage)
+	readIdleTimerMsg    = new(serverMessage)
 	shutdownTimerMsg    = new(serverMessage)
 	gracefulShutdownMsg = new(serverMessage)
 	handlerDoneMsg      = new(serverMessage)
@@ -1104,6 +1105,7 @@ var (
 
 func (sc *serverConn) onSettingsTimer() { sc.sendServeMsg(settingsTimerMsg) }
 func (sc *serverConn) onIdleTimer()     { sc.sendServeMsg(idleTimerMsg) }
+func (sc *serverConn) onReadIdleTimer() { sc.sendServeMsg(readIdleTimerMsg) }
 func (sc *serverConn) onShutdownTimer() { sc.sendServeMsg(shutdownTimerMsg) }
 
 func (sc *serverConn) sendServeMsg(msg interface{}) {
@@ -1351,6 +1353,10 @@ func (sc *serverConn) wroteFrame(res frameWriteResult) {
 	}
 	sc.writingFrame = false
 	sc.writingFrameAsync = false
+
+	if res.err != nil {
+		sc.conn.Close()
+	}
 
 	wr := res.wr
 
@@ -1626,6 +1632,11 @@ func (sc *serverConn) processFrame(f Frame) error {
 func (sc *serverConn) processPing(f *PingFrame) error {
 	sc.serveG.check()
 	if f.IsAck() {
+		if sc.pingSent && sc.sentPingData == f.Data {
+			// This is a response to a PING we sent.
+			sc.pingSent = false
+			sc.readIdleTimer.Reset(sc.readIdleTimeout)
+		}
 		// 6.7 PING: " An endpoint MUST NOT respond to PING frames
 		// containing this flag."
 		return nil
@@ -1789,6 +1800,9 @@ func (sc *serverConn) processSetting(s Setting) error {
 		sc.maxFrameSize = int32(s.Val) // the maximum valid s.Val is < 2^31
 	case SettingMaxHeaderListSize:
 		sc.peerMaxHeaderListSize = s.Val
+	case SettingEnableConnectProtocol:
+		// Receipt of this parameter by a server does not
+		// have any impact
 	default:
 		// Unknown setting: "An endpoint that receives a SETTINGS
 		// frame with any unknown or unsupported identifier MUST
@@ -2192,7 +2206,7 @@ func (sc *serverConn) newStream(id, pusherID uint32, state streamState) *stream 
 	st.cw.Init()
 	st.flow.conn = &sc.flow // link to conn-level counter
 	st.flow.add(sc.initialStreamSendWindowSize)
-	st.inflow.init(sc.srv.initialStreamRecvWindowSize())
+	st.inflow.init(sc.initialStreamRecvWindowSize)
 	if sc.hs.WriteTimeout > 0 {
 		st.writeDeadline = time.AfterFunc(sc.hs.WriteTimeout, st.onWriteTimeout)
 	}
@@ -2214,19 +2228,25 @@ func (sc *serverConn) newStream(id, pusherID uint32, state streamState) *stream 
 func (sc *serverConn) newWriterAndRequest(st *stream, f *MetaHeadersFrame) (*responseWriter, *http.Request, error) {
 	sc.serveG.check()
 
-	rp := requestParam{
-		method:    f.PseudoValue("method"),
-		scheme:    f.PseudoValue("scheme"),
-		authority: f.PseudoValue("authority"),
-		path:      f.PseudoValue("path"),
+	rp := httpcommon.ServerRequestParam{
+		Method:    f.PseudoValue("method"),
+		Scheme:    f.PseudoValue("scheme"),
+		Authority: f.PseudoValue("authority"),
+		Path:      f.PseudoValue("path"),
+		Protocol:  f.PseudoValue("protocol"),
 	}
 
-	isConnect := rp.method == "CONNECT"
+	// extended connect is disabled, so we should not see :protocol
+	if disableExtendedConnectProtocol && rp.Protocol != "" {
+		return nil, nil, sc.countError("bad_connect", streamError(f.StreamID, ErrCodeProtocol))
+	}
+
+	isConnect := rp.Method == "CONNECT"
 	if isConnect {
-		if rp.path != "" || rp.scheme != "" || rp.authority == "" {
+		if rp.Protocol == "" && (rp.Path != "" || rp.Scheme != "" || rp.Authority == "") {
 			return nil, nil, sc.countError("bad_connect", streamError(f.StreamID, ErrCodeProtocol))
 		}
-	} else if rp.method == "" || rp.path == "" || (rp.scheme != "https" && rp.scheme != "http") {
+	} else if rp.Method == "" || rp.Path == "" || (rp.Scheme != "https" && rp.Scheme != "http") {
 		// See 8.1.2.6 Malformed Requests and Responses:
 		//
 		// Malformed requests or responses that are detected
@@ -2240,12 +2260,16 @@ func (sc *serverConn) newWriterAndRequest(st *stream, f *MetaHeadersFrame) (*res
 		return nil, nil, sc.countError("bad_path_method", streamError(f.StreamID, ErrCodeProtocol))
 	}
 
-	rp.header = make(http.Header)
+	header := make(http.Header)
+	rp.Header = header
 	for _, hf := range f.RegularFields() {
-		rp.header.Add(sc.canonicalHeader(hf.Name), hf.Value)
+		header.Add(sc.canonicalHeader(hf.Name), hf.Value)
 	}
-	if rp.authority == "" {
-		rp.authority = rp.header.Get("Host")
+	if rp.Authority == "" {
+		rp.Authority = header.Get("Host")
+	}
+	if rp.Protocol != "" {
+		header.Set(":protocol", rp.Protocol)
 	}
 
 	rw, req, err := sc.newWriterAndRequestNoBody(st, rp)
@@ -2254,7 +2278,7 @@ func (sc *serverConn) newWriterAndRequest(st *stream, f *MetaHeadersFrame) (*res
 	}
 	bodyOpen := !f.StreamEnded()
 	if bodyOpen {
-		if vv, ok := rp.header["Content-Length"]; ok {
+		if vv, ok := rp.Header["Content-Length"]; ok {
 			if cl, err := strconv.ParseUint(vv[0], 10, 63); err == nil {
 				req.ContentLength = int64(cl)
 			} else {
@@ -2270,83 +2294,38 @@ func (sc *serverConn) newWriterAndRequest(st *stream, f *MetaHeadersFrame) (*res
 	return rw, req, nil
 }
 
-type requestParam struct {
-	method                  string
-	scheme, authority, path string
-	header                  http.Header
-}
-
-func (sc *serverConn) newWriterAndRequestNoBody(st *stream, rp requestParam) (*responseWriter, *http.Request, error) {
+func (sc *serverConn) newWriterAndRequestNoBody(st *stream, rp httpcommon.ServerRequestParam) (*responseWriter, *http.Request, error) {
 	sc.serveG.check()
 
 	var tlsState *tls.ConnectionState // nil if not scheme https
-	if rp.scheme == "https" {
+	if rp.Scheme == "https" {
 		tlsState = sc.tlsState
 	}
 
-	needsContinue := httpguts.HeaderValuesContainsToken(rp.header["Expect"], "100-continue")
-	if needsContinue {
-		rp.header.Del("Expect")
-	}
-	// Merge Cookie headers into one "; "-delimited value.
-	if cookies := rp.header["Cookie"]; len(cookies) > 1 {
-		rp.header.Set("Cookie", strings.Join(cookies, "; "))
-	}
-
-	// Setup Trailers
-	var trailer http.Header
-	for _, v := range rp.header["Trailer"] {
-		for _, key := range strings.Split(v, ",") {
-			key = http.CanonicalHeaderKey(textproto.TrimString(key))
-			switch key {
-			case "Transfer-Encoding", "Trailer", "Content-Length":
-				// Bogus. (copy of http1 rules)
-				// Ignore.
-			default:
-				if trailer == nil {
-					trailer = make(http.Header)
-				}
-				trailer[key] = nil
-			}
-		}
-	}
-	delete(rp.header, "Trailer")
-
-	var url_ *url.URL
-	var requestURI string
-	if rp.method == "CONNECT" {
-		url_ = &url.URL{Host: rp.authority}
-		requestURI = rp.authority // mimic HTTP/1 server behavior
-	} else {
-		var err error
-		url_, err = url.ParseRequestURI(rp.path)
-		if err != nil {
-			return nil, nil, sc.countError("bad_path", streamError(st.id, ErrCodeProtocol))
-		}
-		requestURI = rp.path
+	res := httpcommon.NewServerRequest(rp)
+	if res.InvalidReason != "" {
+		return nil, nil, sc.countError(res.InvalidReason, streamError(st.id, ErrCodeProtocol))
 	}
 
 	body := &requestBody{
 		conn:          sc,
 		stream:        st,
-		needsContinue: needsContinue,
+		needsContinue: res.NeedsContinue,
 	}
-	req := &http.Request{
-		Method:     rp.method,
-		URL:        url_,
+	req := (&http.Request{
+		Method:     rp.Method,
+		URL:        res.URL,
 		RemoteAddr: sc.remoteAddrStr,
-		Header:     rp.header,
-		RequestURI: requestURI,
+		Header:     rp.Header,
+		RequestURI: res.RequestURI,
 		Proto:      "HTTP/2.0",
 		ProtoMajor: 2,
 		ProtoMinor: 0,
 		TLS:        tlsState,
-		Host:       rp.authority,
+		Host:       rp.Authority,
 		Body:       body,
-		Trailer:    trailer,
-	}
-	req = req.WithContext(st.ctx)
-
+		Trailer:    res.Trailer,
+	}).WithContext(st.ctx)
 	rw := sc.newResponseWriter(st, req)
 	return rw, req, nil
 }
@@ -2886,6 +2865,11 @@ func (w *responseWriter) SetWriteDeadline(deadline time.Time) error {
 	return nil
 }
 
+func (w *responseWriter) EnableFullDuplex() error {
+	// We always support full duplex responses, so this is a no-op.
+	return nil
+}
+
 func (w *responseWriter) Flush() {
 	w.FlushError()
 }
@@ -3235,12 +3219,12 @@ func (sc *serverConn) startPush(msg *startPushRequest) {
 		// we start in "half closed (remote)" for simplicity.
 		// See further comments at the definition of stateHalfClosedRemote.
 		promised := sc.newStream(promisedID, msg.parent.id, stateHalfClosedRemote)
-		rw, req, err := sc.newWriterAndRequestNoBody(promised, requestParam{
-			method:    msg.method,
-			scheme:    msg.url.Scheme,
-			authority: msg.url.Host,
-			path:      msg.url.RequestURI(),
-			header:    cloneHeader(msg.header), // clone since handler runs concurrently with writing the PUSH_PROMISE
+		rw, req, err := sc.newWriterAndRequestNoBody(promised, httpcommon.ServerRequestParam{
+			Method:    msg.method,
+			Scheme:    msg.url.Scheme,
+			Authority: msg.url.Host,
+			Path:      msg.url.RequestURI(),
+			Header:    cloneHeader(msg.header), // clone since handler runs concurrently with writing the PUSH_PROMISE
 		})
 		if err != nil {
 			// Should not happen, since we've already validated msg.url.
@@ -3332,7 +3316,7 @@ func (sc *serverConn) countError(name string, err error) error {
 	if sc == nil || sc.srv == nil {
 		return err
 	}
-	f := sc.srv.CountError
+	f := sc.countErrorFunc
 	if f == nil {
 		return err
 	}

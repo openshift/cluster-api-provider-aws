@@ -893,6 +893,11 @@ func (m *CSIDriverSpec) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if m.NodeAllocatableUpdatePeriodSeconds != nil {
+		i = encodeVarintGenerated(dAtA, i, uint64(*m.NodeAllocatableUpdatePeriodSeconds))
+		i--
+		dAtA[i] = 0x48
+	}
 	if m.SELinuxMount != nil {
 		i--
 		if *m.SELinuxMount {
@@ -1860,6 +1865,11 @@ func (m *VolumeError) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if m.ErrorCode != nil {
+		i = encodeVarintGenerated(dAtA, i, uint64(*m.ErrorCode))
+		i--
+		dAtA[i] = 0x18
+	}
 	i -= len(m.Message)
 	copy(dAtA[i:], m.Message)
 	i = encodeVarintGenerated(dAtA, i, uint64(len(m.Message)))
@@ -1983,6 +1993,9 @@ func (m *CSIDriverSpec) Size() (n int) {
 	}
 	if m.SELinuxMount != nil {
 		n += 2
+	}
+	if m.NodeAllocatableUpdatePeriodSeconds != nil {
+		n += 1 + sovGenerated(uint64(*m.NodeAllocatableUpdatePeriodSeconds))
 	}
 	return n
 }
@@ -2310,6 +2323,9 @@ func (m *VolumeError) Size() (n int) {
 	n += 1 + l + sovGenerated(uint64(l))
 	l = len(m.Message)
 	n += 1 + l + sovGenerated(uint64(l))
+	if m.ErrorCode != nil {
+		n += 1 + sovGenerated(uint64(*m.ErrorCode))
+	}
 	return n
 }
 
@@ -2376,6 +2392,7 @@ func (this *CSIDriverSpec) String() string {
 		`TokenRequests:` + repeatedStringForTokenRequests + `,`,
 		`RequiresRepublish:` + valueToStringGenerated(this.RequiresRepublish) + `,`,
 		`SELinuxMount:` + valueToStringGenerated(this.SELinuxMount) + `,`,
+		`NodeAllocatableUpdatePeriodSeconds:` + valueToStringGenerated(this.NodeAllocatableUpdatePeriodSeconds) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -2643,6 +2660,7 @@ func (this *VolumeError) String() string {
 	s := strings.Join([]string{`&VolumeError{`,
 		`Time:` + strings.Replace(strings.Replace(fmt.Sprintf("%v", this.Time), "Time", "v1.Time", 1), `&`, ``, 1) + `,`,
 		`Message:` + fmt.Sprintf("%v", this.Message) + `,`,
+		`ErrorCode:` + valueToStringGenerated(this.ErrorCode) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -3131,6 +3149,26 @@ func (m *CSIDriverSpec) Unmarshal(dAtA []byte) error {
 			}
 			b := bool(v != 0)
 			m.SELinuxMount = &b
+		case 9:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NodeAllocatableUpdatePeriodSeconds", wireType)
+			}
+			var v int64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenerated
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.NodeAllocatableUpdatePeriodSeconds = &v
 		default:
 			iNdEx = preIndex
 			skippy, err := skipGenerated(dAtA[iNdEx:])
@@ -5859,6 +5897,26 @@ func (m *VolumeError) Unmarshal(dAtA []byte) error {
 			}
 			m.Message = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ErrorCode", wireType)
+			}
+			var v int32
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenerated
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.ErrorCode = &v
 		default:
 			iNdEx = preIndex
 			skippy, err := skipGenerated(dAtA[iNdEx:])

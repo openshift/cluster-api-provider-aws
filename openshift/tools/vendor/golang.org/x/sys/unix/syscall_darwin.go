@@ -402,6 +402,18 @@ func IoctlSetIfreqMTU(fd int, ifreq *IfreqMTU) error {
 	return ioctlPtr(fd, SIOCSIFMTU, unsafe.Pointer(ifreq))
 }
 
+//sys	renamexNp(from string, to string, flag uint32) (err error)
+
+func RenamexNp(from string, to string, flag uint32) (err error) {
+	return renamexNp(from, to, flag)
+}
+
+//sys	renameatxNp(fromfd int, from string, tofd int, to string, flag uint32) (err error)
+
+func RenameatxNp(fromfd int, from string, tofd int, to string, flag uint32) (err error) {
+	return renameatxNp(fromfd, from, tofd, to, flag)
+}
+
 //sys	sysctl(mib []_C_int, old *byte, oldlen *uintptr, new *byte, newlen uintptr) (err error) = SYS_SYSCTL
 
 func Uname(uname *Utsname) error {
@@ -782,3 +794,7 @@ func readvRacedetect(iovecs []Iovec, n int, err error) {
 //sys	write(fd int, p []byte) (n int, err error)
 //sys	mmap(addr uintptr, length uintptr, prot int, flag int, fd int, pos int64) (ret uintptr, err error)
 //sys	munmap(addr uintptr, length uintptr) (err error)
+//sys	readv(fd int, iovecs []Iovec) (n int, err error)
+//sys	preadv(fd int, iovecs []Iovec, offset int64) (n int, err error)
+//sys	writev(fd int, iovecs []Iovec) (n int, err error)
+//sys	pwritev(fd int, iovecs []Iovec, offset int64) (n int, err error)
