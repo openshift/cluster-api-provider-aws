@@ -130,12 +130,9 @@ E2E_SKIP_EKS_UPGRADE ?= "false"
 # Set EKS_SOURCE_TEMPLATE to override the source template
 EKS_SOURCE_TEMPLATE ?= eks/cluster-template-eks-control-plane-only.yaml
 
-# set up `setup-envtest` to install kubebuilder dependency
-export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.23.3
-SETUP_ENVTEST_VER := v0.0.0-20211110210527-619e6b92dab9
-SETUP_ENVTEST_BIN := setup-envtest
-SETUP_ENVTEST := $(abspath $(TOOLS_BIN_DIR)/$(SETUP_ENVTEST_BIN)-$(SETUP_ENVTEST_VER))
-SETUP_ENVTEST_PKG := sigs.k8s.io/controller-runtime/tools/setup-envtest
+# set up envtest to install kubebuilder dependency
+export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.23.5
+ENVTEST_ASSETS_DIR ?= /tmp/controller-tools/envtest
 
 GINKGO_FOCUS ?= ""
 GINKGO_SKIP ?= ""
@@ -377,27 +374,24 @@ generate-test-flavors: $(KUSTOMIZE)  ## Generate test template flavors
 e2e-image: docker-pull-prerequisites $(TOOLS_BIN_DIR)/start.sh $(TOOLS_BIN_DIR)/restart.sh ## Build an e2e test image
 	docker build -f Dockerfile --tag="gcr.io/k8s-staging-cluster-api/capa-manager:e2e" .
 
-.PHONY: install-setup-envtest
-install-setup-envtest: # Install setup-envtest so that setup-envtest's eval is executed after the tool has been installed.
-	GOBIN=$(abspath $(TOOLS_BIN_DIR)) $(GO_INSTALL) $(SETUP_ENVTEST_PKG) $(SETUP_ENVTEST_BIN) $(SETUP_ENVTEST_VER)
-
-.PHONY: setup-envtest
-setup-envtest: install-setup-envtest # Build setup-envtest from tools folder.
-	@if [ $(shell go env GOOS) == "darwin" ]; then \
-		$(eval KUBEBUILDER_ASSETS := $(shell $(SETUP_ENVTEST) use --use-env -p path --arch amd64 $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))) \
-		echo "kube-builder assets set using darwin OS"; \
-	else \
-		$(eval KUBEBUILDER_ASSETS := $(shell $(SETUP_ENVTEST) use --use-env -p path $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))) \
-		echo "kube-builder assets set using other OS"; \
-	fi
+.PHONY: envtest
+envtest: ## Download envtest binaries if not present
+	@[ -f $(ENVTEST_ASSETS_DIR)/kube-apiserver ] || { \
+	set -e ;\
+	ARCH=$$(go env GOARCH) ;\
+	OS=$$(go env GOOS) ;\
+	echo "Downloading envtest binaries for k8s $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION) ($${OS}/$${ARCH})..." ;\
+	curl -fSL "https://github.com/kubernetes-sigs/controller-tools/releases/download/envtest-v$(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION)/envtest-v$(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION)-$${OS}-$${ARCH}.tar.gz" -o /tmp/envtest.tar.gz ;\
+	tar -xzf /tmp/envtest.tar.gz -C /tmp/ ;\
+	}
 
 .PHONY: test
-test: setup-envtest ## Run tests
-	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" go test ./...
+test: envtest ## Run tests
+	KUBEBUILDER_ASSETS="$(ENVTEST_ASSETS_DIR)" go test ./...
 
 .PHONY: test-verbose
-test-verbose: setup-envtest ## Run tests with verbose settings.
-	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" go test -v ./...
+test-verbose: envtest ## Run tests with verbose settings.
+	KUBEBUILDER_ASSETS="$(ENVTEST_ASSETS_DIR)" go test -v ./...
 
 .PHONY: test-e2e ## Run e2e tests using clusterctl
 test-e2e: $(GINKGO) $(KIND) $(SSM_PLUGIN) $(KUSTOMIZE) generate-test-flavors e2e-image ## Run e2e tests
@@ -424,8 +418,8 @@ test-conformance: generate-test-flavors $(GINKGO) $(KIND) $(SSM_PLUGIN) $(KUSTOM
 	time $(GINKGO) -tags=e2e -focus="conformance" $(CONFORMANCE_GINKGO_ARGS) ./test/e2e/suites/conformance/... -- -config-path="$(E2E_CONF_PATH)" $(CONFORMANCE_E2E_ARGS)
 
 .PHONY: test-cover
-test-cover: setup-envtest ## Run tests with code coverage and code generate  reports
-	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" go test -coverprofile=coverage.out ./... $(TEST_ARGS)
+test-cover: envtest ## Run tests with code coverage and code generate  reports
+	KUBEBUILDER_ASSETS="$(ENVTEST_ASSETS_DIR)" go test -coverprofile=coverage.out ./... $(TEST_ARGS)
 	go tool cover -func=coverage.out -o coverage.txt
 	go tool cover -html=coverage.out -o coverage.html
 
