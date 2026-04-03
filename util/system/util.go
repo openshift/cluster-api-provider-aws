@@ -29,9 +29,10 @@ const (
 	namespaceEnvVarName = "POD_NAMESPACE"
 	// defaultNamespace is the default value from manifest.
 	defaultNamespace = "capa-system"
-	// inClusterNamespacePath is the file the default namespace to be used for namespaced API operations is placed at.
-	inClusterNamespacePath = "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
 )
+
+// inClusterNamespacePath is the file the default namespace to be used for namespaced API operations is placed at.
+var inClusterNamespacePath = "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
 
 // GetManagerNamespace return the namespace where the controller is running.
 func GetManagerNamespace() string {
