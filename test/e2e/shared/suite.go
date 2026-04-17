@@ -32,6 +32,7 @@ import (
 	"time"
 
 	iamtypes "github.com/aws/aws-sdk-go-v2/service/iam/types"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/gofrs/flock"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -171,7 +172,10 @@ func Node1BeforeSuite(e2eCtx *E2EContext) []byte {
 	e2eCtx.Environment.ClusterctlConfigPath = createClusterctlLocalRepository(e2eCtx, filepath.Join(e2eCtx.Settings.ArtifactFolder, "repository"))
 
 	By("Setting up the bootstrap cluster")
-	e2eCtx.Environment.BootstrapClusterProvider, e2eCtx.Environment.BootstrapClusterProxy = setupBootstrapCluster(e2eCtx.E2EConfig, e2eCtx.Environment.Scheme, e2eCtx.Settings.UseExistingCluster)
+	e2eCtx.Environment.BootstrapClusterProvider, e2eCtx.Environment.BootstrapClusterProxy = setupBootstrapCluster(
+		e2eCtx.E2EConfig, e2eCtx.Environment.Scheme, e2eCtx.Settings.UseExistingCluster,
+		framework.WithMachineLogCollector(AWSStackLogCollector{E2EContext: e2eCtx}),
+	)
 
 	base64EncodedCredentials := encodeCredentials(e2eCtx.Environment.BootstrapAccessKey, bootstrapTemplate.Spec.Region)
 	SetEnvVar("AWS_B64ENCODED_CREDENTIALS", base64EncodedCredentials, true)
@@ -225,7 +229,9 @@ func AllNodesBeforeSuite(e2eCtx *E2EContext, data []byte) {
 	e2eCtx.Settings.ArtifactFolder = conf.ArtifactFolder
 	e2eCtx.Settings.ConfigPath = conf.ConfigPath
 	e2eCtx.Environment.ClusterctlConfigPath = conf.ClusterctlConfigPath
-	e2eCtx.Environment.BootstrapClusterProxy = framework.NewClusterProxy("bootstrap", conf.KubeconfigPath, e2eCtx.Environment.Scheme)
+	e2eCtx.Environment.BootstrapClusterProxy = framework.NewClusterProxy("bootstrap", conf.KubeconfigPath, e2eCtx.Environment.Scheme,
+		framework.WithMachineLogCollector(AWSStackLogCollector{E2EContext: e2eCtx}),
+	)
 	e2eCtx.E2EConfig = &conf.E2EConfig
 	e2eCtx.BootstrapUserAWSSession = NewAWSSessionWithKey(conf.BootstrapAccessKey)
 	e2eCtx.Settings.FileLock = flock.New(ResourceQuotaFilePath)
@@ -240,6 +246,10 @@ func AllNodesBeforeSuite(e2eCtx *E2EContext, data []byte) {
 	SetEnvVar("AWS_REGION", conf.Region, false)
 	SetEnvVar("AWS_SSH_KEY_NAME", DefaultSSHKeyPairName, false)
 	SetEnvVar("AWS_B64ENCODED_CREDENTIALS", conf.Base64EncodedCredentials, true)
+	stsSvc := sts.NewFromConfig(*e2eCtx.AWSSession)
+	caller, err := stsSvc.GetCallerIdentity(context.TODO(), &sts.GetCallerIdentityInput{})
+	Expect(err).NotTo(HaveOccurred())
+	SetEnvVar(AwsAccountID, *caller.Account, false)
 	e2eCtx.Environment.ResourceTicker = time.NewTicker(time.Second * 5)
 	e2eCtx.Environment.ResourceTickerDone = make(chan bool)
 	// Get EC2 logs every minute
@@ -257,7 +267,12 @@ func AllNodesBeforeSuite(e2eCtx *E2EContext, data []byte) {
 				return
 			case <-e2eCtx.Environment.ResourceTicker.C:
 				for k := range e2eCtx.Environment.Namespaces {
-					DumpSpecResources(resourceCtx, e2eCtx, k)
+					// Warn instead of error when dumping resources fails due to a cluster being deleted.
+					if err := InterceptGomegaFailure(func() {
+						DumpSpecResources(resourceCtx, e2eCtx, k)
+					}); err != nil {
+						fmt.Fprintf(GinkgoWriter, "WARNING: periodic DumpSpecResources for namespace %q failed (can occur when a cluster is being deleted): %v\n", k.Name, err)
+					}
 				}
 			}
 		}
@@ -273,7 +288,12 @@ func AllNodesBeforeSuite(e2eCtx *E2EContext, data []byte) {
 				return
 			case <-e2eCtx.Environment.MachineTicker.C:
 				for k := range e2eCtx.Environment.Namespaces {
-					DumpMachines(machineCtx, e2eCtx, k)
+					// Warn instead of error when dumping machines fails due to a cluster being deleted.
+					if err := InterceptGomegaFailure(func() {
+						DumpMachines(machineCtx, e2eCtx, k)
+					}); err != nil {
+						fmt.Fprintf(GinkgoWriter, "WARNING: periodic DumpMachines for namespace %q failed (can occur when a cluster is being deleted): %v\n", k.Name, err)
+					}
 				}
 			}
 		}

@@ -5905,6 +5905,132 @@ func TestCreateInstance(t *testing.T) {
 				}
 			},
 		},
+		{
+			name: "with nested virtualization enabled",
+			machine: &clusterv1.Machine{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{"set": "node"},
+				},
+				Spec: clusterv1.MachineSpec{
+					Bootstrap: clusterv1.Bootstrap{
+						DataSecretName: ptr.To[string]("bootstrap-data"),
+					},
+				},
+			},
+			machineConfig: &infrav1.AWSMachineSpec{
+				AMI: infrav1.AMIReference{
+					ID: aws.String("abc"),
+				},
+				InstanceType: "m8i.large",
+				CPUOptions: infrav1.CPUOptions{
+					NestedVirtualization: infrav1.NestedVirtualizationPolicyEnabled,
+				},
+			},
+			awsCluster: &infrav1.AWSCluster{
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec: infrav1.AWSClusterSpec{
+					NetworkSpec: infrav1.NetworkSpec{
+						Subnets: infrav1.Subnets{
+							infrav1.SubnetSpec{
+								ID:       "subnet-1",
+								IsPublic: false,
+							},
+							infrav1.SubnetSpec{
+								IsPublic: false,
+							},
+						},
+						VPC: infrav1.VPCSpec{
+							ID: "vpc-test",
+						},
+					},
+				},
+				Status: infrav1.AWSClusterStatus{
+					Network: infrav1.NetworkStatus{
+						SecurityGroups: map[infrav1.SecurityGroupRole]infrav1.SecurityGroup{
+							infrav1.SecurityGroupControlPlane: {
+								ID: "1",
+							},
+							infrav1.SecurityGroupNode: {
+								ID: "2",
+							},
+							infrav1.SecurityGroupLB: {
+								ID: "3",
+							},
+						},
+						APIServerELB: infrav1.LoadBalancer{
+							DNSName: "test-apiserver.us-east-1.aws",
+						},
+					},
+				},
+			},
+			expect: func(m *mocks.MockEC2APIMockRecorder) {
+				m.
+					DescribeInstanceTypes(context.TODO(), gomock.Eq(&ec2.DescribeInstanceTypesInput{
+						InstanceTypes: []types.InstanceType{
+							types.InstanceTypeM8iLarge,
+						},
+					})).
+					Return(&ec2.DescribeInstanceTypesOutput{
+						InstanceTypes: []types.InstanceTypeInfo{
+							{
+								ProcessorInfo: &types.ProcessorInfo{
+									SupportedArchitectures: []types.ArchitectureType{
+										types.ArchitectureTypeX8664,
+									},
+								},
+							},
+						},
+					}, nil)
+				m.
+					RunInstances(context.TODO(), gomock.Any()).
+					DoAndReturn(func(ctx context.Context, input *ec2.RunInstancesInput, optFns ...func(*ec2.Options)) (*ec2.RunInstancesOutput, error) {
+						if input.CpuOptions == nil {
+							t.Fatalf("expected nested virtualization to be enabled, but got no CpuOptions")
+						} else if input.CpuOptions.NestedVirtualization != types.NestedVirtualizationSpecificationEnabled {
+							t.Fatalf("expected nested virtualization to be enabled, but got %s", input.CpuOptions.NestedVirtualization)
+						}
+						return &ec2.RunInstancesOutput{
+							Instances: []types.Instance{
+								{
+									State: &types.InstanceState{
+										Name: types.InstanceStateNamePending,
+									},
+									IamInstanceProfile: &types.IamInstanceProfile{
+										Arn: aws.String("arn:aws:iam::123456789012:instance-profile/foo"),
+									},
+									InstanceId:     aws.String("two"),
+									InstanceType:   types.InstanceTypeM8iLarge,
+									SubnetId:       aws.String("subnet-1"),
+									ImageId:        aws.String("ami-1"),
+									RootDeviceName: aws.String("device-1"),
+									BlockDeviceMappings: []types.InstanceBlockDeviceMapping{
+										{
+											DeviceName: aws.String("device-1"),
+											Ebs: &types.EbsInstanceBlockDevice{
+												VolumeId: aws.String("volume-1"),
+											},
+										},
+									},
+									Placement: &types.Placement{
+										AvailabilityZone: &az,
+									},
+								},
+							},
+						}, nil
+					})
+				m.
+					DescribeNetworkInterfaces(context.TODO(), gomock.Any()).
+					Return(&ec2.DescribeNetworkInterfacesOutput{
+						NetworkInterfaces: []types.NetworkInterface{},
+						NextToken:         nil,
+					}, nil)
+			},
+			check: func(instance *infrav1.Instance, err error) {
+				if err != nil {
+					t.Fatalf("did not expect error: %v", err)
+				}
+			},
+		},
 	}
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -5971,7 +6097,7 @@ func TestCreateInstance(t *testing.T) {
 			machineScope.AWSMachine.Spec = *tc.machineConfig
 			tc.expect(ec2Mock.EXPECT())
 
-			s := NewService(clusterScope)
+			s := NewService(clusterScope).WithInstanceTypeArchitectureCache(nil)
 			s.EC2Client = ec2Mock
 
 			instance, err := s.CreateInstance(context.TODO(), machineScope, data, "")
@@ -6359,6 +6485,19 @@ func TestGetDHCPOptionSetDomainName(t *testing.T) {
 			expectedPrivateDNSName: nil,
 			mockCalls:              mockedGetPrivateDNSDomainNameFromDHCPOptionsEmptyCalls,
 		},
+		{
+			name:  "DescribeDhcpOptions call returns error, e.g. because it is denied by IAM policy",
+			vpcID: "vpc-exists",
+			dhcpOpt: &types.DhcpOptions{
+				DhcpConfigurations: []types.DhcpConfiguration{
+					{
+						Key: aws.String("domain-name"),
+					},
+				},
+			},
+			expectedPrivateDNSName: nil,
+			mockCalls:              mockedGetPrivateDNSDomainNameFromDHCPOptionsErrorCalls,
+		},
 	}
 	for _, tc := range testsCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -6464,6 +6603,25 @@ func mockedGetPrivateDNSDomainNameFromDHCPOptionsEmptyCalls(m *mocks.MockEC2APIM
 	}, nil)
 }
 
+func mockedGetPrivateDNSDomainNameFromDHCPOptionsErrorCalls(m *mocks.MockEC2APIMockRecorder) {
+	m.DescribeVpcs(context.TODO(), &ec2.DescribeVpcsInput{
+		VpcIds: []string{"vpc-exists"},
+	}).Return(&ec2.DescribeVpcsOutput{
+		Vpcs: []types.Vpc{
+			{
+				VpcId:         aws.String("vpc-exists"),
+				CidrBlock:     aws.String("10.0.0.0/16"),
+				IsDefault:     aws.Bool(false),
+				State:         types.VpcStateAvailable,
+				DhcpOptionsId: aws.String("dopt-12345678"),
+			},
+		},
+	}, nil)
+	m.DescribeDhcpOptions(context.TODO(), &ec2.DescribeDhcpOptionsInput{
+		DhcpOptionsIds: []string{"dopt-12345678"},
+	}).Return(nil, errors.New("some error"))
+}
+
 func TestGetCapacityReservationSpecification(t *testing.T) {
 	mockCapacityReservationID := "cr-123"
 	mockCapacityReservationIDPtr := &mockCapacityReservationID
@@ -6547,6 +6705,35 @@ func TestGetInstanceCPUOptionsRequest(t *testing.T) {
 				ConfidentialCompute: "",
 			},
 			expectedRequest: nil,
+		},
+		{
+			name: "with NestedVirtualization enabled",
+			cpuOptions: infrav1.CPUOptions{
+				NestedVirtualization: infrav1.NestedVirtualizationPolicyEnabled,
+			},
+			expectedRequest: &types.CpuOptionsRequest{
+				NestedVirtualization: types.NestedVirtualizationSpecificationEnabled,
+			},
+		},
+		{
+			name: "with NestedVirtualization disabled",
+			cpuOptions: infrav1.CPUOptions{
+				NestedVirtualization: infrav1.NestedVirtualizationPolicyDisabled,
+			},
+			expectedRequest: &types.CpuOptionsRequest{
+				NestedVirtualization: types.NestedVirtualizationSpecificationDisabled,
+			},
+		},
+		{
+			name: "with both ConfidentialCompute and NestedVirtualization set",
+			cpuOptions: infrav1.CPUOptions{
+				ConfidentialCompute:  infrav1.AWSConfidentialComputePolicySEVSNP,
+				NestedVirtualization: infrav1.NestedVirtualizationPolicyEnabled,
+			},
+			expectedRequest: &types.CpuOptionsRequest{
+				AmdSevSnp:            types.AmdSevSnpSpecificationEnabled,
+				NestedVirtualization: types.NestedVirtualizationSpecificationEnabled,
+			},
 		},
 	}
 
