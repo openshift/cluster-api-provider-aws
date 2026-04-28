@@ -11,11 +11,13 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"slices"
 	"strings"
 	"sync"
 
 	"golang.org/x/net/http/httpguts"
 	"golang.org/x/net/http2/hpack"
+	"golang.org/x/net/internal/httpsfv"
 )
 
 const frameHeaderLen = 9
@@ -23,40 +25,43 @@ const frameHeaderLen = 9
 var padZeros = make([]byte, 255) // zeros for padding
 
 // A FrameType is a registered frame type as defined in
-// https://httpwg.org/specs/rfc7540.html#rfc.section.11.2
+// https://httpwg.org/specs/rfc7540.html#rfc.section.11.2 and other future
+// RFCs.
 type FrameType uint8
 
 const (
-	FrameData         FrameType = 0x0
-	FrameHeaders      FrameType = 0x1
-	FramePriority     FrameType = 0x2
-	FrameRSTStream    FrameType = 0x3
-	FrameSettings     FrameType = 0x4
-	FramePushPromise  FrameType = 0x5
-	FramePing         FrameType = 0x6
-	FrameGoAway       FrameType = 0x7
-	FrameWindowUpdate FrameType = 0x8
-	FrameContinuation FrameType = 0x9
+	FrameData           FrameType = 0x0
+	FrameHeaders        FrameType = 0x1
+	FramePriority       FrameType = 0x2
+	FrameRSTStream      FrameType = 0x3
+	FrameSettings       FrameType = 0x4
+	FramePushPromise    FrameType = 0x5
+	FramePing           FrameType = 0x6
+	FrameGoAway         FrameType = 0x7
+	FrameWindowUpdate   FrameType = 0x8
+	FrameContinuation   FrameType = 0x9
+	FramePriorityUpdate FrameType = 0x10
 )
 
-var frameName = map[FrameType]string{
-	FrameData:         "DATA",
-	FrameHeaders:      "HEADERS",
-	FramePriority:     "PRIORITY",
-	FrameRSTStream:    "RST_STREAM",
-	FrameSettings:     "SETTINGS",
-	FramePushPromise:  "PUSH_PROMISE",
-	FramePing:         "PING",
-	FrameGoAway:       "GOAWAY",
-	FrameWindowUpdate: "WINDOW_UPDATE",
-	FrameContinuation: "CONTINUATION",
+var frameNames = [...]string{
+	FrameData:           "DATA",
+	FrameHeaders:        "HEADERS",
+	FramePriority:       "PRIORITY",
+	FrameRSTStream:      "RST_STREAM",
+	FrameSettings:       "SETTINGS",
+	FramePushPromise:    "PUSH_PROMISE",
+	FramePing:           "PING",
+	FrameGoAway:         "GOAWAY",
+	FrameWindowUpdate:   "WINDOW_UPDATE",
+	FrameContinuation:   "CONTINUATION",
+	FramePriorityUpdate: "PRIORITY_UPDATE",
 }
 
 func (t FrameType) String() string {
-	if s, ok := frameName[t]; ok {
-		return s
+	if int(t) < len(frameNames) {
+		return frameNames[t]
 	}
-	return fmt.Sprintf("UNKNOWN_FRAME_TYPE_%d", uint8(t))
+	return fmt.Sprintf("UNKNOWN_FRAME_TYPE_%d", t)
 }
 
 // Flags is a bitmask of HTTP/2 flags.
@@ -124,22 +129,25 @@ var flagName = map[FrameType]map[Flags]string{
 // might be 0).
 type frameParser func(fc *frameCache, fh FrameHeader, countError func(string), payload []byte) (Frame, error)
 
-var frameParsers = map[FrameType]frameParser{
-	FrameData:         parseDataFrame,
-	FrameHeaders:      parseHeadersFrame,
-	FramePriority:     parsePriorityFrame,
-	FrameRSTStream:    parseRSTStreamFrame,
-	FrameSettings:     parseSettingsFrame,
-	FramePushPromise:  parsePushPromise,
-	FramePing:         parsePingFrame,
-	FrameGoAway:       parseGoAwayFrame,
-	FrameWindowUpdate: parseWindowUpdateFrame,
-	FrameContinuation: parseContinuationFrame,
+var frameParsers = [...]frameParser{
+	FrameData:           parseDataFrame,
+	FrameHeaders:        parseHeadersFrame,
+	FramePriority:       parsePriorityFrame,
+	FrameRSTStream:      parseRSTStreamFrame,
+	FrameSettings:       parseSettingsFrame,
+	FramePushPromise:    parsePushPromise,
+	FramePing:           parsePingFrame,
+	FrameGoAway:         parseGoAwayFrame,
+	FrameWindowUpdate:   parseWindowUpdateFrame,
+	FrameContinuation:   parseContinuationFrame,
+	FramePriorityUpdate: parsePriorityUpdateFrame,
 }
 
 func typeFrameParser(t FrameType) frameParser {
-	if f := frameParsers[t]; f != nil {
-		return f
+	if int(t) < len(frameParsers) {
+		if f := frameParsers[t]; f != nil {
+			return f
+		}
 	}
 	return parseUnknownFrame
 }
@@ -223,6 +231,11 @@ var fhBytes = sync.Pool{
 		buf := make([]byte, frameHeaderLen)
 		return &buf
 	},
+}
+
+func invalidHTTP1LookingFrameHeader() FrameHeader {
+	fh, _ := readFrameHeader(make([]byte, frameHeaderLen), strings.NewReader("HTTP/1.1 "))
+	return fh
 }
 
 // ReadFrameHeader reads 9 bytes from r and returns a FrameHeader.
@@ -523,6 +536,9 @@ func (fr *Framer) ReadFrameForHeader(fh FrameHeader) (Frame, error) {
 	}
 	payload := fr.getReadBuf(fh.Length)
 	if _, err := io.ReadFull(fr.r, payload); err != nil {
+		if fh == invalidHTTP1LookingFrameHeader() {
+			return nil, fmt.Errorf("http2: failed reading the frame payload: %w, note that the frame header looked like an HTTP/1.1 header", err)
+		}
 		return nil, err
 	}
 	f, err := typeFrameParser(fh.Type)(fr.frameCache, fh, fr.countError, payload)
@@ -1172,9 +1188,34 @@ type PriorityFrame struct {
 	PriorityParam
 }
 
-var defaultRFC9218Priority = PriorityParam{
-	incremental: 0,
-	urgency:     3,
+// defaultRFC9218Priority determines what priority we should use as the default
+// value.
+//
+// According to RFC 9218, by default, streams should be given an urgency of 3
+// and should be non-incremental. However, making streams non-incremental by
+// default would be a huge change to our historical behavior where we would
+// round-robin writes across streams. When streams are non-incremental, we
+// would process streams of the same urgency one-by-one to completion instead.
+//
+// To avoid such a sudden change which might break some HTTP/2 users, this
+// function allows the caller to specify whether they can actually use the
+// default value as specified in RFC 9218. If not, this function will return a
+// priority value where streams are incremental by default instead: effectively
+// a round-robin between stream of the same urgency.
+//
+// As an example, a server might not be able to use the RFC 9218 default value
+// when it's not sure that the client it is serving is aware of RFC 9218.
+func defaultRFC9218Priority(canUseDefault bool) PriorityParam {
+	if canUseDefault {
+		return PriorityParam{
+			urgency:     3,
+			incremental: 0,
+		}
+	}
+	return PriorityParam{
+		urgency:     3,
+		incremental: 1,
+	}
 }
 
 // Note that HTTP/2 has had two different prioritization schemes, and
@@ -1255,6 +1296,74 @@ func (f *Framer) WritePriority(streamID uint32, p PriorityParam) error {
 	}
 	f.writeUint32(v)
 	f.writeByte(p.Weight)
+	return f.endWrite()
+}
+
+// PriorityUpdateFrame is a PRIORITY_UPDATE frame as described in
+// https://www.rfc-editor.org/rfc/rfc9218.html#name-the-priority_update-frame.
+type PriorityUpdateFrame struct {
+	FrameHeader
+	Priority            string
+	PrioritizedStreamID uint32
+}
+
+func parseRFC9218Priority(s string, canUseDefault bool) (p PriorityParam, ok bool) {
+	p = defaultRFC9218Priority(canUseDefault)
+	ok = httpsfv.ParseDictionary(s, func(key, val, _ string) {
+		switch key {
+		case "u":
+			if u, ok := httpsfv.ParseInteger(val); ok && u >= 0 && u <= 7 {
+				p.urgency = uint8(u)
+			}
+		case "i":
+			if i, ok := httpsfv.ParseBoolean(val); ok {
+				if i {
+					p.incremental = 1
+				} else {
+					p.incremental = 0
+				}
+			}
+		}
+	})
+	if !ok {
+		return defaultRFC9218Priority(canUseDefault), ok
+	}
+	return p, true
+}
+
+func parsePriorityUpdateFrame(_ *frameCache, fh FrameHeader, countError func(string), payload []byte) (Frame, error) {
+	if fh.StreamID != 0 {
+		countError("frame_priority_update_non_zero_stream")
+		return nil, connError{ErrCodeProtocol, "PRIORITY_UPDATE frame with non-zero stream ID"}
+	}
+	if len(payload) < 4 {
+		countError("frame_priority_update_bad_length")
+		return nil, connError{ErrCodeFrameSize, fmt.Sprintf("PRIORITY_UPDATE frame payload size was %d; want at least 4", len(payload))}
+	}
+	v := binary.BigEndian.Uint32(payload[:4])
+	streamID := v & 0x7fffffff // mask off high bit
+	if streamID == 0 {
+		countError("frame_priority_update_prioritizing_zero_stream")
+		return nil, connError{ErrCodeProtocol, "PRIORITY_UPDATE frame with prioritized stream ID of zero"}
+	}
+	return &PriorityUpdateFrame{
+		FrameHeader:         fh,
+		PrioritizedStreamID: streamID,
+		Priority:            string(payload[4:]),
+	}, nil
+}
+
+// WritePriorityUpdate writes a PRIORITY_UPDATE frame.
+//
+// It will perform exactly one Write to the underlying Writer.
+// It is the caller's responsibility to not call other Write methods concurrently.
+func (f *Framer) WritePriorityUpdate(streamID uint32, priority string) error {
+	if !validStreamID(streamID) && !f.AllowIllegalWrites {
+		return errStreamID
+	}
+	f.startWrite(FramePriorityUpdate, 0, 0)
+	f.writeUint32(streamID)
+	f.writeBytes([]byte(priority))
 	return f.endWrite()
 }
 
@@ -1539,12 +1648,29 @@ func (mh *MetaHeadersFrame) PseudoFields() []hpack.HeaderField {
 	return mh.Fields
 }
 
+func (mh *MetaHeadersFrame) rfc9218Priority(priorityAware bool) (p PriorityParam, priorityAwareAfter, hasIntermediary bool) {
+	var s string
+	for _, field := range mh.Fields {
+		if field.Name == "priority" {
+			s = field.Value
+			priorityAware = true
+		}
+		if slices.Contains([]string{"via", "forwarded", "x-forwarded-for"}, field.Name) {
+			hasIntermediary = true
+		}
+	}
+	// No need to check for ok. parseRFC9218Priority will return a default
+	// value if there is no priority field or if the field cannot be parsed.
+	p, _ = parseRFC9218Priority(s, priorityAware && !hasIntermediary)
+	return p, priorityAware, hasIntermediary
+}
+
 func (mh *MetaHeadersFrame) checkPseudos() error {
 	var isRequest, isResponse bool
 	pf := mh.PseudoFields()
 	for i, hf := range pf {
 		switch hf.Name {
-		case ":method", ":path", ":scheme", ":authority":
+		case ":method", ":path", ":scheme", ":authority", ":protocol":
 			isRequest = true
 		case ":status":
 			isResponse = true
@@ -1552,7 +1678,7 @@ func (mh *MetaHeadersFrame) checkPseudos() error {
 			return pseudoHeaderError(hf.Name)
 		}
 		// Check for duplicates.
-		// This would be a bad algorithm, but N is 4.
+		// This would be a bad algorithm, but N is 5.
 		// And this doesn't allocate.
 		for _, hf2 := range pf[:i] {
 			if hf.Name == hf2.Name {
