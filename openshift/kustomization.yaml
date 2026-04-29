@@ -21,3 +21,15 @@ patches:
   patch: |-
     - op: remove
       path: /metadata/annotations/${AWS_CONTROLLER_IAM_ROLE~1#arn~1eks.amazonaws.com~1role-arn
+
+# Add TLS configuration args (substituted by cluster-capi-operator revisiongenerator)
+- target:
+    kind: Deployment
+    name: capa-controller-manager
+  patch: |-
+    - op: add
+      path: /spec/template/spec/containers/0/args/-
+      value: "--tls-min-version=${TLS_MIN_VERSION}"
+    - op: add
+      path: /spec/template/spec/containers/0/args/-
+      value: "--tls-cipher-suites=${TLS_CIPHER_SUITES}"
