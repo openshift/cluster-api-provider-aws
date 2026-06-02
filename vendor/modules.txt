@@ -619,8 +619,8 @@ github.com/fsnotify/fsnotify/internal
 # github.com/fxamacker/cbor/v2 v2.7.0
 ## explicit; go 1.17
 github.com/fxamacker/cbor/v2
-# github.com/go-jose/go-jose/v4 v4.1.1
-## explicit; go 1.23.0
+# github.com/go-jose/go-jose/v4 v4.1.4
+## explicit; go 1.24.0
 github.com/go-jose/go-jose/v4
 github.com/go-jose/go-jose/v4/cipher
 github.com/go-jose/go-jose/v4/json
