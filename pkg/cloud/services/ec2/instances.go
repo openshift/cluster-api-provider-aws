@@ -594,7 +594,7 @@ func (s *Service) runInstance(role string, i *infrav1.Instance) (*infrav1.Instan
 		for index, id := range i.NetworkInterfaces {
 			netInterfaces = append(netInterfaces, types.InstanceNetworkInterfaceSpecification{
 				NetworkInterfaceId: aws.String(id),
-				DeviceIndex:        aws.Int32(int32(index)), //nolint:gosec // disable G115
+				DeviceIndex:        aws.Int32(int32(index)),
 			})
 		}
 		netInterfaces[0].AssociatePublicIpAddress = i.PublicIPOnLaunch
@@ -709,11 +709,14 @@ func (s *Service) runInstance(role string, i *infrav1.Instance) (*infrav1.Instan
 
 	if i.HostID != nil {
 		if i.HostAffinity == nil {
+			// If HostAffinity is not specified, default to "default" Affinity (flexible affinity).
 			i.HostAffinity = aws.String("default")
 		}
 		if len(i.Tenancy) == 0 {
+			// If Tenancy is not specified with HostID set, default to "host" Tenancy.
 			i.Tenancy = "host"
 		}
+
 		s.scope.Debug("Running instance with dedicated host placement",
 			"hostId", i.HostID,
 			"affinity", i.HostAffinity)
