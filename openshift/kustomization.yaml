@@ -33,3 +33,27 @@ patches:
     - op: add
       path: /spec/template/spec/containers/0/args/-
       value: "--tls-cipher-suites=${TLS_CIPHER_SUITES}"
+
+
+
+# https://redhat.atlassian.net/browse/OCPCLOUD-3435
+- path: patches/remove-awsmachinepool-crd.yaml
+- path: patches/remove-awsmachinepool-mutating-webhook.yaml
+- path: patches/remove-awsmachinepool-validating-webhook.yaml
+
+# index may not be stable in the JSON patch below but no better way has been identified so far
+# Remove awsmachinepools from ClusterRole RBAC rules
+# Remove in reverse order (higher indices first) to avoid index shifting
+# Rule 21: Remove only awsmachinepools/status (index 0) from the resources array
+# Rule 20: Remove entire rule (only contains awsmachinepools/finalizers)
+# Rule 18: Remove only awsmachinepools (index 2) from the resources array
+- target:
+    kind: ClusterRole
+    name: capa-manager-role
+  patch: |-
+    - op: remove
+      path: /rules/21/resources/0
+    - op: remove
+      path: /rules/20
+    - op: remove
+      path: /rules/18/resources/2
