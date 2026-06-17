@@ -13,27 +13,7 @@ default:
   version: v1
 - group: apiextensions.k8s.io
   kind: CustomResourceDefinition
-  name: awsclusterroleidentities.infrastructure.cluster.x-k8s.io
-  version: v1
-- group: apiextensions.k8s.io
-  kind: CustomResourceDefinition
   name: awsclusters.infrastructure.cluster.x-k8s.io
-  version: v1
-- group: apiextensions.k8s.io
-  kind: CustomResourceDefinition
-  name: awsclusterstaticidentities.infrastructure.cluster.x-k8s.io
-  version: v1
-- group: apiextensions.k8s.io
-  kind: CustomResourceDefinition
-  name: awsclustertemplates.infrastructure.cluster.x-k8s.io
-  version: v1
-- group: apiextensions.k8s.io
-  kind: CustomResourceDefinition
-  name: awsfargateprofiles.infrastructure.cluster.x-k8s.io
-  version: v1
-- group: apiextensions.k8s.io
-  kind: CustomResourceDefinition
-  name: awsmachinepools.infrastructure.cluster.x-k8s.io
   version: v1
 - group: apiextensions.k8s.io
   kind: CustomResourceDefinition
@@ -42,62 +22,6 @@ default:
 - group: apiextensions.k8s.io
   kind: CustomResourceDefinition
   name: awsmachinetemplates.infrastructure.cluster.x-k8s.io
-  version: v1
-- group: apiextensions.k8s.io
-  kind: CustomResourceDefinition
-  name: awsmanagedclusters.infrastructure.cluster.x-k8s.io
-  version: v1
-- group: apiextensions.k8s.io
-  kind: CustomResourceDefinition
-  name: awsmanagedclustertemplates.infrastructure.cluster.x-k8s.io
-  version: v1
-- group: apiextensions.k8s.io
-  kind: CustomResourceDefinition
-  name: awsmanagedcontrolplanes.controlplane.cluster.x-k8s.io
-  version: v1
-- group: apiextensions.k8s.io
-  kind: CustomResourceDefinition
-  name: awsmanagedcontrolplanetemplates.controlplane.cluster.x-k8s.io
-  version: v1
-- group: apiextensions.k8s.io
-  kind: CustomResourceDefinition
-  name: awsmanagedmachinepools.infrastructure.cluster.x-k8s.io
-  version: v1
-- group: apiextensions.k8s.io
-  kind: CustomResourceDefinition
-  name: eksconfigs.bootstrap.cluster.x-k8s.io
-  version: v1
-- group: apiextensions.k8s.io
-  kind: CustomResourceDefinition
-  name: eksconfigtemplates.bootstrap.cluster.x-k8s.io
-  version: v1
-- group: apiextensions.k8s.io
-  kind: CustomResourceDefinition
-  name: nodeadmconfigs.bootstrap.cluster.x-k8s.io
-  version: v1
-- group: apiextensions.k8s.io
-  kind: CustomResourceDefinition
-  name: nodeadmconfigtemplates.bootstrap.cluster.x-k8s.io
-  version: v1
-- group: apiextensions.k8s.io
-  kind: CustomResourceDefinition
-  name: rosaclusters.infrastructure.cluster.x-k8s.io
-  version: v1
-- group: apiextensions.k8s.io
-  kind: CustomResourceDefinition
-  name: rosacontrolplanes.controlplane.cluster.x-k8s.io
-  version: v1
-- group: apiextensions.k8s.io
-  kind: CustomResourceDefinition
-  name: rosamachinepools.infrastructure.cluster.x-k8s.io
-  version: v1
-- group: apiextensions.k8s.io
-  kind: CustomResourceDefinition
-  name: rosanetworks.infrastructure.cluster.x-k8s.io
-  version: v1
-- group: apiextensions.k8s.io
-  kind: CustomResourceDefinition
-  name: rosaroleconfigs.infrastructure.cluster.x-k8s.io
   version: v1
 - group: apps
   kind: Deployment
