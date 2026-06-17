@@ -6,12 +6,18 @@ include provider-version.mk
 MANIFESTS_GEN := go run ./vendor/github.com/openshift/cluster-capi-operator/manifests-gen/
 
 .PHONY: verify
-verify: verify-ocp-manifests
+verify: verify-ocp-manifests verify-manifests-summary
 
 .PHONY: verify-%
 verify-%: ## Ensure no diff after running some other target
 	$(MAKE) $*
 	./verify-diff.sh
+
+MAKEFILE_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
+.PHONY: manifests-summary
+manifests-summary:
+	cd tools && go run ./generate-manifests-summary --manifests-file="$(MAKEFILE_DIR)/capi-operator-manifests/default/manifests.yaml" --manifests-summary-file="$(MAKEFILE_DIR)/manifests-summary.yaml"
 
 .PHONY: update-manifests-gen
 update-manifests-gen:
