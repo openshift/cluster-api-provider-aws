@@ -2,7 +2,12 @@ module tools
 
 go 1.25.0
 
-require github.com/openshift/cluster-capi-operator/manifests-gen v0.0.0-20260506082208-390a5b10a37c
+require (
+	github.com/openshift/cluster-capi-operator/manifests-gen v0.0.0-20260506082208-390a5b10a37c
+	k8s.io/apimachinery v0.35.3
+	k8s.io/klog/v2 v2.140.0
+	sigs.k8s.io/yaml v1.6.0
+)
 
 require (
 	github.com/blang/semver/v4 v4.0.0 // indirect
@@ -53,9 +58,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	k8s.io/api v0.35.3 // indirect
 	k8s.io/apiextensions-apiserver v0.35.3 // indirect
-	k8s.io/apimachinery v0.35.3 // indirect
 	k8s.io/client-go v0.35.3 // indirect
-	k8s.io/klog/v2 v2.140.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20260127142750-a19766b6e2d4 // indirect
 	k8s.io/utils v0.0.0-20260210185600-b8788abfbbc2 // indirect
 	sigs.k8s.io/controller-runtime v0.23.3 // indirect
@@ -65,5 +68,4 @@ require (
 	sigs.k8s.io/kustomize/kyaml v0.20.1 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v6 v6.3.2 // indirect
-	sigs.k8s.io/yaml v1.6.0 // indirect
 )
