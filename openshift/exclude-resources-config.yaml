@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: exclude-resources-config
+  annotations:
+    config.kubernetes.io/local-config: "true"
+data:
+  excludeCRDs: |
+    awsclusterroleidentities.infrastructure.cluster.x-k8s.io
+    awsclusterstaticidentities.infrastructure.cluster.x-k8s.io
+    awsclustertemplates.infrastructure.cluster.x-k8s.io
+    awsfargateprofiles.infrastructure.cluster.x-k8s.io
+    awsmachinepools.infrastructure.cluster.x-k8s.io
+    awsmanagedclusters.infrastructure.cluster.x-k8s.io
+    awsmanagedclustertemplates.infrastructure.cluster.x-k8s.io
+    awsmanagedcontrolplanes.controlplane.cluster.x-k8s.io
+    awsmanagedcontrolplanetemplates.controlplane.cluster.x-k8s.io
+    awsmanagedmachinepools.infrastructure.cluster.x-k8s.io
+    eksconfigs.bootstrap.cluster.x-k8s.io
+    eksconfigtemplates.bootstrap.cluster.x-k8s.io
+    nodeadmconfigs.bootstrap.cluster.x-k8s.io
+    nodeadmconfigtemplates.bootstrap.cluster.x-k8s.io
+    rosaclusters.infrastructure.cluster.x-k8s.io
+    rosacontrolplanes.controlplane.cluster.x-k8s.io
+    rosamachinepools.infrastructure.cluster.x-k8s.io
+    rosanetworks.infrastructure.cluster.x-k8s.io
+    rosaroleconfigs.infrastructure.cluster.x-k8s.io
+  renameClusterRoles: |
+    capa-manager-role=openshift-capa-manager-role

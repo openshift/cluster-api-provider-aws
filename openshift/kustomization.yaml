@@ -6,6 +6,10 @@ components:
 
 resources:
 - ../config/default
+- exclude-resources-config.yaml
+
+transformers:
+- tools/vendor/github.com/openshift/cluster-capi-operator/manifests-gen/transformers/exclude-resources.yaml
 
 images:
 - name: gcr.io/k8s-staging-cluster-api-aws/cluster-api-aws-controller
