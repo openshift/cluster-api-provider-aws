@@ -1,17 +1,25 @@
 BIN_DIR := bin
 TOOLS_DIR := tools
+MAKEFILE_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+REPO_OWNER ?= openshift
+REPO_NAME ?= cluster-api-provider-aws
+PULL_BASE_SHA ?= main
 
 include provider-version.mk
 
 MANIFESTS_GEN := go run ./vendor/github.com/openshift/cluster-capi-operator/manifests-gen/
 
 .PHONY: verify
-verify: verify-ocp-manifests
+verify: verify-ocp-manifests verify-gh-summary
 
 .PHONY: verify-%
 verify-%: ## Ensure no diff after running some other target
 	$(MAKE) $*
 	./verify-diff.sh
+
+.PHONY: gh-summary
+gh-summary:
+	curl -fsSL "https://raw.githubusercontent.com/$(REPO_OWNER)/$(REPO_NAME)/$(PULL_BASE_SHA)/openshift/manifests-summary.yaml" -o "$(MAKEFILE_DIR)/manifests-summary.yaml"
 
 .PHONY: update-manifests-gen
 update-manifests-gen:
