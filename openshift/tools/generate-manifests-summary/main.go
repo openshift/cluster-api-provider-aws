@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"sort"
-	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
@@ -38,48 +37,32 @@ func main() {
 	}
 }
 
-// parseDocument parses a single YAML document and extracts metadata.
-func parseDocument(obj *metav1.PartialObjectMetadata, docIndex int) (*ManifestMetadata, error) {
-	// Validate required fields
-	if obj.Kind == "" {
-		return nil, fmt.Errorf("manifest at document %d has empty kind", docIndex)
-	}
-
-	if obj.Name == "" {
-		return nil, fmt.Errorf("manifest at document %d has empty metadata.name", docIndex)
-	}
-
-	return &ManifestMetadata{
-		Kind:       obj.Kind,
-		APIVersion: obj.APIVersion,
-		Name:       obj.Name,
-		Namespace:  obj.Namespace,
-	}, nil
-}
-
 // parseManifests parses all documents using a YAML decoder and returns a slice of ManifestMetadata.
 func parseManifests(r io.Reader) ([]ManifestMetadata, error) {
 	var manifests []ManifestMetadata
 	decoder := yaml.NewYAMLOrJSONDecoder(r, 4096)
-	docIndex := 0
 
-	for {
+	for i := 0; ; i++ {
 		var obj metav1.PartialObjectMetadata
 		err := decoder.Decode(&obj)
 		if err == io.EOF {
 			break
 		}
 		if err != nil {
-			return nil, fmt.Errorf("failed to decode document %d: %w", docIndex+1, err)
+			return nil, fmt.Errorf("failed to decode manifest[%d]: %w", i, err)
 		}
-
-		docIndex++
-
-		metadata, err := parseDocument(&obj, docIndex)
-		if err != nil {
-			return nil, err
+		if obj.Kind == "" {
+			return nil, fmt.Errorf("manifest[%d] has empty kind", i)
 		}
-		manifests = append(manifests, *metadata)
+		if obj.Name == "" {
+			return nil, fmt.Errorf("manifest[%d] has empty metadata.name", i)
+		}
+		manifests = append(manifests, ManifestMetadata{
+			Kind:       obj.Kind,
+			APIVersion: obj.APIVersion,
+			Name:       obj.Name,
+			Namespace:  obj.Namespace,
+		})
 	}
 
 	return manifests, nil
@@ -96,7 +79,7 @@ func run(inputPath, outputPath, profileName string) error {
 	klog.V(1).InfoS("Parsing manifests from input file")
 	manifests, err := parseManifests(file)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to parse input file %q: %w", inputPath, err)
 	}
 	klog.V(1).InfoS("Parsed manifests", "count", len(manifests))
 
@@ -167,20 +150,4 @@ func writeSummary(summary ManifestsSummary, outputPath string) error {
 	}
 
 	return nil
-}
-
-// parseAPIVersion splits an apiVersion string into group and version components.
-func parseAPIVersion(apiVersion string) (group, version string) {
-	if apiVersion == "" {
-		return "", ""
-	}
-
-	// Check if apiVersion contains a group (has '/')
-	if strings.Contains(apiVersion, "/") {
-		parts := strings.SplitN(apiVersion, "/", 2)
-		return parts[0], parts[1]
-	}
-
-	// Core API resources have no group (e.g., "v1")
-	return "", apiVersion
 }
