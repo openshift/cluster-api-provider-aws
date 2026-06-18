@@ -16,11 +16,10 @@ import (
 
 // ManifestMetadata represents extracted metadata from a Kubernetes manifest.
 type ManifestMetadata struct {
-	Kind      string `json:"kind,omitempty"`
-	Group     string `json:"group,omitempty"`
-	Version   string `json:"version,omitempty"`
-	Name      string `json:"name,omitempty"`
-	Namespace string `json:"namespace,omitempty"`
+	Kind       string `json:"kind,omitempty"`
+	APIVersion string `json:"apiVersion,omitempty"`
+	Name       string `json:"name,omitempty"`
+	Namespace  string `json:"namespace,omitempty"`
 }
 
 // ManifestsSummary maps profile names to their manifest metadata lists.
@@ -50,15 +49,11 @@ func parseDocument(obj *metav1.PartialObjectMetadata, docIndex int) (*ManifestMe
 		return nil, fmt.Errorf("manifest at document %d has empty metadata.name", docIndex)
 	}
 
-	// Parse APIVersion
-	group, version := parseAPIVersion(obj.APIVersion)
-
 	return &ManifestMetadata{
-		Kind:      obj.Kind,
-		Group:     group,
-		Version:   version,
-		Name:      obj.Name,
-		Namespace: obj.Namespace,
+		Kind:       obj.Kind,
+		APIVersion: obj.APIVersion,
+		Name:       obj.Name,
+		Namespace:  obj.Namespace,
 	}, nil
 }
 
@@ -141,16 +136,13 @@ func readExistingSummary(outputPath string) (ManifestsSummary, error) {
 
 // updateSummary updates the summary with new manifests for the given profile.
 func updateSummary(existingSummary ManifestsSummary, manifests []ManifestMetadata, profileName string) ManifestsSummary {
-	// Sort manifests by kind, group, version, namespace, name
+	// Sort manifests by kind, apiVersion, namespace, name
 	sort.Slice(manifests, func(i, j int) bool {
 		if manifests[i].Kind != manifests[j].Kind {
 			return manifests[i].Kind < manifests[j].Kind
 		}
-		if manifests[i].Group != manifests[j].Group {
-			return manifests[i].Group < manifests[j].Group
-		}
-		if manifests[i].Version != manifests[j].Version {
-			return manifests[i].Version < manifests[j].Version
+		if manifests[i].APIVersion != manifests[j].APIVersion {
+			return manifests[i].APIVersion < manifests[j].APIVersion
 		}
 		if manifests[i].Namespace != manifests[j].Namespace {
 			return manifests[i].Namespace < manifests[j].Namespace

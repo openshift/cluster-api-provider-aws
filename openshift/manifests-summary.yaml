@@ -1,68 +1,55 @@
 default:
-- group: rbac.authorization.k8s.io
+- apiVersion: rbac.authorization.k8s.io/v1
   kind: ClusterRole
   name: capa-manager-role
-  version: v1
-- group: rbac.authorization.k8s.io
+- apiVersion: rbac.authorization.k8s.io/v1
   kind: ClusterRoleBinding
   name: capa-manager-rolebinding
-  version: v1
-- group: apiextensions.k8s.io
+- apiVersion: apiextensions.k8s.io/v1
   kind: CustomResourceDefinition
   name: awsclustercontrolleridentities.infrastructure.cluster.x-k8s.io
-  version: v1
-- group: apiextensions.k8s.io
+- apiVersion: apiextensions.k8s.io/v1
   kind: CustomResourceDefinition
   name: awsclusters.infrastructure.cluster.x-k8s.io
-  version: v1
-- group: apiextensions.k8s.io
+- apiVersion: apiextensions.k8s.io/v1
   kind: CustomResourceDefinition
   name: awsmachines.infrastructure.cluster.x-k8s.io
-  version: v1
-- group: apiextensions.k8s.io
+- apiVersion: apiextensions.k8s.io/v1
   kind: CustomResourceDefinition
   name: awsmachinetemplates.infrastructure.cluster.x-k8s.io
-  version: v1
-- group: apps
+- apiVersion: apps/v1
   kind: Deployment
   name: capa-controller-manager
   namespace: openshift-cluster-api
-  version: v1
-- group: admissionregistration.k8s.io
+- apiVersion: admissionregistration.k8s.io/v1
   kind: MutatingWebhookConfiguration
   name: capa-mutating-webhook-configuration
-  version: v1
-- group: rbac.authorization.k8s.io
+- apiVersion: rbac.authorization.k8s.io/v1
   kind: Role
   name: capa-leader-elect-role
   namespace: openshift-cluster-api
-  version: v1
-- group: rbac.authorization.k8s.io
+- apiVersion: rbac.authorization.k8s.io/v1
   kind: RoleBinding
   name: capa-leader-elect-rolebinding
   namespace: openshift-cluster-api
-  version: v1
-- kind: Service
+- apiVersion: v1
+  kind: Service
   name: capa-metrics-service
   namespace: openshift-cluster-api
-  version: v1
-- kind: Service
+- apiVersion: v1
+  kind: Service
   name: capa-webhook-service
   namespace: openshift-cluster-api
-  version: v1
-- kind: ServiceAccount
+- apiVersion: v1
+  kind: ServiceAccount
   name: capa-controller-manager
   namespace: openshift-cluster-api
-  version: v1
-- group: admissionregistration.k8s.io
+- apiVersion: admissionregistration.k8s.io/v1
   kind: ValidatingAdmissionPolicy
   name: openshift-cluster-api-protect-awscluster
-  version: v1
-- group: admissionregistration.k8s.io
+- apiVersion: admissionregistration.k8s.io/v1
   kind: ValidatingAdmissionPolicyBinding
   name: openshift-cluster-api-protect-awscluster
-  version: v1
-- group: admissionregistration.k8s.io
+- apiVersion: admissionregistration.k8s.io/v1
   kind: ValidatingWebhookConfiguration
   name: capa-validating-webhook-configuration
-  version: v1
