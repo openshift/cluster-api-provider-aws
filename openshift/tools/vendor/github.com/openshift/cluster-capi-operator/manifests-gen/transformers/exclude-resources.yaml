@@ -5,7 +5,7 @@ metadata:
   annotations:
     config.kubernetes.io/function: |
       container:
-        image: ghcr.io/kptdev/krm-functions-catalog/starlark:v0.3.0
+        image: quay.io/openshift/ci:ci_krm-functions-catalog-starlark_v0.5.0
 data:
   source: |
     def find_config(items):
