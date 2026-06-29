@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/kustomize/api/krusty"
+	"sigs.k8s.io/kustomize/api/types"
 	"sigs.k8s.io/kustomize/kyaml/filesys"
 	"sigs.k8s.io/yaml"
 )
@@ -66,7 +67,9 @@ func generateKustomizeResources(kustomizeDir string) ([]client.Object, error) {
 	// Compile assets using kustomize.
 	fmt.Printf("> Generating OpenShift manifests based on kustomize.yaml from %q\n", kustomizeDir)
 
-	k := krusty.MakeKustomizer(krusty.MakeDefaultOptions())
+	opts := krusty.MakeDefaultOptions()
+	opts.PluginConfig = types.EnabledPluginConfig(types.BploUseStaticallyLinked)
+	k := krusty.MakeKustomizer(opts)
 	fSys := filesys.MakeFsOnDisk()
 
 	res, err := k.Run(fSys, kustomizeDir)
