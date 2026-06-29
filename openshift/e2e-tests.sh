@@ -4,6 +4,9 @@ set -euo pipefail
 
 echo "Running e2e-tests.sh"
 
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
+"${SCRIPT_DIR}/e2e-verify-manifests.sh"
+
 unset GOFLAGS
 tmp="$(mktemp -d)"
 
