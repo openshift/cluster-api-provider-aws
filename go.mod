@@ -1,6 +1,6 @@
 module sigs.k8s.io/cluster-api-provider-aws/v2
 
-go 1.24.0
+go 1.25.0
 
 // Required to include https://github.com/kubernetes-sigs/cluster-api/pull/13022
 replace sigs.k8s.io/cluster-api/test => sigs.k8s.io/cluster-api/test v1.11.4-0.20251125201037-d322ff6baa2f
@@ -54,8 +54,8 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/zgalor/weberr v0.8.2
 	go.uber.org/mock v0.5.2
-	golang.org/x/crypto v0.46.0
-	golang.org/x/text v0.32.0
+	golang.org/x/crypto v0.54.0
+	golang.org/x/text v0.40.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.33.4
 	k8s.io/apiextensions-apiserver v0.33.4
@@ -90,7 +90,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/vincent-petithory/dataurl v1.0.0 // indirect
-	golang.org/x/net v0.48.0 // indirect
+	golang.org/x/net v0.56.0 // indirect
 )
 
 require (
@@ -234,11 +234,11 @@ require (
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
 	golang.org/x/oauth2 v0.34.0 // indirect
-	golang.org/x/sync v0.19.0 // indirect
-	golang.org/x/sys v0.39.0 // indirect
-	golang.org/x/term v0.38.0 // indirect
+	golang.org/x/sync v0.22.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/term v0.45.0 // indirect
 	golang.org/x/time v0.13.0 // indirect
-	golang.org/x/tools v0.39.0 // indirect
+	golang.org/x/tools v0.47.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20251202230838-ff82c1b0f217 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251202230838-ff82c1b0f217 // indirect
