@@ -64,6 +64,8 @@ const (
 	LaunchTemplateNeedsUpdateReasonSSHKeyName LaunchTemplateNeedsUpdateReason = "SSHKeyName"
 	// LaunchTemplateNeedsUpdateReasonAdditionalSecurityGroupIDs means a difference in the additional security group IDs was found.
 	LaunchTemplateNeedsUpdateReasonAdditionalSecurityGroupIDs LaunchTemplateNeedsUpdateReason = "AdditionalSecurityGroupIDs"
+	// LaunchTemplateNeedsUpdateReasonEnclaveOptions means a difference in the enclave options was found.
+	LaunchTemplateNeedsUpdateReasonEnclaveOptions LaunchTemplateNeedsUpdateReason = "EnclaveOptions"
 )
 
 // ASGInterface encapsulates the methods exposed to the machinepool
@@ -160,7 +162,7 @@ type ELBInterface interface {
 // NetworkInterface encapsulates the methods exposed to the cluster
 // controller.
 type NetworkInterface interface {
-	DeleteNetwork() error
+	DeleteNetwork(ctx context.Context) error
 	ReconcileNetwork() error
 }
 

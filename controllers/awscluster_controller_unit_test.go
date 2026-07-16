@@ -403,6 +403,31 @@ func TestAWSClusterReconcileOperations(t *testing.T) {
 				g.Expect(err).To(BeNil())
 				expectAWSClusterConditions(g, cs.AWSCluster, []conditionAssertion{{infrav1.LoadBalancerReadyCondition, corev1.ConditionFalse, clusterv1beta1.ConditionSeverityInfo, infrav1.WaitForDNSNameReason}})
 			})
+			t.Run("Should fail AWSCluster create with LoadBalancer reconcile failure with WaitForDNSNameResolve condition as false", func(t *testing.T) {
+				g := NewWithT(t)
+				awsCluster := getAWSCluster("test", "test")
+				runningCluster := func() {
+					networkSvc.EXPECT().ReconcileNetwork().Return(nil)
+					sgSvc.EXPECT().ReconcileSecurityGroups().Return(nil)
+					ec2Svc.EXPECT().ReconcileBastion().Return(nil)
+					elbSvc.EXPECT().ReconcileLoadbalancers(gomock.Any()).Return(nil)
+				}
+				csClient := setup(t, &awsCluster)
+				defer teardown()
+				runningCluster()
+				cs, err := scope.NewClusterScope(
+					scope.ClusterScopeParams{
+						Client:     csClient,
+						Cluster:    &clusterv1.Cluster{},
+						AWSCluster: &awsCluster,
+					},
+				)
+				awsCluster.Status.Network.APIServerELB.DNSName = "test-apiserver.us-east-1.aws"
+				g.Expect(err).To(BeNil())
+				_, err = reconciler.reconcileNormal(context.TODO(), cs)
+				g.Expect(err).To(BeNil())
+				expectAWSClusterConditions(g, cs.AWSCluster, []conditionAssertion{{infrav1.LoadBalancerReadyCondition, corev1.ConditionFalse, clusterv1beta1.ConditionSeverityInfo, infrav1.WaitForDNSNameResolveReason}})
+			})
 		})
 	})
 	t.Run("Reconcile delete AWSCluster", func(t *testing.T) {
@@ -410,7 +435,7 @@ func TestAWSClusterReconcileOperations(t *testing.T) {
 			deleteCluster := func() {
 				ec2Svc.EXPECT().DeleteBastion().Return(nil)
 				elbSvc.EXPECT().DeleteLoadbalancers(gomock.Any()).Return(nil)
-				networkSvc.EXPECT().DeleteNetwork().Return(nil)
+				networkSvc.EXPECT().DeleteNetwork(gomock.Any()).Return(nil)
 				sgSvc.EXPECT().DeleteSecurityGroups().Return(nil)
 			}
 			t.Run("Should successfully delete AWSCluster with Cluster Finalizer removed", func(t *testing.T) {
@@ -441,7 +466,7 @@ func TestAWSClusterReconcileOperations(t *testing.T) {
 					t.Helper()
 					elbSvc.EXPECT().DeleteLoadbalancers(gomock.Any()).Return(expectedErr)
 					ec2Svc.EXPECT().DeleteBastion().Return(nil)
-					networkSvc.EXPECT().DeleteNetwork().Return(nil)
+					networkSvc.EXPECT().DeleteNetwork(gomock.Any()).Return(nil)
 					sgSvc.EXPECT().DeleteSecurityGroups().Return(nil)
 				}
 				awsCluster := getAWSCluster("test", "test")
@@ -466,7 +491,7 @@ func TestAWSClusterReconcileOperations(t *testing.T) {
 				deleteCluster := func() {
 					ec2Svc.EXPECT().DeleteBastion().Return(expectedErr)
 					elbSvc.EXPECT().DeleteLoadbalancers(gomock.Any()).Return(nil)
-					networkSvc.EXPECT().DeleteNetwork().Return(nil)
+					networkSvc.EXPECT().DeleteNetwork(gomock.Any()).Return(nil)
 					sgSvc.EXPECT().DeleteSecurityGroups().Return(nil)
 				}
 				awsCluster := getAWSCluster("test", "test")
@@ -492,7 +517,7 @@ func TestAWSClusterReconcileOperations(t *testing.T) {
 					ec2Svc.EXPECT().DeleteBastion().Return(nil)
 					elbSvc.EXPECT().DeleteLoadbalancers(gomock.Any()).Return(nil)
 					sgSvc.EXPECT().DeleteSecurityGroups().Return(expectedErr)
-					networkSvc.EXPECT().DeleteNetwork().Return(nil)
+					networkSvc.EXPECT().DeleteNetwork(gomock.Any()).Return(nil)
 				}
 				awsCluster := getAWSCluster("test", "test")
 				awsCluster.Finalizers = []string{infrav1.ClusterFinalizer}
@@ -517,7 +542,7 @@ func TestAWSClusterReconcileOperations(t *testing.T) {
 					ec2Svc.EXPECT().DeleteBastion().Return(nil)
 					elbSvc.EXPECT().DeleteLoadbalancers(gomock.Any()).Return(nil)
 					sgSvc.EXPECT().DeleteSecurityGroups().Return(nil)
-					networkSvc.EXPECT().DeleteNetwork().Return(expectedErr)
+					networkSvc.EXPECT().DeleteNetwork(gomock.Any()).Return(expectedErr)
 				}
 				awsCluster := getAWSCluster("test", "test")
 				awsCluster.Finalizers = []string{infrav1.ClusterFinalizer}
