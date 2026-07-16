@@ -41,6 +41,7 @@ import (
 	certificatesv1alpha1 "k8s.io/api/certificates/v1alpha1"
 	certificatesv1beta1 "k8s.io/api/certificates/v1beta1"
 	coordinationv1 "k8s.io/api/coordination/v1"
+	coordinationv1alpha2 "k8s.io/api/coordination/v1alpha2"
 	coordinationv1beta1 "k8s.io/api/coordination/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
@@ -72,7 +73,7 @@ import (
 	storagev1 "k8s.io/api/storage/v1"
 	storagev1alpha1 "k8s.io/api/storage/v1alpha1"
 	storagev1beta1 "k8s.io/api/storage/v1beta1"
-	storagemigrationv1alpha1 "k8s.io/api/storagemigration/v1alpha1"
+	storagemigrationv1beta1 "k8s.io/api/storagemigration/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -105,6 +106,7 @@ var localSchemeBuilder = runtime.SchemeBuilder{
 	certificatesv1.AddToScheme,
 	certificatesv1beta1.AddToScheme,
 	certificatesv1alpha1.AddToScheme,
+	coordinationv1alpha2.AddToScheme,
 	coordinationv1beta1.AddToScheme,
 	coordinationv1.AddToScheme,
 	corev1.AddToScheme,
@@ -137,7 +139,7 @@ var localSchemeBuilder = runtime.SchemeBuilder{
 	storagev1beta1.AddToScheme,
 	storagev1.AddToScheme,
 	storagev1alpha1.AddToScheme,
-	storagemigrationv1alpha1.AddToScheme,
+	storagemigrationv1beta1.AddToScheme,
 }
 
 // AddToScheme adds all types of this clientset into the given scheme. This allows composition

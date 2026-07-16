@@ -72,7 +72,10 @@ func IsObjectNamespaced(obj runtime.Object, scheme *runtime.Scheme, restmapper m
 // IsGVKNamespaced returns true if the object having the provided
 // GVK is namespace scoped.
 func IsGVKNamespaced(gvk schema.GroupVersionKind, restmapper meta.RESTMapper) (bool, error) {
-	restmapping, err := restmapper.RESTMapping(schema.GroupKind{Group: gvk.Group, Kind: gvk.Kind})
+	// Fetch the RESTMapping using the complete GVK. If we exclude the Version, the Version set
+	// will be populated using the cached Group if available. This can lead to failures updating
+	// the cache with new Versions of CRDs registered at runtime.
+	restmapping, err := restmapper.RESTMapping(schema.GroupKind{Group: gvk.Group, Kind: gvk.Kind}, gvk.Version)
 	if err != nil {
 		return false, fmt.Errorf("failed to get restmapping: %w", err)
 	}
@@ -228,7 +231,7 @@ func (t targetZeroingDecoder) Decode(data []byte, defaults *schema.GroupVersionK
 }
 
 // zero zeros the value of a pointer.
-func zero(x interface{}) {
+func zero(x any) {
 	if x == nil {
 		return
 	}

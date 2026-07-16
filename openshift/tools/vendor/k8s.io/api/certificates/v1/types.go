@@ -27,6 +27,7 @@ import (
 // +genclient:nonNamespaced
 // +genclient:method=UpdateApproval,verb=update,subresource=approval,input=k8s.io/api/certificates/v1.CertificateSigningRequest,result=k8s.io/api/certificates/v1.CertificateSigningRequest
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:prerelease-lifecycle-gen:introduced=1.19
 
 // CertificateSigningRequest objects provide a mechanism to obtain x509 certificates
 // by submitting a certificate signing request, and having it asynchronously approved and issued.
@@ -60,7 +61,6 @@ type CertificateSigningRequest struct {
 type CertificateSigningRequestSpec struct {
 	// request contains an x509 certificate signing request encoded in a "CERTIFICATE REQUEST" PEM block.
 	// When serialized as JSON or YAML, the data is additionally base64-encoded.
-	// +listType=atomic
 	Request []byte `json:"request" protobuf:"bytes,1,opt,name=request"`
 
 	// signerName indicates the requested signer, and is a qualified name.
@@ -181,6 +181,7 @@ type CertificateSigningRequestStatus struct {
 	// +optional
 	// +k8s:listType=map
 	// +k8s:listMapKey=type
+	// +k8s:customUnique
 	// +k8s:optional
 	// +k8s:item(type: "Approved")=+k8s:zeroOrOneOfMember
 	// +k8s:item(type: "Denied")=+k8s:zeroOrOneOfMember
@@ -213,7 +214,6 @@ type CertificateSigningRequestStatus struct {
 	//     -----END CERTIFICATE-----
 	//     )
 	//
-	// +listType=atomic
 	// +optional
 	Certificate []byte `json:"certificate,omitempty" protobuf:"bytes,2,opt,name=certificate"`
 }
@@ -269,6 +269,7 @@ type CertificateSigningRequestCondition struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:prerelease-lifecycle-gen:introduced=1.19
 
 // CertificateSigningRequestList is a collection of CertificateSigningRequest objects
 type CertificateSigningRequestList struct {

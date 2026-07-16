@@ -25,6 +25,7 @@ import (
 // +genclient
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:prerelease-lifecycle-gen:introduced=1.6
 
 // StorageClass describes the parameters for a class of storage for
 // which PersistentVolumes can be dynamically provisioned.
@@ -40,6 +41,8 @@ type StorageClass struct {
 	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
 	// provisioner indicates the type of the provisioner.
+	// +required
+	// +k8s:required
 	Provisioner string `json:"provisioner" protobuf:"bytes,2,opt,name=provisioner"`
 
 	// parameters holds the parameters for the provisioner that should
@@ -79,6 +82,7 @@ type StorageClass struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:prerelease-lifecycle-gen:introduced=1.6
 
 // StorageClassList is a collection of storage classes.
 type StorageClassList struct {
@@ -112,6 +116,7 @@ const (
 // +genclient
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:prerelease-lifecycle-gen:introduced=1.13
 
 // VolumeAttachment captures the intent to attach or detach the specified volume
 // to/from the specified node.
@@ -137,6 +142,7 @@ type VolumeAttachment struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:prerelease-lifecycle-gen:introduced=1.13
 
 // VolumeAttachmentList is a collection of VolumeAttachment objects.
 type VolumeAttachmentList struct {
@@ -165,8 +171,8 @@ type VolumeAttachmentSpec struct {
 }
 
 // VolumeAttachmentSource represents a volume that should be attached.
-// Right now only PersistenVolumes can be attached via external attacher,
-// in future we may allow also inline volumes in pods.
+// Right now only PersistentVolumes can be attached via external attacher,
+// in the future we may allow also inline volumes in pods.
 // Exactly one member can be set.
 type VolumeAttachmentSource struct {
 	// persistentVolumeName represents the name of the persistent volume to attach.
@@ -235,6 +241,7 @@ type VolumeError struct {
 // +genclient
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:prerelease-lifecycle-gen:introduced=1.18
 
 // CSIDriver captures information about a Container Storage Interface (CSI)
 // volume driver deployed on the cluster.
@@ -259,6 +266,7 @@ type CSIDriver struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:prerelease-lifecycle-gen:introduced=1.18
 
 // CSIDriverList is a collection of CSIDriver objects.
 type CSIDriverList struct {
@@ -437,6 +445,30 @@ type CSIDriverSpec struct {
 	// +featureGate=MutableCSINodeAllocatableCount
 	// +optional
 	NodeAllocatableUpdatePeriodSeconds *int64 `json:"nodeAllocatableUpdatePeriodSeconds,omitempty" protobuf:"varint,9,opt,name=nodeAllocatableUpdatePeriodSeconds"`
+
+	// serviceAccountTokenInSecrets is an opt-in for CSI drivers to indicate that
+	// service account tokens should be passed via the Secrets field in NodePublishVolumeRequest
+	// instead of the VolumeContext field. The CSI specification provides a dedicated Secrets
+	// field for sensitive information like tokens, which is the appropriate mechanism for
+	// handling credentials. This addresses security concerns where sensitive tokens were being
+	// logged as part of volume context.
+	//
+	// When "true", kubelet will pass the tokens only in the Secrets field with the key
+	// "csi.storage.k8s.io/serviceAccount.tokens". The CSI driver must be updated to read
+	// tokens from the Secrets field instead of VolumeContext.
+	//
+	// When "false" or not set, kubelet will pass the tokens in VolumeContext with the key
+	// "csi.storage.k8s.io/serviceAccount.tokens" (existing behavior). This maintains backward
+	// compatibility with existing CSI drivers.
+	//
+	// This field can only be set when TokenRequests is configured. The API server will reject
+	// CSIDriver specs that set this field without TokenRequests.
+	//
+	// Default behavior if unset is to pass tokens in the VolumeContext field.
+	//
+	// +featureGate=CSIServiceAccountTokenSecrets
+	// +optional
+	ServiceAccountTokenInSecrets *bool `json:"serviceAccountTokenInSecrets,omitempty" protobuf:"varint,10,opt,name=serviceAccountTokenInSecrets"`
 }
 
 // FSGroupPolicy specifies if a CSI Driver supports modifying
@@ -448,7 +480,7 @@ const (
 	// ReadWriteOnceWithFSTypeFSGroupPolicy indicates that each volume will be examined
 	// to determine if the volume ownership and permissions
 	// should be modified. If a fstype is defined and the volume's access mode
-	// contains ReadWriteOnce, then the defined fsGroup will be applied.
+	// contains ReadWriteOnce or ReadWriteOncePod, then the defined fsGroup will be applied.
 	// This mode should be defined if it's expected that the
 	// fsGroup may need to be modified depending on the pod's SecurityPolicy.
 	// This is the default behavior if no other FSGroupPolicy is defined.
@@ -512,6 +544,7 @@ const (
 // +genclient
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:prerelease-lifecycle-gen:introduced=1.17
 
 // CSINode holds information about all CSI drivers installed on a node.
 // CSI drivers do not need to create the CSINode object directly. As long as
@@ -593,6 +626,7 @@ type VolumeNodeResources struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:prerelease-lifecycle-gen:introduced=1.17
 
 // CSINodeList is a collection of CSINode objects.
 type CSINodeList struct {
@@ -609,6 +643,7 @@ type CSINodeList struct {
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:prerelease-lifecycle-gen:introduced=1.24
 
 // CSIStorageCapacity stores the result of one CSI GetCapacity call.
 // For a given StorageClass, this describes the available capacity in a
@@ -694,6 +729,7 @@ type CSIStorageCapacity struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +k8s:prerelease-lifecycle-gen:introduced=1.24
 
 // CSIStorageCapacityList is a collection of CSIStorageCapacity objects.
 type CSIStorageCapacityList struct {

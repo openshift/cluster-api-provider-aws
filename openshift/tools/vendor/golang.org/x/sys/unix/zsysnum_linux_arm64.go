@@ -85,7 +85,7 @@ const (
 	SYS_SPLICE                  = 76
 	SYS_TEE                     = 77
 	SYS_READLINKAT              = 78
-	SYS_FSTATAT                 = 79
+	SYS_NEWFSTATAT              = 79
 	SYS_FSTAT                   = 80
 	SYS_SYNC                    = 81
 	SYS_FSYNC                   = 82
@@ -330,4 +330,8 @@ const (
 	SYS_LISTXATTRAT             = 465
 	SYS_REMOVEXATTRAT           = 466
 	SYS_OPEN_TREE_ATTR          = 467
+	SYS_FILE_GETATTR            = 468
+	SYS_FILE_SETATTR            = 469
+	SYS_LISTNS                  = 470
+	SYS_RSEQ_SLICE_YIELD        = 471
 )
