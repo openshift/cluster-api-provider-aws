@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     name: verify PR contents
     steps:
-    - uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # tag=v4.2.2
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # tag=v4.2.2
 
     - name: Check if PR title is valid
       env:

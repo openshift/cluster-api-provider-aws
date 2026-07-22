@@ -547,7 +547,8 @@ var _ = ginkgo.Context("[unmanaged] [functional]", func() {
 				}, e2eCtx.E2EConfig.GetIntervals("", "wait-machine-status")...).Should(BeTrue(), "Eventually failed waiting for AWSMachine to be labelled as terminated")
 
 				ginkgo.By("Waiting for machine to reach Failed state")
-				statusChecks := []framework.MachineStatusCheck{framework.MachinePhaseCheck(string(clusterv1.MachinePhaseFailed))} //nolint:staticcheck
+				//nolint:staticcheck // SA1019: MachinePhaseFailed is deprecated but still needed for v1beta1 compatibility
+				statusChecks := []framework.MachineStatusCheck{framework.MachinePhaseCheck(string(clusterv1.MachinePhaseFailed))}
 				machineStatusInput := framework.WaitForMachineStatusCheckInput{
 					Getter:       e2eCtx.Environment.BootstrapClusterProxy.GetClient(),
 					Machine:      &machines[0],
@@ -627,6 +628,29 @@ var _ = ginkgo.Context("[unmanaged] [functional]", func() {
 			Expect(len(workerMachines)).To(Equal(1))
 			assertSpotInstanceType(workerMachines[0].Spec.ProviderID)
 			Expect(len(controlPlaneMachines)).To(Equal(1))
+		})
+	})
+
+	ginkgo.PDescribe("Workload cluster with Nitro Enclave enabled", func() {
+		ginkgo.It("should create instances with EnclaveOptions enabled", func() {
+			specName := "functional-test-nitro-enclave"
+			if !e2eCtx.Settings.SkipQuotas {
+				// c5.xlarge = 4 vCPUs hardcoded in flavor
+				requiredResources = &shared.TestResource{EC2Normal: 4, IGW: 1, NGW: 1, VPC: 1, ClassicLB: 1, EIP: 1, EventBridgeRules: 50}
+				requiredResources.WriteRequestedResources(e2eCtx, specName)
+				Expect(shared.AcquireResources(requiredResources, ginkgo.GinkgoParallelProcess(), flock.New(shared.ResourceQuotaFilePath))).To(Succeed())
+				defer shared.ReleaseResources(requiredResources, ginkgo.GinkgoParallelProcess(), flock.New(shared.ResourceQuotaFilePath))
+			}
+			namespace := shared.SetupSpecNamespace(ctx, specName, e2eCtx)
+			defer shared.DumpSpecResourcesAndCleanup(ctx, "", namespace, e2eCtx)
+			ginkgo.By("Creating a cluster")
+			clusterName := fmt.Sprintf("%s-%s", specName, util.RandomString(6))
+			configCluster := defaultConfigCluster(clusterName, namespace.Name)
+			configCluster.WorkerMachineCount = ptr.To[int64](1)
+			configCluster.Flavor = shared.NitroEnclaveFlavor
+			createCluster(ctx, configCluster, result)
+
+			assertNitroEnclaveEnabled(ctx, clusterName)
 		})
 	})
 

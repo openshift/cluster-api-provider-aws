@@ -77,7 +77,11 @@ func TestNewROSANetworkScope(t *testing.T) {
 		},
 	}
 
-	fakeClient := fake.NewClientBuilder().WithScheme(scheme).WithObjects(clusterControllerIdentity, staticSecret, clusterStaticIdentity).Build()
+	fakeClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithRESTMapper(newTestRESTMapper()).
+		WithObjects(clusterControllerIdentity, staticSecret, clusterStaticIdentity).
+		Build()
 
 	rosaNetwork := expinfrav1.ROSANetwork{
 		TypeMeta: metav1.TypeMeta{

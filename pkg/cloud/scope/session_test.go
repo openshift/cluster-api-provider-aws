@@ -43,6 +43,7 @@ func TestIsClusterPermittedToUsePrincipal(t *testing.T) {
 		clusterNamespace string
 		allowedNs        *infrav1.AllowedNamespaces
 		setup            func(*testing.T, client.Client)
+		obj              client.Object
 		expectedResult   bool
 		expectErr        bool
 	}{
@@ -187,6 +188,64 @@ func TestIsClusterPermittedToUsePrincipal(t *testing.T) {
 			expectedResult: true,
 			expectErr:      false,
 		},
+		{
+			name:             "Cluster-scoped resources bypass allowedNamespaces check even with restricted allowedNamespaces",
+			clusterNamespace: "default",
+			allowedNs: &infrav1.AllowedNamespaces{
+				NamespaceList: []string{"team-a", "team-b"},
+			},
+			setup: func(t *testing.T, c client.Client) {
+				t.Helper()
+			},
+			obj: func() client.Object {
+				obj := &infrav1.AWSClusterRoleIdentity{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "cluster-scoped-identity",
+					},
+					Spec: infrav1.AWSClusterRoleIdentitySpec{
+						AWSRoleSpec: infrav1.AWSRoleSpec{
+							RoleArn: "arn:aws:iam::123456789012:role/test-role",
+						},
+					},
+				}
+				obj.SetGroupVersionKind(schema.GroupVersionKind{
+					Group:   infrav1.GroupVersion.Group,
+					Version: infrav1.GroupVersion.Version,
+					Kind:    "AWSClusterRoleIdentity",
+				})
+				return obj
+			}(),
+			expectedResult: true,
+			expectErr:      false,
+		},
+		{
+			name:             "Cluster-scoped resources bypass allowedNamespaces check even with nil allowedNamespaces",
+			clusterNamespace: "default",
+			allowedNs:        nil,
+			setup: func(t *testing.T, c client.Client) {
+				t.Helper()
+			},
+			obj: func() client.Object {
+				obj := &infrav1.AWSClusterRoleIdentity{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "cluster-scoped-identity-2",
+					},
+					Spec: infrav1.AWSClusterRoleIdentitySpec{
+						AWSRoleSpec: infrav1.AWSRoleSpec{
+							RoleArn: "arn:aws:iam::123456789012:role/test-role",
+						},
+					},
+				}
+				obj.SetGroupVersionKind(schema.GroupVersionKind{
+					Group:   infrav1.GroupVersion.Group,
+					Version: infrav1.GroupVersion.Version,
+					Kind:    "AWSClusterRoleIdentity",
+				})
+				return obj
+			}(),
+			expectedResult: true,
+			expectErr:      false,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -197,11 +256,26 @@ func TestIsClusterPermittedToUsePrincipal(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
+			k8sClient := fake.NewClientBuilder().
+				WithScheme(scheme).
+				WithRESTMapper(newTestRESTMapper()).
+				Build()
 			if tc.setup != nil {
 				tc.setup(t, k8sClient)
 			}
-			result, err := isClusterPermittedToUsePrincipal(k8sClient, tc.allowedNs, tc.clusterNamespace)
+
+			// Create a test object (namespace-scoped AWSCluster) if not provided
+			testObj := tc.obj
+			if testObj == nil {
+				testObj = &infrav1.AWSCluster{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-cluster",
+						Namespace: tc.clusterNamespace,
+					},
+				}
+			}
+
+			result, err := isClusterPermittedToUsePrincipal(k8sClient, tc.allowedNs, tc.clusterNamespace, testObj)
 			if tc.expectErr {
 				g.Expect(err).ToNot(BeNil())
 			} else {
@@ -219,7 +293,10 @@ func TestPrincipalParsing(t *testing.T) {
 	// Create the scope.
 	scheme := runtime.NewScheme()
 	_ = infrav1.AddToScheme(scheme)
-	cl := fake.NewClientBuilder().WithScheme(scheme).Build()
+	cl := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithRESTMapper(newTestRESTMapper()).
+		Build()
 	clusterScope, _ := NewClusterScope(ClusterScopeParams{
 		Client: cl,
 		Cluster: &clusterv1.Cluster{
@@ -485,7 +562,10 @@ func TestPrincipalParsing(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
+			k8sClient := fake.NewClientBuilder().
+				WithScheme(scheme).
+				WithRESTMapper(newTestRESTMapper()).
+				Build()
 			tc.setup(t, k8sClient)
 			clusterScope.AWSCluster = &tc.awsCluster
 			providers, err := getProvidersForCluster(context.Background(), k8sClient, clusterScope, clusterScope.Region(), logger.NewLogger(klog.Background()))
