@@ -65,7 +65,7 @@ func AddonSDKToAddonState(eksAddon *ekstypes.Addon) *ekscontrolplanev1.AddonStat
 
 // FromAWSStringSlice will converts an AWS string pointer slice.
 func FromAWSStringSlice(from []*string) []string {
-	converted := []string{}
+	converted := make([]string, 0, len(from))
 	for _, s := range from {
 		converted = append(converted, *s)
 	}
@@ -189,11 +189,11 @@ func NodegroupUpdateconfigToSDK(updateConfig *expinfrav1.UpdateConfig) (*ekstype
 
 	converted := &ekstypes.NodegroupUpdateConfig{}
 	if updateConfig.MaxUnavailable != nil {
-		//nolint:G115 // Added golint exception as there is a kubebuilder validation configured
+		//nolint:gosec // G115: value is bounded by kubebuilder validation on the CRD field
 		converted.MaxUnavailable = aws.Int32(int32(*updateConfig.MaxUnavailable))
 	}
 	if updateConfig.MaxUnavailablePercentage != nil {
-		//nolint:G115 // Added golint exception as there is a kubebuilder validation configured
+		//nolint:gosec // G115: value is bounded by kubebuilder validation on the CRD field
 		converted.MaxUnavailablePercentage = aws.Int32(int32(*updateConfig.MaxUnavailablePercentage))
 	}
 

@@ -148,39 +148,46 @@ func (m MultitenancyRole) RoleARN(ctx context.Context, cfg *aws.Config) (string,
 	return roleARN, nil
 }
 
+const (
+	// serviceCodeVPC is the AWS service code for VPC quotas.
+	serviceCodeVPC = "vpc"
+	// serviceCodeEC2 is the AWS service code for EC2 quotas.
+	serviceCodeEC2 = "ec2"
+)
+
 // Service codes and quotas can be found under: https://us-west-1.console.aws.amazon.com/servicequotas/home/services
 func getLimitedResources() map[string]*ServiceQuota {
 	serviceQuotas := map[string]*ServiceQuota{}
 	serviceQuotas["igw"] = &ServiceQuota{
-		ServiceCode:         "vpc",
+		ServiceCode:         serviceCodeVPC,
 		QuotaName:           "Internet gateways per Region",
 		QuotaCode:           "L-A4707A72",
 		DesiredMinimumValue: 20,
 	}
 
 	serviceQuotas["ngw"] = &ServiceQuota{
-		ServiceCode:         "vpc",
+		ServiceCode:         serviceCodeVPC,
 		QuotaName:           "NAT gateways per Availability Zone",
 		QuotaCode:           "L-FE5A380F",
 		DesiredMinimumValue: 20,
 	}
 
 	serviceQuotas["vpc"] = &ServiceQuota{
-		ServiceCode:         "vpc",
+		ServiceCode:         serviceCodeVPC,
 		QuotaName:           "VPCs per Region",
 		QuotaCode:           "L-F678F1CE",
 		DesiredMinimumValue: 25,
 	}
 
 	serviceQuotas["ec2-normal"] = &ServiceQuota{
-		ServiceCode:         "ec2",
+		ServiceCode:         serviceCodeEC2,
 		QuotaName:           "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances",
 		QuotaCode:           "L-1216C47A",
 		DesiredMinimumValue: 128,
 	}
 
 	serviceQuotas["eip"] = &ServiceQuota{
-		ServiceCode:         "ec2",
+		ServiceCode:         serviceCodeEC2,
 		QuotaName:           "EC2-VPC Elastic IPs",
 		QuotaCode:           "L-0263D0A3",
 		DesiredMinimumValue: 100,
@@ -194,7 +201,7 @@ func getLimitedResources() map[string]*ServiceQuota {
 	}
 
 	serviceQuotas["ec2-GPU"] = &ServiceQuota{
-		ServiceCode:         "ec2",
+		ServiceCode:         serviceCodeEC2,
 		QuotaName:           "Running On-Demand G and VT instances",
 		QuotaCode:           "L-DB2E81BA",
 		DesiredMinimumValue: 8,

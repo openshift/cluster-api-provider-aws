@@ -204,7 +204,7 @@ func createTestServer(g *GomegaWithT) *httptest.Server {
 	g.Expect(err).NotTo(HaveOccurred())
 
 	// Create custom TLS config
-	tlsConfig := &tls.Config{ //nolint:gosec
+	tlsConfig := &tls.Config{
 		Certificates: []tls.Certificate{cert},
 	}
 

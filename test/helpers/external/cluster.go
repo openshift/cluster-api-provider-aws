@@ -28,6 +28,9 @@ import (
 const (
 	clusterAPIGroup       = "cluster.x-k8s.io"
 	clusterAPITestVersion = "v1beta1"
+
+	// jsonSchemaTypeObject is the JSON Schema type for objects.
+	jsonSchemaTypeObject = "object"
 )
 
 var (
@@ -64,14 +67,14 @@ func generateTestClusterAPICRD(kind, pluralKind string) *apiextensionsv1.CustomR
 					},
 					Schema: &apiextensionsv1.CustomResourceValidation{
 						OpenAPIV3Schema: &apiextensionsv1.JSONSchemaProps{
-							Type: "object",
+							Type: jsonSchemaTypeObject,
 							Properties: map[string]apiextensionsv1.JSONSchemaProps{
 								"spec": {
-									Type:                   "object",
+									Type:                   jsonSchemaTypeObject,
 									XPreserveUnknownFields: ptr.To[bool](true),
 								},
 								"status": {
-									Type:                   "object",
+									Type:                   jsonSchemaTypeObject,
 									XPreserveUnknownFields: ptr.To[bool](true),
 								},
 							},

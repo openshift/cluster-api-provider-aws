@@ -258,7 +258,7 @@ func (r *AWSMachineReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Ma
 		For(&infrav1.AWSMachine{}).
 		Watches(
 			&clusterv1.Machine{},
-			handler.EnqueueRequestsFromMapFunc(util.MachineToInfrastructureMapFunc(infrav1.GroupVersion.WithKind("AWSMachine"))),
+			handler.EnqueueRequestsFromMapFunc(util.MachineToInfrastructureMapFunc(infrav1.GroupVersion.WithKind(kindAWSMachine))),
 		).
 		Watches(
 			&infrav1.AWSCluster{},
@@ -270,7 +270,7 @@ func (r *AWSMachineReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Ma
 				// Avoid reconciling if the event triggering the reconciliation is related to incremental status updates
 				// for AWSMachine resources only
 				UpdateFunc: func(e event.UpdateEvent) bool {
-					if e.ObjectOld.GetObjectKind().GroupVersionKind().Kind != "AWSMachine" {
+					if e.ObjectOld.GetObjectKind().GroupVersionKind().Kind != kindAWSMachine {
 						return true
 					}
 
@@ -1209,7 +1209,7 @@ func (r *AWSMachineReconciler) requestsForCluster(log logger.Wrapper, namespace,
 	result := make([]ctrl.Request, 0, len(machineList.Items))
 	for _, m := range machineList.Items {
 		log.WithValues("machine", klog.KObj(&m))
-		if m.Spec.InfrastructureRef.Kind != "AWSMachine" {
+		if m.Spec.InfrastructureRef.Kind != kindAWSMachine {
 			log.Trace("Machine has an InfrastructureRef for a different type, will not add to reconciliation request.")
 			continue
 		}
@@ -1229,7 +1229,7 @@ func (r *AWSMachineReconciler) getInfraCluster(ctx context.Context, log *logger.
 	var managedControlPlaneScope *scope.ManagedControlPlaneScope
 	var err error
 
-	if cluster.Spec.ControlPlaneRef.IsDefined() && cluster.Spec.ControlPlaneRef.Kind == "AWSManagedControlPlane" {
+	if cluster.Spec.ControlPlaneRef.IsDefined() && cluster.Spec.ControlPlaneRef.Kind == AWSManagedControlPlaneRefKind {
 		controlPlane := &ekscontrolplanev1.AWSManagedControlPlane{}
 		controlPlaneName := client.ObjectKey{
 			Namespace: awsMachine.Namespace,

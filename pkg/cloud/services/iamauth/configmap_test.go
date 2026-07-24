@@ -63,7 +63,7 @@ func TestAddRoleMappingCM(t *testing.T) {
 				RoleARN: "arn:aws:iam::000000000000:role/KubernetesNode",
 				KubernetesMapping: ekscontrolplanev1.KubernetesMapping{
 					UserName: "system:node:{{EC2PrivateDNSName}}",
-					Groups:   []string{"system:bootstrappers", "system:nodes"},
+					Groups:   []string{systemBootstrappersGroup, systemNodesGroup},
 				},
 			},
 			expectedRoleMaps: []ekscontrolplanev1.RoleMapping{
@@ -71,7 +71,7 @@ func TestAddRoleMappingCM(t *testing.T) {
 					RoleARN: "arn:aws:iam::000000000000:role/KubernetesNode",
 					KubernetesMapping: ekscontrolplanev1.KubernetesMapping{
 						UserName: "system:node:{{EC2PrivateDNSName}}",
-						Groups:   []string{"system:bootstrappers", "system:nodes"},
+						Groups:   []string{systemBootstrappersGroup, systemNodesGroup},
 					},
 				},
 			},
@@ -91,7 +91,7 @@ func TestAddRoleMappingCM(t *testing.T) {
 					RoleARN: "arn:aws:iam::000000000000:role/KubernetesNode",
 					KubernetesMapping: ekscontrolplanev1.KubernetesMapping{
 						UserName: "system:node:{{EC2PrivateDNSName}}",
-						Groups:   []string{"system:bootstrappers", "system:nodes"},
+						Groups:   []string{systemBootstrappersGroup, systemNodesGroup},
 					},
 				},
 				{
@@ -111,7 +111,7 @@ func TestAddRoleMappingCM(t *testing.T) {
 				RoleARN: "arn:aws:iam::000000000000:role/KubernetesNode",
 				KubernetesMapping: ekscontrolplanev1.KubernetesMapping{
 					UserName: "system:node:{{EC2PrivateDNSName}}",
-					Groups:   []string{"system:bootstrappers", "system:nodes"},
+					Groups:   []string{systemBootstrappersGroup, systemNodesGroup},
 				},
 			},
 			expectedRoleMaps: []ekscontrolplanev1.RoleMapping{
@@ -119,7 +119,7 @@ func TestAddRoleMappingCM(t *testing.T) {
 					RoleARN: "arn:aws:iam::000000000000:role/KubernetesNode",
 					KubernetesMapping: ekscontrolplanev1.KubernetesMapping{
 						UserName: "system:node:{{EC2PrivateDNSName}}",
-						Groups:   []string{"system:bootstrappers", "system:nodes"},
+						Groups:   []string{systemBootstrappersGroup, systemNodesGroup},
 					},
 				},
 			},

@@ -55,7 +55,7 @@ func TestReconcileRules(t *testing.T) {
 					Name: aws.String(ruleName),
 				})).Return(nil, &eventbridgetypes.ResourceNotFoundException{})
 				e := &eventPattern{
-					Source:     []string{"aws.ec2"},
+					Source:     []string{ec2EventSource},
 					DetailType: []string{Ec2StateChangeNotification},
 					EventDetail: &eventDetail{
 						States: []infrav1.InstanceState{infrav1.InstanceStateShuttingDown, infrav1.InstanceStateTerminated},
@@ -258,7 +258,7 @@ func TestAddInstanceToRule(t *testing.T) {
 	defer mockCtrl.Finish()
 	pattern := eventPattern{
 		DetailType: []string{Ec2StateChangeNotification},
-		Source:     []string{"aws.ec2"},
+		Source:     []string{ec2EventSource},
 		EventDetail: &eventDetail{
 			InstanceIDs: []string{"instance-a"},
 		},
@@ -339,7 +339,7 @@ func TestRemoveInstanceStateFromEventPattern(t *testing.T) {
 	defer mockCtrl.Finish()
 	pattern := eventPattern{
 		DetailType: []string{Ec2StateChangeNotification},
-		Source:     []string{"aws.ec2"},
+		Source:     []string{ec2EventSource},
 		EventDetail: &eventDetail{
 			InstanceIDs: []string{"instance-a", "instance-b", "instance-c"},
 		},

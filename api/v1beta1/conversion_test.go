@@ -43,7 +43,7 @@ func AWSMachineFuzzer(obj *AWSMachine, c randfill.Continue) {
 	if obj.Spec.Subnet != nil {
 		obj.Spec.Subnet.ARN = nil
 	}
-	restored := make([]AWSResourceReference, len(obj.Spec.AdditionalSecurityGroups))
+	restored := make([]AWSResourceReference, 0, len(obj.Spec.AdditionalSecurityGroups))
 	for _, sg := range obj.Spec.AdditionalSecurityGroups {
 		sg.ARN = nil
 		restored = append(restored, sg)
@@ -59,7 +59,7 @@ func AWSMachineTemplateFuzzer(obj *AWSMachineTemplate, c randfill.Continue) {
 	if obj.Spec.Template.Spec.Subnet != nil {
 		obj.Spec.Template.Spec.Subnet.ARN = nil
 	}
-	restored := make([]AWSResourceReference, len(obj.Spec.Template.Spec.AdditionalSecurityGroups))
+	restored := make([]AWSResourceReference, 0, len(obj.Spec.Template.Spec.AdditionalSecurityGroups))
 	for _, sg := range obj.Spec.Template.Spec.AdditionalSecurityGroups {
 		sg.ARN = nil
 		restored = append(restored, sg)

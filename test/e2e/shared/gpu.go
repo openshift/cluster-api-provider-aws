@@ -138,9 +138,9 @@ func WaitForJobComplete(ctx context.Context, input WaitForJobCompleteInput, inte
 func DescribeFailedJob(ctx context.Context, input WaitForJobCompleteInput) string {
 	namespace, name := input.Job.GetNamespace(), input.Job.GetName()
 	b := strings.Builder{}
-	b.WriteString(fmt.Sprintf("Job %s/%s failed",
-		namespace, name))
-	b.WriteString(fmt.Sprintf("\nJob:\n%s\n", prettyPrint(input.Job)))
+	fmt.Fprintf(&b, "Job %s/%s failed",
+		namespace, name)
+	fmt.Fprintf(&b, "\nJob:\n%s\n", prettyPrint(input.Job))
 	b.WriteString(describeEvents(ctx, input.Clientset, namespace, name))
 	return b.String()
 }

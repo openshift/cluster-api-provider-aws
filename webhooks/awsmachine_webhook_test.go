@@ -1011,9 +1011,9 @@ func TestAWSMachineSecretsBackend(t *testing.T) {
 			cloudInit:              infrav1.CloudInit{InsecureSkipSecretsManager: false},
 			expectedSecretsBackend: "secrets-manager",
 		},
-		{
+		{ //nolint:gosec // G101: test fixture, not real credentials
 			name:                   "with insecure skip secrets manager unset and secrets backend set",
-			cloudInit:              infrav1.CloudInit{InsecureSkipSecretsManager: false, SecureSecretsBackend: "ssm-parameter-store"},
+			cloudInit:              infrav1.CloudInit{InsecureSkipSecretsManager: false, SecureSecretsBackend: "ssm-parameter-store"}, //nolint:gosec // G101: test fixture, not real credentials
 			expectedSecretsBackend: "ssm-parameter-store",
 		},
 		{

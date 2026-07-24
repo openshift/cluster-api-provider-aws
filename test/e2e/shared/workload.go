@@ -83,12 +83,12 @@ func WaitForDeploymentsAvailable(ctx context.Context, input WaitForDeploymentsAv
 // DescribeFailedDeployment returns detailed output to help debug a deployment failure in e2e.
 func DescribeFailedDeployment(input WaitForDeploymentsAvailableInput, deployment *appsv1.Deployment) string {
 	b := strings.Builder{}
-	b.WriteString(fmt.Sprintf("Deployment %s/%s failed to get status.Available = True condition",
-		input.Namespace, input.Name))
+	fmt.Fprintf(&b, "Deployment %s/%s failed to get status.Available = True condition",
+		input.Namespace, input.Name)
 	if deployment == nil {
 		b.WriteString("\nDeployment: nil\n")
 	} else {
-		b.WriteString(fmt.Sprintf("\nDeployment:\n%s\n", framework.PrettyPrint(deployment)))
+		fmt.Fprintf(&b, "\nDeployment:\n%s\n", framework.PrettyPrint(deployment))
 	}
 	return b.String()
 }

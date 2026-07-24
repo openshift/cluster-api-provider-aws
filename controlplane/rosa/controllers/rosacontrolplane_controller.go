@@ -77,6 +77,7 @@ import (
 )
 
 const (
+	kubeSystemNamespace  = "kube-system"
 	rosaControlPlaneKind = "ROSAControlPlane"
 	// ROSAControlPlaneFinalizer allows the controller to clean up resources on delete.
 	ROSAControlPlaneFinalizer = "rosacontrolplane.controlplane.cluster.x-k8s.io"
@@ -629,7 +630,7 @@ func findExistingLogForwarders(ocmClient rosa.OCMClient, clusterID string) (cwLo
 
 // buildGroups converts a slice of group IDs into LogForwarderGroupBuilder objects.
 func buildGroups(ids []string) []*cmv1.LogForwarderGroupBuilder {
-	groups := make([]*cmv1.LogForwarderGroupBuilder, 0)
+	groups := make([]*cmv1.LogForwarderGroupBuilder, 0, len(ids))
 	for _, id := range ids {
 		groups = append(groups, cmv1.NewLogForwarderGroup().ID(id))
 	}
@@ -1404,22 +1405,22 @@ func operatorIAMRoles(rolesRef rosacontrolplanev1.AWSRolesRef) []ocm.OperatorIAM
 		},
 		{
 			Name:      "kube-controller-manager",
-			Namespace: "kube-system",
+			Namespace: kubeSystemNamespace,
 			RoleARN:   rolesRef.KubeCloudControllerARN,
 		},
 		{
 			Name:      "kms-provider",
-			Namespace: "kube-system",
+			Namespace: kubeSystemNamespace,
 			RoleARN:   rolesRef.KMSProviderARN,
 		},
 		{
 			Name:      "control-plane-operator",
-			Namespace: "kube-system",
+			Namespace: kubeSystemNamespace,
 			RoleARN:   rolesRef.ControlPlaneOperatorARN,
 		},
 		{
 			Name:      "capa-controller-manager",
-			Namespace: "kube-system",
+			Namespace: kubeSystemNamespace,
 			RoleARN:   rolesRef.NodePoolManagementARN,
 		},
 	}
