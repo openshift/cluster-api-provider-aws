@@ -62,6 +62,8 @@ import (
 	"sigs.k8s.io/cluster-api/util/predicates"
 )
 
+const kindMachinePool = "MachinePool"
+
 // AWSMachinePoolReconciler reconciles a AWSMachinePool object.
 type AWSMachinePoolReconciler struct {
 	client.Client
@@ -694,7 +696,7 @@ func diffASG(machinePoolScope *scope.MachinePoolScope, existingASG *expinfrav1.A
 // getOwnerMachinePool returns the MachinePool object owning the current resource.
 func getOwnerMachinePool(ctx context.Context, c client.Client, obj metav1.ObjectMeta) (*clusterv1.MachinePool, error) {
 	for _, ref := range obj.OwnerReferences {
-		if ref.Kind != "MachinePool" {
+		if ref.Kind != kindMachinePool {
 			continue
 		}
 		gv, err := schema.ParseGroupVersion(ref.APIVersion)

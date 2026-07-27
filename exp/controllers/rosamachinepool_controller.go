@@ -472,7 +472,7 @@ func nodePoolBuilder(rosaMachinePoolSpec expinfrav1.RosaMachinePoolSpec, machine
 	}
 
 	if len(rosaMachinePoolSpec.Taints) > 0 {
-		taintBuilders := []*cmv1.TaintBuilder{}
+		taintBuilders := make([]*cmv1.TaintBuilder, 0, len(rosaMachinePoolSpec.Taints))
 		for _, taint := range rosaMachinePoolSpec.Taints {
 			newTaintBuilder := cmv1.NewTaint().Key(taint.Key).Value(taint.Value).Effect(string(taint.Effect))
 			taintBuilders = append(taintBuilders, newTaintBuilder)
@@ -574,7 +574,7 @@ func (r *ROSAMachinePoolReconciler) reconcileProviderIDList(ctx context.Context,
 }
 
 func buildEC2FiltersFromTags(tags map[string]string) []ec2types.Filter {
-	filters := make([]ec2types.Filter, len(tags)+1)
+	filters := make([]ec2types.Filter, 0, len(tags)+1)
 	for key, value := range tags {
 		filters = append(filters, ec2types.Filter{
 			Name: ptr.To(fmt.Sprintf("tag:%s", key)),

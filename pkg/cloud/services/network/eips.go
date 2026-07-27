@@ -170,8 +170,10 @@ func (s *Service) releaseAddressesWithFilter(filters []types.Filter) error {
 // releaseAddresses is default cluster release flow, discoverying and releasing all
 // addresses associated and owned by the cluster tag.
 func (s *Service) releaseAddresses() error {
-	filters := []types.Filter{filter.EC2.Cluster(s.scope.Name())}
-	filters = append(filters, filter.EC2.ClusterOwned(s.scope.Name()))
+	filters := []types.Filter{
+		filter.EC2.Cluster(s.scope.Name()),
+		filter.EC2.ClusterOwned(s.scope.Name()),
+	}
 	return s.releaseAddressesWithFilter(filters)
 }
 

@@ -44,6 +44,11 @@ import (
 	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
+const (
+	defaultRegion = "us-east-1"
+	nodeRole      = "node"
+)
+
 // GetRunningInstanceByTags returns the existing instance or nothing if it doesn't exist.
 func (s *Service) GetRunningInstanceByTags(scope *scope.MachineScope) (*infrav1.Instance, error) {
 	s.scope.Debug("Looking for existing machine instance by tags")
@@ -490,7 +495,7 @@ func (s *Service) GetCoreSecurityGroups(scope *scope.MachineScope) ([]string, er
 	}
 
 	switch scope.Role() {
-	case "node":
+	case nodeRole:
 		// Just the common security groups above
 		if scope.IsEKSManaged() {
 			sgRoles = append(sgRoles, infrav1.SecurityGroupEKSNodeAdditional)
@@ -1228,8 +1233,8 @@ func (s *Service) GetDHCPOptionSetDomainName(ec2client common.EC2API, vpcID *str
 			}
 			domainName := dhcpConfig.Values[0].Value
 			// default domainName is 'ec2.internal' in us-east-1 and 'region.compute.internal' in the other regions.
-			if (s.scope.Region() == "us-east-1" && aws.ToString(domainName) == "ec2.internal") ||
-				(s.scope.Region() != "us-east-1" && aws.ToString(domainName) == fmt.Sprintf("%s.compute.internal", s.scope.Region())) {
+			if (s.scope.Region() == defaultRegion && aws.ToString(domainName) == "ec2.internal") ||
+				(s.scope.Region() != defaultRegion && aws.ToString(domainName) == fmt.Sprintf("%s.compute.internal", s.scope.Region())) {
 				return nil
 			}
 

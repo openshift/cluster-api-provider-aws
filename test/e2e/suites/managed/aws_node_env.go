@@ -36,6 +36,11 @@ import (
 	"sigs.k8s.io/cluster-api/test/framework/clusterctl"
 )
 
+const (
+	// awsNodeName is the name of the aws-node DaemonSet.
+	awsNodeName = "aws-node"
+)
+
 type UpdateAwsNodeVersionSpecInput struct {
 	E2EConfig             *clusterctl.E2EConfig
 	BootstrapClusterProxy framework.ClusterProxy
@@ -71,12 +76,12 @@ func CheckAwsNodeEnvVarsSet(ctx context.Context, inputGetter func() UpdateAwsNod
 	clusterClient := input.BootstrapClusterProxy.GetWorkloadCluster(ctx, input.Namespace.Name, input.ClusterName).GetClient()
 
 	Eventually(func() error {
-		if err := clusterClient.Get(ctx, crclient.ObjectKey{Namespace: "kube-system", Name: "aws-node"}, daemonSet); err != nil {
+		if err := clusterClient.Get(ctx, crclient.ObjectKey{Namespace: "kube-system", Name: awsNodeName}, daemonSet); err != nil {
 			return fmt.Errorf("unable to get aws-node: %w", err)
 		}
 
 		for _, container := range daemonSet.Spec.Template.Spec.Containers {
-			if container.Name == "aws-node" {
+			if container.Name == awsNodeName {
 				if matchEnvVar(container.Env, corev1.EnvVar{Name: "FOO", Value: "BAR"}) &&
 					matchEnvVar(container.Env, corev1.EnvVar{Name: "ENABLE_PREFIX_DELEGATION", Value: "true"}) {
 					return nil

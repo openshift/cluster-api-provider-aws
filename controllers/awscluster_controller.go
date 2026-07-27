@@ -61,6 +61,10 @@ import (
 
 const (
 	deleteRequeueAfter = 20 * time.Second
+
+	kindAWSCluster = "AWSCluster"
+	kindAWSMachine = "AWSMachine"
+	kindCluster    = "Cluster"
 )
 
 var defaultAWSSecurityGroupRoles = []infrav1.SecurityGroupRole{
@@ -438,7 +442,7 @@ func (r *AWSClusterReconciler) requeueAWSClusterForUnpausedCluster(_ context.Con
 			return nil
 		}
 
-		if c.Spec.InfrastructureRef.Kind != "AWSCluster" {
+		if c.Spec.InfrastructureRef.Kind != kindAWSCluster {
 			log.Trace("Cluster has an InfrastructureRef for a different type, skipping mapping.")
 			return nil
 		}

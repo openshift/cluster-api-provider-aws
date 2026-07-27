@@ -994,11 +994,11 @@ func conformanceImageID(e2eCtx *E2EContext) string {
 			Name:   aws.String("name"),
 			Values: []string{amiName},
 		},
+		{
+			Name:   aws.String("owner-id"),
+			Values: []string{DefaultImageLookupOrg},
+		},
 	}
-	filters = append(filters, ec2types.Filter{
-		Name:   aws.String("owner-id"),
-		Values: []string{DefaultImageLookupOrg},
-	})
 	resp, err := ec2Svc.DescribeImages(context.TODO(), &ec2.DescribeImagesInput{
 		Filters: filters,
 	})

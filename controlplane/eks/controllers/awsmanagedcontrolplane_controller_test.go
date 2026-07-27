@@ -337,7 +337,7 @@ func mockedCallsForMissingEverything(ec2Rec *mocks.MockEC2APIMockRecorder, subne
 		Subnets: []ec2types.Subnet{},
 	}, nil)
 
-	zones := []ec2types.AvailabilityZone{}
+	zones := make([]ec2types.AvailabilityZone, 0, len(subnets))
 	for _, subnet := range subnets {
 		zones = append(zones, ec2types.AvailabilityZone{
 			ZoneName: aws.String(subnet.AvailabilityZone),

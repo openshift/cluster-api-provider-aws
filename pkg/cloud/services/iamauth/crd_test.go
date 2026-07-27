@@ -46,14 +46,14 @@ func TestAddRoleMappingCRD(t *testing.T) {
 				RoleARN: "arn:aws:iam::000000000000:role/KubernetesNode",
 				KubernetesMapping: ekscontrolplanev1.KubernetesMapping{
 					UserName: "system:node:{{EC2PrivateDNSName}}",
-					Groups:   []string{"system:bootstrappers", "system:nodes"},
+					Groups:   []string{systemBootstrappersGroup, systemNodesGroup},
 				},
 			},
 			expectedRoleMapSpecs: []iamauthv1.IAMIdentityMappingSpec{
 				{
 					ARN:      "arn:aws:iam::000000000000:role/KubernetesNode",
 					Username: "system:node:{{EC2PrivateDNSName}}",
-					Groups:   []string{"system:bootstrappers", "system:nodes"},
+					Groups:   []string{systemBootstrappersGroup, systemNodesGroup},
 				},
 			},
 			expectError: false,
@@ -64,7 +64,7 @@ func TestAddRoleMappingCRD(t *testing.T) {
 				RoleARN: "arn:aws:iam::000000000000:role/KubernetesNode",
 				KubernetesMapping: ekscontrolplanev1.KubernetesMapping{
 					UserName: "system:node:{{EC2PrivateDNSName}}",
-					Groups:   []string{"system:bootstrappers", "system:nodes"},
+					Groups:   []string{systemBootstrappersGroup, systemNodesGroup},
 				},
 			},
 			existingRoleMapping: createIAMAuthMapping("arn:aws:iam::000000000000:role/KubernetesAdmin", "admin:{{SessionName}}", []string{"system:masters"}),
@@ -77,7 +77,7 @@ func TestAddRoleMappingCRD(t *testing.T) {
 				{
 					ARN:      "arn:aws:iam::000000000000:role/KubernetesNode",
 					Username: "system:node:{{EC2PrivateDNSName}}",
-					Groups:   []string{"system:bootstrappers", "system:nodes"},
+					Groups:   []string{systemBootstrappersGroup, systemNodesGroup},
 				},
 			},
 			expectError: false,
@@ -88,15 +88,15 @@ func TestAddRoleMappingCRD(t *testing.T) {
 				RoleARN: "arn:aws:iam::000000000000:role/KubernetesNode",
 				KubernetesMapping: ekscontrolplanev1.KubernetesMapping{
 					UserName: "system:node:{{EC2PrivateDNSName}}",
-					Groups:   []string{"system:bootstrappers", "system:nodes"},
+					Groups:   []string{systemBootstrappersGroup, systemNodesGroup},
 				},
 			},
-			existingRoleMapping: createIAMAuthMapping("arn:aws:iam::000000000000:role/KubernetesNode", "system:node:{{EC2PrivateDNSName}}", []string{"system:bootstrappers", "system:nodes"}),
+			existingRoleMapping: createIAMAuthMapping("arn:aws:iam::000000000000:role/KubernetesNode", "system:node:{{EC2PrivateDNSName}}", []string{systemBootstrappersGroup, systemNodesGroup}),
 			expectedRoleMapSpecs: []iamauthv1.IAMIdentityMappingSpec{
 				{
 					ARN:      "arn:aws:iam::000000000000:role/KubernetesNode",
 					Username: "system:node:{{EC2PrivateDNSName}}",
-					Groups:   []string{"system:bootstrappers", "system:nodes"},
+					Groups:   []string{systemBootstrappersGroup, systemNodesGroup},
 				},
 			},
 			expectError: false,
@@ -107,7 +107,7 @@ func TestAddRoleMappingCRD(t *testing.T) {
 				RoleARN: "arn:aws:iam::000000000000:user/Alice",
 				KubernetesMapping: ekscontrolplanev1.KubernetesMapping{
 					UserName: "system:node:{{EC2PrivateDNSName}}",
-					Groups:   []string{"system:bootstrappers", "system:nodes"},
+					Groups:   []string{systemBootstrappersGroup, systemNodesGroup},
 				},
 			},
 			expectedRoleMapSpecs: []iamauthv1.IAMIdentityMappingSpec{},

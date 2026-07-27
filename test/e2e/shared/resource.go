@@ -108,7 +108,7 @@ func (r *TestResource) WriteRequestedResources(e2eCtx *E2EContext, testName stri
 	err := fileLock.Lock()
 	Expect(err).NotTo(HaveOccurred())
 
-	requestedResources, err := os.ReadFile(requestedResourceFilePath)
+	requestedResources, err := os.ReadFile(requestedResourceFilePath) //nolint:gosec // G304: path comes from trusted test configuration
 	Expect(err).NotTo(HaveOccurred())
 
 	resources := struct {

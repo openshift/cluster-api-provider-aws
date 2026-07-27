@@ -365,7 +365,7 @@ func TestPrincipalParsing(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "static-identity",
 					},
-					Spec: infrav1.AWSClusterStaticIdentitySpec{
+					Spec: infrav1.AWSClusterStaticIdentitySpec{ //nolint:gosec // G101: test fixture, not real credentials
 						SecretRef: "static-credentials-secret",
 						AWSClusterIdentitySpec: infrav1.AWSClusterIdentitySpec{
 							AllowedNamespaces: &infrav1.AllowedNamespaces{},
@@ -440,7 +440,7 @@ func TestPrincipalParsing(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "static-identity",
 					},
-					Spec: infrav1.AWSClusterStaticIdentitySpec{
+					Spec: infrav1.AWSClusterStaticIdentitySpec{ //nolint:gosec // G101: test fixture, not real credentials
 						SecretRef: "static-credentials-secret",
 						AWSClusterIdentitySpec: infrav1.AWSClusterIdentitySpec{
 							AllowedNamespaces: &infrav1.AllowedNamespaces{},
