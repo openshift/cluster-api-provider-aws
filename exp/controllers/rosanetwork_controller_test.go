@@ -28,6 +28,7 @@ import (
 	ec2Types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	stsv2 "github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/aws/smithy-go"
+	"github.com/google/go-cmp/cmp"
 	. "github.com/onsi/gomega"
 	rosaAWSClient "github.com/openshift/rosa/pkg/aws"
 	rosaMocks "github.com/openshift/rosa/pkg/aws/mocks"
@@ -38,6 +39,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	expinfrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta2"
@@ -941,4 +944,107 @@ func TestROSANetworkReconcilerWithRoleIdentityNamespaceNotAllowed(t *testing.T) 
 		g.Expect(errReconcile.Error()).To(ContainSubstring("failed to create rosanetwork scope"))
 		g.Expect(awsClientCalled).To(BeFalse())
 	}).WithTimeout(30 * time.Second).WithPolling(500 * time.Millisecond).Should(Succeed())
+}
+
+// TestROSANetworkUpdatePredicate verifies that the WithEventFilter predicate in
+// SetupWithManager drops Update events whose only differences are in .Status or
+// .ResourceVersion, and passes through events that carry real spec changes.
+func TestROSANetworkUpdatePredicate(t *testing.T) {
+	pred := predicate.Funcs{
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			oldNet, ok := e.ObjectOld.(*expinfrav1.ROSANetwork)
+			if !ok {
+				return true
+			}
+			newNet, ok := e.ObjectNew.(*expinfrav1.ROSANetwork)
+			if !ok {
+				return true
+			}
+			oldNet = oldNet.DeepCopy()
+			newNet = newNet.DeepCopy()
+			oldNet.Status = expinfrav1.ROSANetworkStatus{}
+			newNet.Status = expinfrav1.ROSANetworkStatus{}
+			oldNet.ObjectMeta.ResourceVersion = ""
+			newNet.ObjectMeta.ResourceVersion = ""
+			return !cmp.Equal(oldNet, newNet)
+		},
+	}
+
+	base := func() *expinfrav1.ROSANetwork {
+		return &expinfrav1.ROSANetwork{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:            "test-rosa-network",
+				Namespace:       "default",
+				ResourceVersion: "1",
+			},
+			Spec: expinfrav1.ROSANetworkSpec{
+				CIDRBlock: "10.0.0.0/8",
+				Region:    "us-east-1",
+			},
+		}
+	}
+
+	tests := []struct {
+		name        string
+		old         *expinfrav1.ROSANetwork
+		new         *expinfrav1.ROSANetwork
+		wantProcess bool
+	}{
+		{
+			name: "status-only change is filtered out",
+			old:  base(),
+			new: func() *expinfrav1.ROSANetwork {
+				p := base()
+				p.Status.Subnets = []expinfrav1.ROSANetworkSubnet{{PrivateSubnet: "subnet-123"}}
+				p.ResourceVersion = "2"
+				return p
+			}(),
+			wantProcess: false,
+		},
+		{
+			name: "resource-version-only change is filtered out",
+			old:  base(),
+			new: func() *expinfrav1.ROSANetwork {
+				p := base()
+				p.ResourceVersion = "2"
+				return p
+			}(),
+			wantProcess: false,
+		},
+		{
+			name: "spec change passes through",
+			old:  base(),
+			new: func() *expinfrav1.ROSANetwork {
+				p := base()
+				p.Spec.CIDRBlock = "192.168.0.0/16"
+				p.ResourceVersion = "2"
+				return p
+			}(),
+			wantProcess: true,
+		},
+		{
+			name: "spec change with simultaneous status change passes through",
+			old:  base(),
+			new: func() *expinfrav1.ROSANetwork {
+				p := base()
+				p.Spec.CIDRBlock = "192.168.0.0/16"
+				p.Status.Subnets = []expinfrav1.ROSANetworkSubnet{{PrivateSubnet: "subnet-123"}}
+				p.ResourceVersion = "2"
+				return p
+			}(),
+			wantProcess: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			g := NewWithT(t)
+			got := pred.Update(event.UpdateEvent{
+				ObjectOld: tc.old,
+				ObjectNew: tc.new,
+			})
+			g.Expect(got).To(Equal(tc.wantProcess),
+				"predicate.Update() = %v, want %v", got, tc.wantProcess)
+		})
+	}
 }

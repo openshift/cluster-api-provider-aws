@@ -30,6 +30,7 @@ import (
 	cloudformationtypes "github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
 	"github.com/aws/smithy-go"
 	"github.com/go-logr/logr"
+	"github.com/google/go-cmp/cmp"
 	rosaCFNetwork "github.com/openshift/rosa/cmd/create/network"
 	rosaAWSClient "github.com/openshift/rosa/pkg/aws"
 	corev1 "k8s.io/api/core/v1"
@@ -39,6 +40,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	expinfrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/scope"
@@ -326,6 +329,30 @@ func (r *ROSANetworkReconciler) SetupWithManager(ctx context.Context, mgr ctrl.M
 	return ctrl.NewControllerManagedBy(mgr).
 		WithOptions(options).
 		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), log.GetLogger(), r.WatchFilterValue)).
+		WithEventFilter(
+			predicate.Funcs{
+				// Drop Update events that are status-only changes on ROSANetwork objects.
+				// Without this, PatchObject() patching a condition re-enqueues the item immediately via
+				// the watch, bypassing the exponential backoff that an error return is supposed to engage.
+				UpdateFunc: func(e event.UpdateEvent) bool {
+					oldNet, ok := e.ObjectOld.(*expinfrav1.ROSANetwork)
+					if !ok {
+						return true
+					}
+					newNet, ok := e.ObjectNew.(*expinfrav1.ROSANetwork)
+					if !ok {
+						return true
+					}
+					oldNet = oldNet.DeepCopy()
+					newNet = newNet.DeepCopy()
+					oldNet.Status = expinfrav1.ROSANetworkStatus{}
+					newNet.Status = expinfrav1.ROSANetworkStatus{}
+					oldNet.ObjectMeta.ResourceVersion = ""
+					newNet.ObjectMeta.ResourceVersion = ""
+					return !cmp.Equal(oldNet, newNet)
+				},
+			},
+		).
 		For(&expinfrav1.ROSANetwork{}).
 		Complete(r)
 }

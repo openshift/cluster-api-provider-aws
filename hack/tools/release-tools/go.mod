@@ -1,12 +1,12 @@
 module sigs.k8s.io/cluster-api-provider-aws/hack/tools/release-tools
 
-go 1.24.0
+go 1.25.0
 
 require (
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/google/go-github/v83 v83.0.0
 	github.com/spf13/cobra v1.9.1
-	golang.org/x/oauth2 v0.34.0
+	golang.org/x/oauth2 v0.36.0
 	sigs.k8s.io/yaml v1.6.0
 )
 

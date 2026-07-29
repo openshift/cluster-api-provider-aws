@@ -438,6 +438,20 @@ func (mr *MockOCMClientMockRecorder) UpdateCluster(arg0, arg1, arg2 interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateCluster", reflect.TypeOf((*MockOCMClient)(nil).UpdateCluster), arg0, arg1, arg2)
 }
 
+// UpdateClusterDeletionProtection mocks base method.
+func (m *MockOCMClient) UpdateClusterDeletionProtection(arg0 string, arg1 bool) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateClusterDeletionProtection", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateClusterDeletionProtection indicates an expected call of UpdateClusterDeletionProtection.
+func (mr *MockOCMClientMockRecorder) UpdateClusterDeletionProtection(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateClusterDeletionProtection", reflect.TypeOf((*MockOCMClient)(nil).UpdateClusterDeletionProtection), arg0, arg1)
+}
+
 // UpdateLogForwarder mocks base method.
 func (m *MockOCMClient) UpdateLogForwarder(arg0 *v1.LogForwarder, arg1, arg2 string) error {
 	m.ctrl.T.Helper()

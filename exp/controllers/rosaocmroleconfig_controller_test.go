@@ -27,6 +27,7 @@ import (
 	iamv2 "github.com/aws/aws-sdk-go-v2/service/iam"
 	iamTypes "github.com/aws/aws-sdk-go-v2/service/iam/types"
 	stsv2 "github.com/aws/aws-sdk-go-v2/service/sts"
+	"github.com/google/go-cmp/cmp"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
 	sdk "github.com/openshift-online/ocm-sdk-go"
@@ -43,6 +44,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	expinfrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta2"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/pkg/cloud/scope"
@@ -520,7 +523,7 @@ func TestROSAOCMRoleConfigSetUpRuntimeWithExpiredAWSCredentials(t *testing.T) {
 		Client: testEnv.Client,
 		NewOCMClient: func(ctx context.Context, scope caparosa.OCMSecretsRetriever) (caparosa.OCMClient, error) {
 			ocmClientCallCount++
-			return ocmClient, nil
+			return caparosa.NewOCMClientFromRosaClient(ocmClient), nil
 		},
 		runtimeFactory: nil, // Use default setUpRuntime (not the mock factory)
 	}
@@ -1069,4 +1072,106 @@ func TestROSAOCMRoleConfigDeleteWithRetainPolicy(t *testing.T) {
 	// Verify unlink was not called (DeletionPolicy=Retain)
 	h.g.Expect(unlinkCalled).To(BeFalse(), "Should skip unlink when DeletionPolicy is Retain")
 	h.g.Expect(deleteRoleCalled).To(BeFalse(), "Should skip IAM role deletion when DeletionPolicy is Retain")
+}
+
+// TestROSAOCMRoleConfigUpdatePredicate verifies that the WithEventFilter predicate in
+// SetupWithManager drops Update events whose only differences are in .Status or
+// .ResourceVersion, and passes through events that carry real spec changes.
+func TestROSAOCMRoleConfigUpdatePredicate(t *testing.T) {
+	pred := predicate.Funcs{
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			oldRC, ok := e.ObjectOld.(*expinfrav1.ROSAOCMRoleConfig)
+			if !ok {
+				return true
+			}
+			newRC, ok := e.ObjectNew.(*expinfrav1.ROSAOCMRoleConfig)
+			if !ok {
+				return true
+			}
+			oldRC = oldRC.DeepCopy()
+			newRC = newRC.DeepCopy()
+			oldRC.Status = expinfrav1.ROSAOCMRoleConfigStatus{}
+			newRC.Status = expinfrav1.ROSAOCMRoleConfigStatus{}
+			oldRC.ObjectMeta.ResourceVersion = ""
+			newRC.ObjectMeta.ResourceVersion = ""
+			return !cmp.Equal(oldRC, newRC)
+		},
+	}
+
+	base := func() *expinfrav1.ROSAOCMRoleConfig {
+		return &expinfrav1.ROSAOCMRoleConfig{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:            "test-ocm-role-config",
+				ResourceVersion: "1",
+			},
+			Spec: expinfrav1.ROSAOCMRoleConfigSpec{
+				RolePrefix: "test",
+				Profile:    expinfrav1.ROSAOCMRoleProfileStandard,
+			},
+		}
+	}
+
+	tests := []struct {
+		name        string
+		old         *expinfrav1.ROSAOCMRoleConfig
+		new         *expinfrav1.ROSAOCMRoleConfig
+		wantProcess bool
+	}{
+		{
+			name: "status-only change is filtered out",
+			old:  base(),
+			new: func() *expinfrav1.ROSAOCMRoleConfig {
+				p := base()
+				p.Status.RoleARN = "arn:aws:iam::123:role/test"
+				p.ResourceVersion = "2"
+				return p
+			}(),
+			wantProcess: false,
+		},
+		{
+			name: "resource-version-only change is filtered out",
+			old:  base(),
+			new: func() *expinfrav1.ROSAOCMRoleConfig {
+				p := base()
+				p.ResourceVersion = "2"
+				return p
+			}(),
+			wantProcess: false,
+		},
+		{
+			name: "spec change passes through",
+			old:  base(),
+			new: func() *expinfrav1.ROSAOCMRoleConfig {
+				p := base()
+				p.Spec.RolePrefix = "updated"
+				p.ResourceVersion = "2"
+				return p
+			}(),
+			wantProcess: true,
+		},
+		{
+			name: "spec change with simultaneous status change passes through",
+			old:  base(),
+			new: func() *expinfrav1.ROSAOCMRoleConfig {
+				p := base()
+				p.Spec.RolePrefix = "updated"
+				p.Status.RoleARN = "arn:aws:iam::123:role/test"
+				p.ResourceVersion = "2"
+				return p
+			}(),
+			wantProcess: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			g := NewWithT(t)
+			got := pred.Update(event.UpdateEvent{
+				ObjectOld: tc.old,
+				ObjectNew: tc.new,
+			})
+			g.Expect(got).To(Equal(tc.wantProcess),
+				"predicate.Update() = %v, want %v", got, tc.wantProcess)
+		})
+	}
 }

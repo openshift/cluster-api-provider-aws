@@ -345,6 +345,12 @@ The CAPA controller requires service account credentials to provision ROSA HCP c
 
 ## Deleting a ROSA HCP cluster
 
+When `spec.deleteProtection` is set to `Enabled` on the `ROSAControlPlane`, deleting the `ROSAControlPlane` CR will remove the Kubernetes resource but leave the ROSA cluster intact in OCM. No cascade deletion of NodePools or the cluster itself will occur. To fully delete a protected cluster:
+
+1. Set `spec.deleteProtection` to `Disabled` on the `ROSAControlPlane`.
+2. Wait for reconciliation to complete.
+3. Delete the `Cluster` and `ROSAControlPlane` resources.
+
 To delete a ROSA HCP cluster, delete the `Cluster` and `ROSAControlPlane` resources. This will also clean up the associated `ROSACluster`, `MachinePool`, and `ROSAMachinePool` resources:
 
 ```shell

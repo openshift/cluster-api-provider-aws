@@ -56,7 +56,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	rosacontrolplanev1 "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/rosa/api/v1beta2"
@@ -117,6 +119,30 @@ func (r *ROSAControlPlaneReconciler) SetupWithManager(ctx context.Context, mgr c
 		For(rosaControlPlane).
 		WithOptions(options).
 		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), log.GetLogger(), r.WatchFilterValue)).
+		WithEventFilter(
+			predicate.Funcs{
+				// Drop Update events that are status-only changes on ROSAControlPlane objects.
+				// Without this, Close() patching a condition re-enqueues the item immediately via
+				// the watch, bypassing the exponential backoff that an error return is supposed to engage.
+				UpdateFunc: func(e event.UpdateEvent) bool {
+					oldCP, ok := e.ObjectOld.(*rosacontrolplanev1.ROSAControlPlane)
+					if !ok {
+						return true
+					}
+					newCP, ok := e.ObjectNew.(*rosacontrolplanev1.ROSAControlPlane)
+					if !ok {
+						return true
+					}
+					oldCP = oldCP.DeepCopy()
+					newCP = newCP.DeepCopy()
+					oldCP.Status = rosacontrolplanev1.RosaControlPlaneStatus{}
+					newCP.Status = rosacontrolplanev1.RosaControlPlaneStatus{}
+					oldCP.ObjectMeta.ResourceVersion = ""
+					newCP.ObjectMeta.ResourceVersion = ""
+					return !cmp.Equal(oldCP, newCP)
+				},
+			},
+		).
 		Build(r)
 	if err != nil {
 		return fmt.Errorf("failed setting up the ROSAControlPlane controller manager: %w", err)
@@ -287,6 +313,11 @@ func (r *ROSAControlPlaneReconciler) reconcileNormal(ctx context.Context, rosaSc
 		rosaScope.ControlPlane.Status.Ready = false
 		rosaScope.ControlPlane.Status.Version = rosa.RawVersionID(cluster.Version())
 
+		if err := rosa.ReconcileDeleteProtection(rosaScope, ocmClient, cluster); err != nil {
+			rosaScope.Error(err, "failed to reconcile delete protection")
+			return ctrl.Result{RequeueAfter: time.Minute}, nil
+		}
+
 		switch cluster.Status().State() {
 		case cmv1.ClusterStateReady:
 			v1beta1conditions.MarkTrue(rosaScope.ControlPlane, rosacontrolplanev1.ROSAControlPlaneReadyCondition)
@@ -387,6 +418,19 @@ func (r *ROSAControlPlaneReconciler) reconcileNormal(ctx context.Context, rosaSc
 	rosaScope.Info("cluster created", "state", cluster.Status().State())
 	rosaScope.ControlPlane.Status.ID = cluster.ID()
 
+	if rosaScope.ControlPlane.Spec.DeleteProtection == rosacontrolplanev1.DeleteProtectionEnabled {
+		if err := rosa.UpdateClusterDeletionProtection(ocmClient, cluster.ID(), true); err != nil {
+			v1beta1conditions.MarkFalse(rosaScope.ControlPlane,
+				rosacontrolplanev1.ROSAControlPlaneReadyCondition,
+				rosacontrolplanev1.ReconciliationFailedReason,
+				clusterv1beta1.ConditionSeverityError,
+				"cluster '%s' was created but delete protection could not be enabled: %s",
+				cluster.ID(),
+				err.Error())
+			return ctrl.Result{}, fmt.Errorf("failed to enable delete protection for cluster '%s': %w", cluster.ID(), err)
+		}
+	}
+
 	return ctrl.Result{}, nil
 }
 
@@ -458,6 +502,13 @@ func (r *ROSAControlPlaneReconciler) reconcileDelete(ctx context.Context, rosaSc
 	}
 	if cluster == nil {
 		// cluster and machinepools are deleted, removing finalizer.
+		controllerutil.RemoveFinalizer(rosaScope.ControlPlane, ROSAControlPlaneFinalizer)
+
+		return ctrl.Result{}, nil
+	}
+
+	if rosa.IsDeleteProtectionBlocking(rosaScope, cluster) {
+		rosaScope.Info("Delete protection is enabled, removing finalizer without deleting the ROSA cluster")
 		controllerutil.RemoveFinalizer(rosaScope.ControlPlane, ROSAControlPlaneFinalizer)
 
 		return ctrl.Result{}, nil

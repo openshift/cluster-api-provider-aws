@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
+	"github.com/google/go-cmp/cmp"
 	. "github.com/onsi/gomega"
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -17,6 +18,8 @@ import (
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
@@ -754,6 +757,112 @@ func TestVolumeSizeZeroedBeforeUpdate(t *testing.T) {
 
 	g.Expect(nodePoolSpec.AWSNodePool()).ToNot(BeNil())
 	g.Expect(nodePoolSpec.AWSNodePool().RootVolume()).To(BeNil(), "RootVolume should not be set when volumeSize is 0")
+}
+
+// TestROSAMachinePoolUpdatePredicate verifies that the WithEventFilter predicate
+// used in SetupWithManager drops Update events whose only differences are in
+// .Status or .ResourceVersion, and passes through events that carry real spec changes.
+func TestROSAMachinePoolUpdatePredicate(t *testing.T) {
+	// Mirror the predicate registered in SetupWithManager exactly so the test
+	// proves the production logic rather than a reimagined version.
+	pred := predicate.Funcs{
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			oldPool, ok := e.ObjectOld.(*expinfrav1.ROSAMachinePool)
+			if !ok {
+				return true
+			}
+			newPool, ok := e.ObjectNew.(*expinfrav1.ROSAMachinePool)
+			if !ok {
+				return true
+			}
+			oldPool = oldPool.DeepCopy()
+			newPool = newPool.DeepCopy()
+			oldPool.Status = expinfrav1.RosaMachinePoolStatus{}
+			newPool.Status = expinfrav1.RosaMachinePoolStatus{}
+			oldPool.ObjectMeta.ResourceVersion = ""
+			newPool.ObjectMeta.ResourceVersion = ""
+			return !cmp.Equal(oldPool, newPool)
+		},
+	}
+
+	base := func() *expinfrav1.ROSAMachinePool {
+		return &expinfrav1.ROSAMachinePool{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:            "test-pool",
+				Namespace:       "default",
+				ResourceVersion: "1",
+			},
+			Spec: expinfrav1.RosaMachinePoolSpec{
+				NodePoolName: "test-nodepool",
+				InstanceType: "m5.large",
+			},
+		}
+	}
+
+	tests := []struct {
+		name        string
+		old         *expinfrav1.ROSAMachinePool
+		new         *expinfrav1.ROSAMachinePool
+		wantProcess bool // true = controller should reconcile, false = event dropped
+	}{
+		{
+			name: "status-only change is filtered out",
+			old:  base(),
+			new: func() *expinfrav1.ROSAMachinePool {
+				p := base()
+				p.Status.Ready = true
+				p.Status.Replicas = 3
+				p.ResourceVersion = "2"
+				return p
+			}(),
+			wantProcess: false,
+		},
+		{
+			name: "resource-version-only change is filtered out",
+			old:  base(),
+			new: func() *expinfrav1.ROSAMachinePool {
+				p := base()
+				p.ResourceVersion = "2"
+				return p
+			}(),
+			wantProcess: false,
+		},
+		{
+			name: "spec change passes through",
+			old:  base(),
+			new: func() *expinfrav1.ROSAMachinePool {
+				p := base()
+				p.Spec.InstanceType = "m5.xlarge"
+				p.ResourceVersion = "2"
+				return p
+			}(),
+			wantProcess: true,
+		},
+		{
+			name: "spec change with simultaneous status change passes through",
+			old:  base(),
+			new: func() *expinfrav1.ROSAMachinePool {
+				p := base()
+				p.Spec.InstanceType = "m5.xlarge"
+				p.Status.Ready = true
+				p.ResourceVersion = "2"
+				return p
+			}(),
+			wantProcess: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			g := NewWithT(t)
+			got := pred.Update(event.UpdateEvent{
+				ObjectOld: tc.old,
+				ObjectNew: tc.new,
+			})
+			g.Expect(got).To(Equal(tc.wantProcess),
+				"predicate.Update() = %v, want %v", got, tc.wantProcess)
+		})
+	}
 }
 
 func createObject(g *WithT, obj client.Object, namespace string) {

@@ -30,6 +30,7 @@ import (
 	iamv2 "github.com/aws/aws-sdk-go-v2/service/iam"
 	iamTypes "github.com/aws/aws-sdk-go-v2/service/iam/types"
 	stsv2 "github.com/aws/aws-sdk-go-v2/service/sts"
+	"github.com/google/go-cmp/cmp"
 	. "github.com/onsi/gomega"
 	sdk "github.com/openshift-online/ocm-sdk-go"
 	ocmlogging "github.com/openshift-online/ocm-sdk-go/logging"
@@ -44,6 +45,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	rosacontrolplanev1 "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/rosa/api/v1beta2"
@@ -1294,4 +1297,109 @@ func TestROSARoleConfigReconcileExistWithTrustPolicyExternalID(t *testing.T) {
 		g.Expect(readyCondition.Status).To(Equal(corev1.ConditionFalse))
 		g.Expect(readyCondition.Reason).To(Equal(expinfrav1.RosaRoleConfigReconciliationFailedReason))
 	}).WithTimeout(30 * time.Second).WithPolling(500 * time.Millisecond).Should(Succeed())
+}
+
+// TestROSARoleConfigUpdatePredicate verifies that the WithEventFilter predicate in
+// SetupWithManager drops Update events whose only differences are in .Status or
+// .ResourceVersion, and passes through events that carry real spec changes.
+func TestROSARoleConfigUpdatePredicate(t *testing.T) {
+	pred := predicate.Funcs{
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			oldRC, ok := e.ObjectOld.(*expinfrav1.ROSARoleConfig)
+			if !ok {
+				return true
+			}
+			newRC, ok := e.ObjectNew.(*expinfrav1.ROSARoleConfig)
+			if !ok {
+				return true
+			}
+			oldRC = oldRC.DeepCopy()
+			newRC = newRC.DeepCopy()
+			oldRC.Status = expinfrav1.ROSARoleConfigStatus{}
+			newRC.Status = expinfrav1.ROSARoleConfigStatus{}
+			oldRC.ObjectMeta.ResourceVersion = ""
+			newRC.ObjectMeta.ResourceVersion = ""
+			return !cmp.Equal(oldRC, newRC)
+		},
+	}
+
+	base := func() *expinfrav1.ROSARoleConfig {
+		return &expinfrav1.ROSARoleConfig{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:            "test-role-config",
+				Namespace:       "default",
+				ResourceVersion: "1",
+			},
+			Spec: expinfrav1.ROSARoleConfigSpec{
+				AccountRoleConfig: expinfrav1.AccountRoleConfig{
+					Prefix:  "test",
+					Version: "4.15.0",
+				},
+			},
+		}
+	}
+
+	tests := []struct {
+		name        string
+		old         *expinfrav1.ROSARoleConfig
+		new         *expinfrav1.ROSARoleConfig
+		wantProcess bool
+	}{
+		{
+			name: "status-only change is filtered out",
+			old:  base(),
+			new: func() *expinfrav1.ROSARoleConfig {
+				p := base()
+				p.Status.OIDCID = "test-oidc-id"
+				p.ResourceVersion = "2"
+				return p
+			}(),
+			wantProcess: false,
+		},
+		{
+			name: "resource-version-only change is filtered out",
+			old:  base(),
+			new: func() *expinfrav1.ROSARoleConfig {
+				p := base()
+				p.ResourceVersion = "2"
+				return p
+			}(),
+			wantProcess: false,
+		},
+		{
+			name: "spec change passes through",
+			old:  base(),
+			new: func() *expinfrav1.ROSARoleConfig {
+				p := base()
+				p.Spec.AccountRoleConfig.Prefix = "updated"
+				p.ResourceVersion = "2"
+				return p
+			}(),
+			wantProcess: true,
+		},
+		{
+			name: "spec change with simultaneous status change passes through",
+			old:  base(),
+			new: func() *expinfrav1.ROSARoleConfig {
+				p := base()
+				p.Spec.AccountRoleConfig.Prefix = "updated"
+				p.Status.OIDCID = "test-oidc-id"
+				p.ResourceVersion = "2"
+				return p
+			}(),
+			wantProcess: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			g := NewWithT(t)
+			got := pred.Update(event.UpdateEvent{
+				ObjectOld: tc.old,
+				ObjectNew: tc.new,
+			})
+			g.Expect(got).To(Equal(tc.wantProcess),
+				"predicate.Update() = %v, want %v", got, tc.wantProcess)
+		})
+	}
 }

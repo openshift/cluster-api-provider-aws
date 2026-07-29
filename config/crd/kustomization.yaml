@@ -29,6 +29,7 @@ resources:
 - bases/infrastructure.cluster.x-k8s.io_rosaclusters.yaml
 - bases/infrastructure.cluster.x-k8s.io_rosamachinepools.yaml
 - bases/infrastructure.cluster.x-k8s.io_rosaroleconfigs.yaml
+- bases/infrastructure.cluster.x-k8s.io_rosaocmroleconfigs.yaml
 - bases/infrastructure.cluster.x-k8s.io_rosanetworks.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
