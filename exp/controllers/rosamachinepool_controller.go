@@ -23,7 +23,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	rosacontrolplanev1 "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/rosa/api/v1beta2"
@@ -64,6 +66,30 @@ func (r *ROSAMachinePoolReconciler) SetupWithManager(ctx context.Context, mgr ct
 		For(&expinfrav1.ROSAMachinePool{}).
 		WithOptions(options).
 		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), log.GetLogger(), r.WatchFilterValue)).
+		WithEventFilter(
+			predicate.Funcs{
+				// Drop Update events that are status-only changes on ROSAMachinePool objects.
+				// Without this, Close() patching a condition re-enqueues the item immediately via
+				// the watch, bypassing the exponential backoff that an error return is supposed to engage.
+				UpdateFunc: func(e event.UpdateEvent) bool {
+					oldPool, ok := e.ObjectOld.(*expinfrav1.ROSAMachinePool)
+					if !ok {
+						return true
+					}
+					newPool, ok := e.ObjectNew.(*expinfrav1.ROSAMachinePool)
+					if !ok {
+						return true
+					}
+					oldPool = oldPool.DeepCopy()
+					newPool = newPool.DeepCopy()
+					oldPool.Status = expinfrav1.RosaMachinePoolStatus{}
+					newPool.Status = expinfrav1.RosaMachinePoolStatus{}
+					oldPool.ObjectMeta.ResourceVersion = ""
+					newPool.ObjectMeta.ResourceVersion = ""
+					return !cmp.Equal(oldPool, newPool)
+				},
+			},
+		).
 		Watches(
 			&clusterv1.MachinePool{},
 			handler.EnqueueRequestsFromMapFunc(machinePoolToInfrastructureMapFunc(gvk)),
@@ -316,6 +342,12 @@ func (r *ROSAMachinePoolReconciler) reconcileDelete(
 	rosaControlPlaneScope *scope.ROSAControlPlaneScope,
 ) error {
 	machinePoolScope.Info("Reconciling deletion of RosaMachinePool")
+
+	if machinePoolScope.ControlPlane.Spec.DeleteProtection == rosacontrolplanev1.DeleteProtectionEnabled {
+		machinePoolScope.Info("Delete protection is enabled on ROSAControlPlane, skipping NodePool deletion in OCM")
+		controllerutil.RemoveFinalizer(machinePoolScope.RosaMachinePool, expinfrav1.RosaMachinePoolFinalizer)
+		return nil
+	}
 
 	ocmClient, err := r.NewOCMClient(ctx, rosaControlPlaneScope)
 	if err != nil || ocmClient == nil {

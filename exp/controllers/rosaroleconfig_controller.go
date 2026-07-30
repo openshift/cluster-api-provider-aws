@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	iamtypes "github.com/aws/aws-sdk-go-v2/service/iam/types"
+	"github.com/google/go-cmp/cmp"
 	accountroles "github.com/openshift/rosa/cmd/create/accountroles"
 	oidcconfig "github.com/openshift/rosa/cmd/create/oidcconfig"
 	oidcprovider "github.com/openshift/rosa/cmd/create/oidcprovider"
@@ -43,6 +44,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	"sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/rosa/api/v1beta2"
 	expinfrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta2"
@@ -78,6 +81,30 @@ func (r *ROSARoleConfigReconciler) SetupWithManager(ctx context.Context, mgr ctr
 		For(&expinfrav1.ROSARoleConfig{}).
 		WithOptions(options).
 		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), log.GetLogger(), r.WatchFilterValue)).
+		WithEventFilter(
+			predicate.Funcs{
+				// Drop Update events that are status-only changes on ROSARoleConfig objects.
+				// Without this, PatchObject() patching a condition re-enqueues the item immediately via
+				// the watch, bypassing the exponential backoff that an error return is supposed to engage.
+				UpdateFunc: func(e event.UpdateEvent) bool {
+					oldRC, ok := e.ObjectOld.(*expinfrav1.ROSARoleConfig)
+					if !ok {
+						return true
+					}
+					newRC, ok := e.ObjectNew.(*expinfrav1.ROSARoleConfig)
+					if !ok {
+						return true
+					}
+					oldRC = oldRC.DeepCopy()
+					newRC = newRC.DeepCopy()
+					oldRC.Status = expinfrav1.ROSARoleConfigStatus{}
+					newRC.Status = expinfrav1.ROSARoleConfigStatus{}
+					oldRC.ObjectMeta.ResourceVersion = ""
+					newRC.ObjectMeta.ResourceVersion = ""
+					return !cmp.Equal(oldRC, newRC)
+				},
+			},
+		).
 		Complete(r)
 }
 

@@ -25,6 +25,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	. "github.com/onsi/gomega"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilfeature "k8s.io/component-base/featuregate/testing"
@@ -323,6 +324,168 @@ func TestAWSClusterValidateCreate(t *testing.T) {
 				},
 			},
 			wantErr: false,
+		},
+		{
+			name: "accepts valid additional IAM role",
+			cluster: &infrav1.AWSCluster{
+				Spec: infrav1.AWSClusterSpec{
+					S3Bucket: &infrav1.S3Bucket{
+						Name:                           "foo",
+						ControlPlaneIAMInstanceProfile: "foo",
+						NodesIAMInstanceProfiles:       []string{"bar"},
+						AdditionalIAMRoles: []infrav1.AdditionalIAMRole{
+							{Name: "karpenter-nodes", Prefix: "karpenter-nodes/*"},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "accepts valid additional IAM role with nested prefix",
+			cluster: &infrav1.AWSCluster{
+				Spec: infrav1.AWSClusterSpec{
+					S3Bucket: &infrav1.S3Bucket{
+						Name:                           "foo",
+						ControlPlaneIAMInstanceProfile: "foo",
+						NodesIAMInstanceProfiles:       []string{"bar"},
+						AdditionalIAMRoles: []infrav1.AdditionalIAMRole{
+							{Name: "custom", Prefix: "custom/deep/path/*"},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "accepts wildcard-only prefix for additional IAM role",
+			cluster: &infrav1.AWSCluster{
+				Spec: infrav1.AWSClusterSpec{
+					S3Bucket: &infrav1.S3Bucket{
+						Name:                           "foo",
+						ControlPlaneIAMInstanceProfile: "foo",
+						NodesIAMInstanceProfiles:       []string{"bar"},
+						AdditionalIAMRoles: []infrav1.AdditionalIAMRole{
+							{Name: "wildcard-profile", Prefix: "*"},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "accepts overlap with standard prefixes for additional IAM role",
+			cluster: &infrav1.AWSCluster{
+				Spec: infrav1.AWSClusterSpec{
+					S3Bucket: &infrav1.S3Bucket{
+						Name:                           "foo",
+						ControlPlaneIAMInstanceProfile: "foo",
+						NodesIAMInstanceProfiles:       []string{"bar"},
+						AdditionalIAMRoles: []infrav1.AdditionalIAMRole{
+							{Name: "overlap-profile", Prefix: "node/*"},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "rejects empty name in additional IAM role",
+			cluster: &infrav1.AWSCluster{
+				Spec: infrav1.AWSClusterSpec{
+					S3Bucket: &infrav1.S3Bucket{
+						Name:                           "foo",
+						ControlPlaneIAMInstanceProfile: "foo",
+						NodesIAMInstanceProfiles:       []string{"bar"},
+						AdditionalIAMRoles: []infrav1.AdditionalIAMRole{
+							{Name: "", Prefix: "test/*"},
+						},
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "rejects empty prefix in additional IAM role",
+			cluster: &infrav1.AWSCluster{
+				Spec: infrav1.AWSClusterSpec{
+					S3Bucket: &infrav1.S3Bucket{
+						Name:                           "foo",
+						ControlPlaneIAMInstanceProfile: "foo",
+						NodesIAMInstanceProfiles:       []string{"bar"},
+						AdditionalIAMRoles: []infrav1.AdditionalIAMRole{
+							{Name: "test", Prefix: ""},
+						},
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "rejects prefix starting with slash in additional IAM role",
+			cluster: &infrav1.AWSCluster{
+				Spec: infrav1.AWSClusterSpec{
+					S3Bucket: &infrav1.S3Bucket{
+						Name:                           "foo",
+						ControlPlaneIAMInstanceProfile: "foo",
+						NodesIAMInstanceProfiles:       []string{"bar"},
+						AdditionalIAMRoles: []infrav1.AdditionalIAMRole{
+							{Name: "test", Prefix: "/abc"},
+						},
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "rejects ARN instead of IAM role name",
+			cluster: &infrav1.AWSCluster{
+				Spec: infrav1.AWSClusterSpec{
+					S3Bucket: &infrav1.S3Bucket{
+						Name:                           "foo",
+						ControlPlaneIAMInstanceProfile: "foo",
+						NodesIAMInstanceProfiles:       []string{"bar"},
+						AdditionalIAMRoles: []infrav1.AdditionalIAMRole{
+							{Name: "arn:aws:iam::123456789012:role/karpenter-nodes", Prefix: "karpenter-nodes/*"},
+						},
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "accepts same role name with different prefixes in additional IAM roles",
+			cluster: &infrav1.AWSCluster{
+				Spec: infrav1.AWSClusterSpec{
+					S3Bucket: &infrav1.S3Bucket{
+						Name:                           "foo",
+						ControlPlaneIAMInstanceProfile: "foo",
+						NodesIAMInstanceProfiles:       []string{"bar"},
+						AdditionalIAMRoles: []infrav1.AdditionalIAMRole{
+							{Name: "karpenter-nodes", Prefix: "karpenter-nodes/*"},
+							{Name: "karpenter-nodes", Prefix: "other/*"},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "rejects exact duplicate name and prefix in additional IAM roles",
+			cluster: &infrav1.AWSCluster{
+				Spec: infrav1.AWSClusterSpec{
+					S3Bucket: &infrav1.S3Bucket{
+						Name:                           "foo",
+						ControlPlaneIAMInstanceProfile: "foo",
+						NodesIAMInstanceProfiles:       []string{"bar"},
+						AdditionalIAMRoles: []infrav1.AdditionalIAMRole{
+							{Name: "karpenter-nodes", Prefix: "karpenter-nodes/*"},
+							{Name: "karpenter-nodes", Prefix: "karpenter-nodes/*"},
+						},
+					},
+				},
+			},
+			wantErr: true,
 		},
 		{
 			name: "accepts vpc cidr",
@@ -1357,6 +1520,31 @@ func TestAWSClusterValidateUpdate(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "Should fail if the secondary control plane load balancer is removed",
+			oldCluster: &infrav1.AWSCluster{
+				Spec: infrav1.AWSClusterSpec{
+					ControlPlaneLoadBalancer: &infrav1.AWSLoadBalancerSpec{
+						Name:   ptr.To("primary-lb"),
+						Scheme: &infrav1.ELBSchemeInternetFacing,
+					},
+					SecondaryControlPlaneLoadBalancer: &infrav1.AWSLoadBalancerSpec{
+						Name:             ptr.To("secondary-lb"),
+						Scheme:           &infrav1.ELBSchemeInternal,
+						LoadBalancerType: infrav1.LoadBalancerTypeNLB,
+					},
+				},
+			},
+			newCluster: &infrav1.AWSCluster{
+				Spec: infrav1.AWSClusterSpec{
+					ControlPlaneLoadBalancer: &infrav1.AWSLoadBalancerSpec{
+						Name:   ptr.To("primary-lb"),
+						Scheme: &infrav1.ELBSchemeInternetFacing,
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
 			name: "Should pass if controlPlaneLoadBalancer healthcheckprotocol is same after update",
 			oldCluster: &infrav1.AWSCluster{
 				Spec: infrav1.AWSClusterSpec{
@@ -1520,6 +1708,45 @@ func TestAWSClusterValidateUpdate(t *testing.T) {
 		},
 		)
 	}
+}
+
+func TestAWSClusterValidateUpdateSecondaryControlPlaneLoadBalancerRemovalIsRejected(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	primaryScheme := infrav1.ELBSchemeInternetFacing
+	secondaryScheme := infrav1.ELBSchemeInternal
+
+	oldCluster := &infrav1.AWSCluster{
+		ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "default"},
+		Spec: infrav1.AWSClusterSpec{
+			ControlPlaneLoadBalancer: &infrav1.AWSLoadBalancerSpec{
+				Name:   ptr.To("primary-lb"),
+				Scheme: &primaryScheme,
+			},
+			SecondaryControlPlaneLoadBalancer: &infrav1.AWSLoadBalancerSpec{
+				Name:             ptr.To("secondary-lb"),
+				Scheme:           &secondaryScheme,
+				LoadBalancerType: infrav1.LoadBalancerTypeNLB,
+			},
+		},
+	}
+	newCluster := oldCluster.DeepCopy()
+	newCluster.Spec.SecondaryControlPlaneLoadBalancer = nil
+
+	var err error
+	g.Expect(func() {
+		_, err = (&AWSCluster{}).ValidateUpdate(ctx, oldCluster, newCluster)
+	}).ToNot(Panic())
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(apierrors.IsInvalid(err)).To(BeTrue())
+
+	statusErr, ok := err.(apierrors.APIStatus)
+	g.Expect(ok).To(BeTrue())
+	invalidFields := make([]string, 0)
+	for _, cause := range statusErr.Status().Details.Causes {
+		invalidFields = append(invalidFields, cause.Field)
+	}
+	g.Expect(invalidFields).To(ContainElement("spec.secondaryControlPlaneLoadBalancer"))
 }
 
 func TestAWSClusterDefaultCNIIngressRules(t *testing.T) {

@@ -33,6 +33,7 @@ import (
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	stsv2 "github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/golang/mock/gomock"
+	"github.com/google/go-cmp/cmp"
 	. "github.com/onsi/gomega"
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	rosaaws "github.com/openshift/rosa/pkg/aws"
@@ -44,6 +45,8 @@ import (
 	restclient "k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	rosacontrolplanev1 "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/rosa/api/v1beta2"
@@ -573,6 +576,7 @@ func TestRosaControlPlaneReconcileStatusVersion(t *testing.T) {
 			api := (&v1.ClusterAPIBuilder{}).URL("https://url.com:5000")
 			version := (&v1.VersionBuilder{}).RawID(rosaControlPlane.Spec.Version)
 			mockCluster, _ := v1.NewCluster().AWS(aws).ID("cluster-1").Version(version).Status(status).Console(console).API(api).
+				DeleteProtection(v1.NewDeleteProtection().Enabled(false)).
 				RegistryConfig(v1.NewClusterRegistryConfig().
 					AdditionalTrustedCa(map[string]string{"trusted-ca": "-----BEGIN CERTIFICATE----- testcert -----END CERTIFICATE-----"}).
 					AllowedRegistriesForImport(v1.NewRegistryLocation().
@@ -1959,6 +1963,111 @@ func TestNeedsCredentialRefresh(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
 			g.Expect(needsCredentialRefresh(tt.secret)).To(Equal(tt.want))
+		})
+	}
+}
+
+// TestROSAControlPlaneUpdatePredicate verifies that the WithEventFilter predicate in
+// SetupWithManager drops Update events whose only differences are in .Status or
+// .ResourceVersion, and passes through events that carry real spec changes.
+func TestROSAControlPlaneUpdatePredicate(t *testing.T) {
+	pred := predicate.Funcs{
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			oldCP, ok := e.ObjectOld.(*rosacontrolplanev1.ROSAControlPlane)
+			if !ok {
+				return true
+			}
+			newCP, ok := e.ObjectNew.(*rosacontrolplanev1.ROSAControlPlane)
+			if !ok {
+				return true
+			}
+			oldCP = oldCP.DeepCopy()
+			newCP = newCP.DeepCopy()
+			oldCP.Status = rosacontrolplanev1.RosaControlPlaneStatus{}
+			newCP.Status = rosacontrolplanev1.RosaControlPlaneStatus{}
+			oldCP.ObjectMeta.ResourceVersion = ""
+			newCP.ObjectMeta.ResourceVersion = ""
+			return !cmp.Equal(oldCP, newCP)
+		},
+	}
+
+	base := func() *rosacontrolplanev1.ROSAControlPlane {
+		return &rosacontrolplanev1.ROSAControlPlane{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:            "test-rosa-cp",
+				Namespace:       "default",
+				ResourceVersion: "1",
+			},
+			Spec: rosacontrolplanev1.RosaControlPlaneSpec{
+				RosaClusterName: "test-cluster",
+				Region:          "us-east-1",
+				Version:         "4.15.20",
+			},
+		}
+	}
+
+	tests := []struct {
+		name        string
+		old         *rosacontrolplanev1.ROSAControlPlane
+		new         *rosacontrolplanev1.ROSAControlPlane
+		wantProcess bool
+	}{
+		{
+			name: "status-only change is filtered out",
+			old:  base(),
+			new: func() *rosacontrolplanev1.ROSAControlPlane {
+				p := base()
+				p.Status.Ready = true
+				p.Status.ID = "cluster-id-123"
+				p.ResourceVersion = "2"
+				return p
+			}(),
+			wantProcess: false,
+		},
+		{
+			name: "resource-version-only change is filtered out",
+			old:  base(),
+			new: func() *rosacontrolplanev1.ROSAControlPlane {
+				p := base()
+				p.ResourceVersion = "2"
+				return p
+			}(),
+			wantProcess: false,
+		},
+		{
+			name: "spec change passes through",
+			old:  base(),
+			new: func() *rosacontrolplanev1.ROSAControlPlane {
+				p := base()
+				p.Spec.Region = "us-west-2"
+				p.ResourceVersion = "2"
+				return p
+			}(),
+			wantProcess: true,
+		},
+		{
+			name: "spec change with simultaneous status change passes through",
+			old:  base(),
+			new: func() *rosacontrolplanev1.ROSAControlPlane {
+				p := base()
+				p.Spec.Region = "us-west-2"
+				p.Status.Ready = true
+				p.ResourceVersion = "2"
+				return p
+			}(),
+			wantProcess: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			g := NewWithT(t)
+			got := pred.Update(event.UpdateEvent{
+				ObjectOld: tc.old,
+				ObjectNew: tc.new,
+			})
+			g.Expect(got).To(Equal(tc.wantProcess),
+				"predicate.Update() = %v, want %v", got, tc.wantProcess)
 		})
 	}
 }
