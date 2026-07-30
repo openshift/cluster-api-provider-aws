@@ -6,6 +6,13 @@ components:
 
 resources:
 - ../config/default
+- exclude-resources-config.yaml
+- rename-resources-config.yaml
+
+# Transformers run in order.
+transformers:
+- tools/vendor/github.com/openshift/cluster-capi-operator/manifests-gen/transformers/exclude-resources.yaml
+- tools/vendor/github.com/openshift/cluster-capi-operator/manifests-gen/transformers/rename-resources.yaml
 
 images:
 - name: gcr.io/k8s-staging-cluster-api-aws/cluster-api-aws-controller
