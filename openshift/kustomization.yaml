@@ -6,6 +6,13 @@ components:
 
 resources:
 - ../config/default
+- exclude-resources-config.yaml
+- rename-resources-config.yaml
+
+# Transformers run in order.
+transformers:
+- tools/vendor/github.com/openshift/cluster-capi-operator/manifests-gen/transformers/exclude-resources.yaml
+- tools/vendor/github.com/openshift/cluster-capi-operator/manifests-gen/transformers/rename-resources.yaml
 
 images:
 - name: gcr.io/k8s-staging-cluster-api-aws/cluster-api-aws-controller
@@ -21,6 +28,16 @@ patches:
   patch: |-
     - op: remove
       path: /metadata/annotations/${AWS_CONTROLLER_IAM_ROLE~1#arn~1eks.amazonaws.com~1role-arn
+
+# Disable EKS feature gate: EKS controllers watch CRDs excluded from the manifests,
+# causing cache sync timeout and manager crash.
+- target:
+    kind: Deployment
+    name: capa-controller-manager
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/args/1
+      value: "--feature-gates=EKS=${CAPA_EKS:=false},EKSEnableIAM=${CAPA_EKS_IAM:=false},EKSAllowAddRoles=${CAPA_EKS_ADD_ROLES:=false},EKSFargate=${EXP_EKS_FARGATE:=false},MachinePool=${EXP_MACHINE_POOL:=false},MachinePoolMachines=${EXP_MACHINE_POOL_MACHINES:=false},EventBridgeInstanceState=${EVENT_BRIDGE_INSTANCE_STATE:=false},AutoControllerIdentityCreator=${AUTO_CONTROLLER_IDENTITY_CREATOR:=true},BootstrapFormatIgnition=${EXP_BOOTSTRAP_FORMAT_IGNITION:=false},ExternalResourceGC=${EXTERNAL_RESOURCE_GC:=true},AlternativeGCStrategy=${ALTERNATIVE_GC_STRATEGY:=false},TagUnmanagedNetworkResources=${TAG_UNMANAGED_NETWORK_RESOURCES:=true},ROSA=${EXP_ROSA:=false}"
 
 # Add TLS configuration args (substituted by cluster-capi-operator revisiongenerator)
 - target:
