@@ -192,6 +192,9 @@ spec:
           readOnly: true
         - mountPath: /home/.aws
           name: credentials
+        - mountPath: /var/run/secrets/openshift/serviceaccount
+          name: bound-sa-token
+          readOnly: true
       priorityClassName: system-cluster-critical
       securityContext:
         fsGroup: 1000
@@ -213,6 +216,12 @@ spec:
       - name: credentials
         secret:
           secretName: capa-manager-bootstrap-credentials
+      - name: bound-sa-token
+        projected:
+          sources:
+          - serviceAccountToken:
+              audience: openshift
+              path: token
 status: {}
 ---
 apiVersion: apiextensions.k8s.io/v1

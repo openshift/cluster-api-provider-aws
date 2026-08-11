@@ -50,3 +50,24 @@ patches:
     - op: add
       path: /spec/template/spec/containers/0/args/-
       value: "--tls-cipher-suites=${TLS_CIPHER_SUITES}"
+
+# Add projected bound SA token volume for OpenShift OIDC/STS authentication
+- target:
+    kind: Deployment
+    name: capa-controller-manager
+  patch: |-
+    - op: add
+      path: /spec/template/spec/volumes/-
+      value:
+        name: bound-sa-token
+        projected:
+          sources:
+          - serviceAccountToken:
+              path: token
+              audience: openshift
+    - op: add
+      path: /spec/template/spec/containers/0/volumeMounts/-
+      value:
+        name: bound-sa-token
+        mountPath: /var/run/secrets/openshift/serviceaccount
+        readOnly: true
