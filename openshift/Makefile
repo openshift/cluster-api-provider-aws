@@ -27,4 +27,5 @@ ocp-manifests: ## Builds openshift specific manifests
 		--attribute version="${PROVIDER_VERSION}" \
 		--self-image-ref registry.ci.openshift.org/openshift:aws-cluster-api-controllers \
 		--platform AWS \
-		--protect-cluster-resource awscluster
+		--protect-cluster-resource awscluster \
+		--manifests-summary
