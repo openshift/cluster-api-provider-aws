@@ -1,6 +1,8 @@
 module sigs.k8s.io/cluster-api-provider-aws/v2
 
-go 1.23.1
+go 1.24.0
+
+toolchain go1.24.4
 
 require (
 	github.com/alessio/shellescape v1.4.2
@@ -75,7 +77,7 @@ require (
 require (
 	github.com/AlecAivazis/survey/v2 v2.2.15 // indirect
 	github.com/aws/aws-sdk-go v1.55.7 // indirect
-	github.com/go-jose/go-jose/v4 v4.0.2 // indirect
+	github.com/go-jose/go-jose/v4 v4.1.4 // indirect
 	github.com/itchyny/gojq v0.12.9 // indirect
 	github.com/itchyny/timefmt-go v0.1.4 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
