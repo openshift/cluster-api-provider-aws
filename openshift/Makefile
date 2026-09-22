@@ -3,6 +3,9 @@ TOOLS_DIR := tools
 REPO_OWNER ?= openshift
 REPO_NAME ?= cluster-api-provider-aws
 PULL_BASE_SHA ?= main
+# In Prow, validate the generated summary against the pull request revision.
+# Fall back to the base revision for local verification outside Prow.
+SUMMARY_SHA ?= $(if $(PULL_PULL_SHA),$(PULL_PULL_SHA),$(PULL_BASE_SHA))
 
 include provider-version.mk
 
@@ -21,7 +24,7 @@ gh-summary: gh-summary-default
 
 .PHONY: gh-summary-%
 gh-summary-%:
-	curl --connect-timeout 10 --max-time 120 --retry 3 -fsSL "https://raw.githubusercontent.com/$(REPO_OWNER)/$(REPO_NAME)/$(PULL_BASE_SHA)/openshift/capi-operator-manifests/$*/manifests-summary.yaml" -o "capi-operator-manifests/$*/manifests-summary.yaml"
+	curl --connect-timeout 10 --max-time 120 --retry 3 -fsSL "https://raw.githubusercontent.com/$(REPO_OWNER)/$(REPO_NAME)/$(SUMMARY_SHA)/openshift/capi-operator-manifests/$*/manifests-summary.yaml" -o "capi-operator-manifests/$*/manifests-summary.yaml"
 
 .PHONY: update-manifests-gen
 update-manifests-gen:
