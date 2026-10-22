@@ -1,0 +1,81 @@
+version: 2
+updates:
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+        interval: "weekly"
+    groups:
+      all-github-actions:
+        patterns: [ "*" ]
+    commit-message:
+        prefix: ":seedling:"
+    labels:
+      - "kind/cleanup"
+      - "area/ci"
+      - "ok-to-test"
+      - "release-note-none"
+
+  # Main Go module
+  - package-ecosystem: "gomod"
+    directories:
+    - "/"
+    - "/test"
+    - "/hack/tools"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: ":seedling:"
+    labels:
+      - "kind/cleanup"
+      - "area/dependency"
+      - "ok-to-test"
+      - "release-note-none"
+    ## group all dependencies with a k8s.io prefix into a single PR.
+    groups:
+      all-go-mod-patch-and-minor:
+        patterns: [ "*" ]
+        update-types: [ "patch", "minor" ]
+    ignore:
+      # Ignore Cluster-API as its upgraded manually.
+      - dependency-name: "sigs.k8s.io/cluster-api*"
+        update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
+      # Ignore controller-runtime as its upgraded manually.
+      - dependency-name: "sigs.k8s.io/controller-runtime"
+        update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
+      # Ignore k8s and its transitives modules as they are upgraded manually together with controller-runtime.
+      - dependency-name: "k8s.io/*"
+        update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
+      - dependency-name: "go.etcd.io/*"
+        update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
+      - dependency-name: "google.golang.org/grpc"
+        update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
+      # Note: We have to keep this 100% in sync with k8s.io, so we get exactly the behavior
+      # that the k8s.io CEL code expects.
+      - dependency-name: "github.com/google/cel-go"
+      # Bumping the kustomize API independently can break compatibility with client-go as they share k8s.io/kube-openapi as a dependency.
+      # Bumping kustomize itself has led to using Go versions newer than what's available in the image builder jobs, breaking our builds.
+      - dependency-name: "sigs.k8s.io/kustomize/*"
+        update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
+      # Ignore openshift ROSA pkgs as its upgraded manually.
+      - dependency-name: "github.com/openshift*"
+        update-types: [ "version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch" ]
+
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: ":seedling:"
+    labels:
+      - "kind/cleanup"
+      - "area/dependency"
+      - "ok-to-test"
+      - "release-note-none"
+    groups:
+      dependencies:
+        patterns:
+          - "*"
+
