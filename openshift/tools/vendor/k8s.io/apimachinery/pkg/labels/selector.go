@@ -18,12 +18,14 @@ package labels
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
 
 	"k8s.io/klog/v2"
 
+	"k8s.io/apimachinery/pkg/api/validate/content"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -44,6 +46,19 @@ var (
 
 // Requirements is AND of all requirements.
 type Requirements []Requirement
+
+func (r Requirements) String() string {
+	var sb strings.Builder
+
+	for i, requirement := range r {
+		if i > 0 {
+			sb.WriteString(", ")
+		}
+		sb.WriteString(requirement.String())
+	}
+
+	return sb.String()
+}
 
 // Selector represents a label selector.
 type Selector interface {
@@ -254,13 +269,15 @@ func (r *Requirement) Matches(ls Labels) bool {
 		}
 		lsValue, err := strconv.ParseInt(val, 10, 64)
 		if err != nil {
-			klog.V(10).Infof("ParseInt failed for value %+v in label %+v, %+v", val, ls, err)
+			//nolint:logcheck // Extending the API is not worth it for contextual, structured logging of this.
+			klog.V(10).InfoS("ParseInt failed", "value", val, "label", ls, "err", err)
 			return false
 		}
 
 		// There should be only one strValue in r.strValues, and can be converted to an integer.
 		if len(r.strValues) != 1 {
-			klog.V(10).Infof("Invalid values count %+v of requirement %#v, for 'Gt', 'Lt' operators, exactly one value is required", len(r.strValues), r)
+			//nolint:logcheck // Extending the API is not worth it for contextual, structured logging of this.
+			klog.V(10).InfoS("Invalid values count: for 'Gt', 'Lt' operators, exactly one value is required", "count", len(r.strValues), "requirement", r)
 			return false
 		}
 
@@ -268,7 +285,8 @@ func (r *Requirement) Matches(ls Labels) bool {
 		for i := range r.strValues {
 			rValue, err = strconv.ParseInt(r.strValues[i], 10, 64)
 			if err != nil {
-				klog.V(10).Infof("ParseInt failed for value %+v in requirement %#v, for 'Gt', 'Lt' operators, the value must be an integer", r.strValues[i], r)
+				//nolint:logcheck // Extending the API is not worth it for contextual, structured logging of this.
+				klog.V(10).InfoS("ParseInt failed: for 'Gt', 'Lt' operators, the value must be an integer", "value", r.strValues[i], "requirement", r, "err", err)
 				return false
 			}
 		}
@@ -297,6 +315,13 @@ func (r *Requirement) Values() sets.String {
 	return ret
 }
 
+// ValuesUnsorted returns a copy of requirement values as passed to NewRequirement without sorting.
+func (r *Requirement) ValuesUnsorted() []string {
+	ret := make([]string, 0, len(r.strValues))
+	ret = append(ret, r.strValues...)
+	return ret
+}
+
 // Equal checks the equality of requirement.
 func (r Requirement) Equal(x Requirement) bool {
 	if r.key != x.key {
@@ -305,7 +330,7 @@ func (r Requirement) Equal(x Requirement) bool {
 	if r.operator != x.operator {
 		return false
 	}
-	return stringslices.Equal(r.strValues, x.strValues)
+	return slices.Equal(r.strValues, x.strValues)
 }
 
 // Empty returns true if the internalSelector doesn't restrict selection space
@@ -827,7 +852,6 @@ func (p *Parser) parseIdentifiersList() (sets.String, error) {
 				return s, nil
 			}
 			if tok2 == CommaToken {
-				p.consume(Values)
 				s.Insert("") // to handle ,, Double "" removed by StringSet
 			}
 		default: // it can be operator
@@ -906,7 +930,7 @@ func parse(selector string, path *field.Path) (internalSelector, error) {
 }
 
 func validateLabelKey(k string, path *field.Path) *field.Error {
-	if errs := validation.IsQualifiedName(k); len(errs) != 0 {
+	if errs := content.IsLabelKey(k); len(errs) != 0 {
 		return field.Invalid(path, k, strings.Join(errs, "; "))
 	}
 	return nil
