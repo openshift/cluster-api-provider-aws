@@ -119,6 +119,7 @@ spec:
   template:
     metadata:
       annotations:
+        capi-operator.openshift.io/inject-proxy: manager
         iam.amazonaws.com/role: ${AWS_CONTROLLER_IAM_ROLE:=""}
         openshift.io/required-scc: restricted-v2
         target.workload.openshift.io/management: '{"effect": "PreferredDuringScheduling"}'
