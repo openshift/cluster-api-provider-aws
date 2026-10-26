@@ -33,7 +33,7 @@ type ExtensionHandler struct {
 }
 
 // CallExtension calls a binary extension handler.
-func CallExtension(context *Context, in *yaml.Node, extensionName string) (handled bool, response *any.Any, err error) {
+func CallExtension(context *Context, in *yaml.Node, extensionName string) (handled bool, response *anypb.Any, err error) {
 	if context == nil || context.ExtensionHandlers == nil {
 		return false, nil, nil
 	}
@@ -50,7 +50,7 @@ func CallExtension(context *Context, in *yaml.Node, extensionName string) (handl
 	return handled, response, err
 }
 
-func (extensionHandlers *ExtensionHandler) handle(in *yaml.Node, extensionName string) (*any.Any, error) {
+func (extensionHandlers *ExtensionHandler) handle(in *yaml.Node, extensionName string) (*anypb.Any, error) {
 	if extensionHandlers.Name != "" {
 		yamlData, _ := yaml.Marshal(in)
 		request := &extensions.ExtensionHandlerRequest{

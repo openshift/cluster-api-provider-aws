@@ -32,11 +32,6 @@ func (file *File) resolveMessages() {
 		for j := range md.L2.Fields.List {
 			fd := &md.L2.Fields.List[j]
 
-			// Weak fields are resolved upon actual use.
-			if fd.L1.IsWeak {
-				continue
-			}
-
 			// Resolve message field dependency.
 			switch fd.L1.Kind {
 			case protoreflect.EnumKind:
@@ -45,6 +40,11 @@ func (file *File) resolveMessages() {
 			case protoreflect.MessageKind, protoreflect.GroupKind:
 				fd.L1.Message = file.resolveMessageDependency(fd.L1.Message, listFieldDeps, depIdx)
 				depIdx++
+				if fd.L1.Kind == protoreflect.GroupKind && (fd.IsMap() || fd.IsMapEntry()) {
+					// A map field might inherit delimited encoding from a file-wide default feature.
+					// But maps never actually use delimited encoding. (At least for now...)
+					fd.L1.Kind = protoreflect.MessageKind
+				}
 			}
 
 			// Default is resolved here since it depends on Enum being resolved.
@@ -146,8 +146,6 @@ func (fd *File) unmarshalFull(b []byte) {
 			switch num {
 			case genid.FileDescriptorProto_PublicDependency_field_number:
 				fd.L2.Imports[v].IsPublic = true
-			case genid.FileDescriptorProto_WeakDependency_field_number:
-				fd.L2.Imports[v].IsWeak = true
 			}
 		case protowire.BytesType:
 			v, m := protowire.ConsumeBytes(b)
@@ -332,7 +330,6 @@ func (md *Message) unmarshalFull(b []byte, sb *strs.Builder) {
 				md.L1.Extensions.List[extensionIdx].unmarshalFull(v, sb)
 				extensionIdx++
 			case genid.DescriptorProto_Options_field_number:
-				md.unmarshalOptions(v)
 				rawOptions = appendOptions(rawOptions, v)
 			}
 		default:
@@ -356,27 +353,6 @@ func (md *Message) unmarshalFull(b []byte, sb *strs.Builder) {
 		}
 	}
 	md.L2.Options = md.L0.ParentFile.builder.optionsUnmarshaler(&descopts.Message, rawOptions)
-}
-
-func (md *Message) unmarshalOptions(b []byte) {
-	for len(b) > 0 {
-		num, typ, n := protowire.ConsumeTag(b)
-		b = b[n:]
-		switch typ {
-		case protowire.VarintType:
-			v, m := protowire.ConsumeVarint(b)
-			b = b[m:]
-			switch num {
-			case genid.MessageOptions_MapEntry_field_number:
-				md.L1.IsMapEntry = protowire.DecodeBool(v)
-			case genid.MessageOptions_MessageSetWireFormat_field_number:
-				md.L1.IsMessageSet = protowire.DecodeBool(v)
-			}
-		default:
-			m := protowire.ConsumeFieldValue(num, typ, b)
-			b = b[m:]
-		}
-	}
 }
 
 func unmarshalMessageReservedRange(b []byte) (r [2]protoreflect.FieldNumber) {
@@ -517,8 +493,8 @@ func (fd *Field) unmarshalOptions(b []byte) {
 			switch num {
 			case genid.FieldOptions_Packed_field_number:
 				fd.L1.EditionFeatures.IsPacked = protowire.DecodeBool(v)
-			case genid.FieldOptions_Weak_field_number:
-				fd.L1.IsWeak = protowire.DecodeBool(v)
+			case genid.FieldOptions_Lazy_field_number:
+				fd.L1.IsLazy = protowire.DecodeBool(v)
 			case FieldOptions_EnforceUTF8:
 				fd.L1.EditionFeatures.IsUTF8Validated = protowire.DecodeBool(v)
 			}

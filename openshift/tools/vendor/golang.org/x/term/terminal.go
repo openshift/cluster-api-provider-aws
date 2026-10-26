@@ -6,6 +6,7 @@ package term
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"runtime"
 	"strconv"
@@ -36,6 +37,26 @@ var vt100EscapeCodes = EscapeCodes{
 	Reset: []byte{keyEscape, '[', '0', 'm'},
 }
 
+// A History provides a (possibly bounded) queue of input lines read by [Terminal.ReadLine].
+type History interface {
+	// Add will be called by [Terminal.ReadLine] to add
+	// a new, most recent entry to the history.
+	// It is allowed to drop any entry, including
+	// the entry being added (e.g., if it's deemed an invalid entry),
+	// the least-recent entry (e.g., to keep the history bounded),
+	// or any other entry.
+	Add(entry string)
+
+	// Len returns the number of entries in the history.
+	Len() int
+
+	// At returns an entry from the history.
+	// Index 0 is the most-recently added entry and
+	// index Len()-1 is the least-recently added entry.
+	// If index is < 0 or >= Len(), it panics.
+	At(idx int) string
+}
+
 // Terminal contains the state for running a VT100 terminal that is capable of
 // reading lines of input.
 type Terminal struct {
@@ -44,6 +65,8 @@ type Terminal struct {
 	// bytes, as an index into |line|). If it returns ok=false, the key
 	// press is processed normally. Otherwise it returns a replacement line
 	// and the new cursor position.
+	//
+	// This will be disabled during ReadPassword.
 	AutoCompleteCallback func(line string, pos int, key rune) (newLine string, newPos int, ok bool)
 
 	// Escape contains a pointer to the escape codes for this terminal.
@@ -84,9 +107,14 @@ type Terminal struct {
 	remainder []byte
 	inBuf     [256]byte
 
-	// history contains previously entered commands so that they can be
-	// accessed with the up and down keys.
-	history stRingBuffer
+	// History records and retrieves lines of input read by [ReadLine] which
+	// a user can retrieve and navigate using the up and down arrow keys.
+	//
+	// It is not safe to call ReadLine concurrently with any methods on History.
+	//
+	// [NewTerminal] sets this to a default implementation that records the
+	// last 100 lines of input.
+	History History
 	// historyIndex stores the currently accessed history entry, where zero
 	// means the immediately previous entry.
 	historyIndex int
@@ -109,6 +137,7 @@ func NewTerminal(c io.ReadWriter, prompt string) *Terminal {
 		termHeight:   24,
 		echo:         true,
 		historyIndex: -1,
+		History:      &stRingBuffer{},
 	}
 }
 
@@ -131,7 +160,9 @@ const (
 	keyEnd
 	keyDeleteWord
 	keyDeleteLine
+	keyDelete
 	keyClearScreen
+	keyTranspose
 	keyPasteStart
 	keyPasteEnd
 )
@@ -165,6 +196,8 @@ func bytesToKey(b []byte, pasteActive bool) (rune, []byte) {
 			return keyDeleteLine, b[1:]
 		case 12: // ^L
 			return keyClearScreen, b[1:]
+		case 20: // ^T
+			return keyTranspose, b[1:]
 		case 23: // ^W
 			return keyDeleteWord, b[1:]
 		case 14: // ^N
@@ -197,6 +230,10 @@ func bytesToKey(b []byte, pasteActive bool) (rune, []byte) {
 		case 'F':
 			return keyEnd, b[3:]
 		}
+	}
+
+	if !pasteActive && len(b) >= 4 && b[0] == keyEscape && b[1] == '[' && b[2] == '3' && b[3] == '~' {
+		return keyDelete, b[4:]
 	}
 
 	if !pasteActive && len(b) >= 6 && b[0] == keyEscape && b[1] == '[' && b[2] == '1' && b[3] == ';' && b[4] == '3' {
@@ -513,7 +550,7 @@ func (t *Terminal) handleKey(key rune) (line string, ok bool) {
 		t.pos = len(t.line)
 		t.moveCursorToPos(t.pos)
 	case keyUp:
-		entry, ok := t.history.NthPreviousEntry(t.historyIndex + 1)
+		entry, ok := t.historyAt(t.historyIndex + 1)
 		if !ok {
 			return "", false
 		}
@@ -532,7 +569,7 @@ func (t *Terminal) handleKey(key rune) (line string, ok bool) {
 			t.setLine(runes, len(runes))
 			t.historyIndex--
 		default:
-			entry, ok := t.history.NthPreviousEntry(t.historyIndex - 1)
+			entry, ok := t.historyAt(t.historyIndex - 1)
 			if ok {
 				t.historyIndex--
 				runes := []rune(entry)
@@ -561,7 +598,7 @@ func (t *Terminal) handleKey(key rune) (line string, ok bool) {
 		}
 		t.line = t.line[:t.pos]
 		t.moveCursorToPos(t.pos)
-	case keyCtrlD:
+	case keyCtrlD, keyDelete:
 		// Erase the character under the current position.
 		// The EOF case when the line is empty is handled in
 		// readLine().
@@ -571,6 +608,24 @@ func (t *Terminal) handleKey(key rune) (line string, ok bool) {
 		}
 	case keyCtrlU:
 		t.eraseNPreviousChars(t.pos)
+	case keyTranspose:
+		// This transposes the two characters around the cursor and advances the cursor. Best-effort.
+		if len(t.line) < 2 || t.pos < 1 {
+			return
+		}
+		swap := t.pos
+		if swap == len(t.line) {
+			swap-- // special: at end of line, swap previous two chars
+		}
+		t.line[swap-1], t.line[swap] = t.line[swap], t.line[swap-1]
+		if t.pos < len(t.line) {
+			t.pos++
+		}
+		if t.echo {
+			t.moveCursorToPos(swap - 1)
+			t.writeLine(t.line[swap-1:])
+			t.moveCursorToPos(t.pos)
+		}
 	case keyClearScreen:
 		// Erases the screen and moves the cursor to the home position.
 		t.queue([]rune("\x1b[2J\x1b[H"))
@@ -710,6 +765,8 @@ func (t *Terminal) Write(buf []byte) (n int, err error) {
 
 // ReadPassword temporarily changes the prompt and reads a password, without
 // echo, from the terminal.
+//
+// The AutoCompleteCallback is disabled during this call.
 func (t *Terminal) ReadPassword(prompt string) (line string, err error) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
@@ -717,6 +774,11 @@ func (t *Terminal) ReadPassword(prompt string) (line string, err error) {
 	oldPrompt := t.prompt
 	t.prompt = []rune(prompt)
 	t.echo = false
+	oldAutoCompleteCallback := t.AutoCompleteCallback
+	t.AutoCompleteCallback = nil
+	defer func() {
+		t.AutoCompleteCallback = oldAutoCompleteCallback
+	}()
 
 	line, err = t.readLine()
 
@@ -794,7 +856,7 @@ func (t *Terminal) readLine() (line string, err error) {
 		if lineOk {
 			if t.echo {
 				t.historyIndex = -1
-				t.history.Add(line)
+				t.historyAdd(line)
 			}
 			if lineIsPasted {
 				err = ErrPasteIndicator
@@ -951,19 +1013,23 @@ func (s *stRingBuffer) Add(a string) {
 	}
 }
 
-// NthPreviousEntry returns the value passed to the nth previous call to Add.
+func (s *stRingBuffer) Len() int {
+	return s.size
+}
+
+// At returns the value passed to the nth previous call to Add.
 // If n is zero then the immediately prior value is returned, if one, then the
 // next most recent, and so on. If such an element doesn't exist then ok is
 // false.
-func (s *stRingBuffer) NthPreviousEntry(n int) (value string, ok bool) {
+func (s *stRingBuffer) At(n int) string {
 	if n < 0 || n >= s.size {
-		return "", false
+		panic(fmt.Sprintf("term: history index [%d] out of range [0,%d)", n, s.size))
 	}
 	index := s.head - n
 	if index < 0 {
 		index += s.max
 	}
-	return s.entries[index], true
+	return s.entries[index]
 }
 
 // readPasswordLine reads from reader until it finds \n or io.EOF.

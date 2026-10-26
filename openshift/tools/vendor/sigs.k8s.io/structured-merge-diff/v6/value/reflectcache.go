@@ -19,7 +19,9 @@ package value
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"reflect"
 	"sort"
 	"sync"
@@ -37,14 +39,28 @@ type UnstructuredConverter interface {
 	ToUnstructured() interface{}
 }
 
+// UnstructuredConverterWithError is implemented instead of UnstructuredConverter by types for which
+// some, but not all, values can be converted directly to unstructured. If a type implements both
+// UnstructuredConverter and UnstructuredConverterWithError, its UnstructuredConverterWithError
+// implementation takes precedence during conversion.
+type UnstructuredConverterWithError interface {
+	json.Marshaler // require that json.Marshaler is implemented
+
+	// ToUnstructured returns the unstructured representation, or a non-nil error if the value
+	// cannot be converted to unstructured.
+	ToUnstructuredWithError() (any, error)
+}
+
 // TypeReflectCacheEntry keeps data gathered using reflection about how a type is converted to/from unstructured.
 type TypeReflectCacheEntry struct {
-	isJsonMarshaler        bool
-	ptrIsJsonMarshaler     bool
-	isJsonUnmarshaler      bool
-	ptrIsJsonUnmarshaler   bool
-	isStringConvertable    bool
-	ptrIsStringConvertable bool
+	isJsonMarshaler                     bool
+	ptrIsJsonMarshaler                  bool
+	isJsonUnmarshaler                   bool
+	ptrIsJsonUnmarshaler                bool
+	isUnstructuredConverter             bool
+	ptrIsUnstructuredConverter          bool
+	isUnstructuredConverterWithError    bool
+	ptrIsUnstructuredConverterWithError bool
 
 	structFields        map[string]*FieldCacheEntry
 	orderedStructFields []*FieldCacheEntry
@@ -57,6 +73,8 @@ type FieldCacheEntry struct {
 	JsonName string
 	// isOmitEmpty is true if the field has the json 'omitempty' tag.
 	isOmitEmpty bool
+	// omitzero is set if the field has the json 'omitzero' tag.
+	omitzero func(reflect.Value) bool
 	// fieldPath is a list of field indices (see FieldByIndex) to lookup the value of
 	// a field in a reflect.Value struct. The field indices in the list form a path used
 	// to traverse through intermediary 'inline' fields.
@@ -67,21 +85,32 @@ type FieldCacheEntry struct {
 }
 
 func (f *FieldCacheEntry) CanOmit(fieldVal reflect.Value) bool {
-	return f.isOmitEmpty && (safeIsNil(fieldVal) || isZero(fieldVal))
+	if f.isOmitEmpty && (safeIsNil(fieldVal) || isEmpty(fieldVal)) {
+		return true
+	}
+	if f.omitzero != nil && f.omitzero(fieldVal) {
+		return true
+	}
+	return false
 }
 
 // GetFrom returns the field identified by this FieldCacheEntry from the provided struct.
 func (f *FieldCacheEntry) GetFrom(structVal reflect.Value) reflect.Value {
 	// field might be nested within 'inline' structs
 	for _, elem := range f.fieldPath {
+		if safeIsNil(structVal) {
+			// if any part of the path is nil, return the zero value for the field type
+			return reflect.Zero(f.fieldType)
+		}
 		structVal = dereference(structVal).FieldByIndex(elem)
 	}
 	return structVal
 }
 
-var marshalerType = reflect.TypeOf(new(json.Marshaler)).Elem()
-var unmarshalerType = reflect.TypeOf(new(json.Unmarshaler)).Elem()
-var unstructuredConvertableType = reflect.TypeOf(new(UnstructuredConverter)).Elem()
+var marshalerType = reflect.TypeFor[json.Marshaler]()
+var unmarshalerType = reflect.TypeFor[json.Unmarshaler]()
+var unstructuredConverterType = reflect.TypeFor[UnstructuredConverter]()
+var unstructuredConverterWithErrorType = reflect.TypeFor[UnstructuredConverterWithError]()
 var defaultReflectCache = newReflectCache()
 
 // TypeReflectEntryOf returns the TypeReflectCacheEntry of the provided reflect.Type.
@@ -108,11 +137,13 @@ func typeReflectEntryOf(cm reflectCacheMap, t reflect.Type, updates reflectCache
 		return record
 	}
 	typeEntry := &TypeReflectCacheEntry{
-		isJsonMarshaler:        t.Implements(marshalerType),
-		ptrIsJsonMarshaler:     reflect.PtrTo(t).Implements(marshalerType),
-		isJsonUnmarshaler:      reflect.PtrTo(t).Implements(unmarshalerType),
-		isStringConvertable:    t.Implements(unstructuredConvertableType),
-		ptrIsStringConvertable: reflect.PtrTo(t).Implements(unstructuredConvertableType),
+		isJsonMarshaler:                     t.Implements(marshalerType),
+		ptrIsJsonMarshaler:                  reflect.PointerTo(t).Implements(marshalerType),
+		isJsonUnmarshaler:                   reflect.PointerTo(t).Implements(unmarshalerType),
+		isUnstructuredConverter:             t.Implements(unstructuredConverterType),
+		ptrIsUnstructuredConverter:          reflect.PointerTo(t).Implements(unstructuredConverterType),
+		isUnstructuredConverterWithError:    t.Implements(unstructuredConverterWithErrorType),
+		ptrIsUnstructuredConverterWithError: reflect.PointerTo(t).Implements(unstructuredConverterWithErrorType),
 	}
 	if t.Kind() == reflect.Struct {
 		fieldEntries := map[string]*FieldCacheEntry{}
@@ -145,7 +176,7 @@ func typeReflectEntryOf(cm reflectCacheMap, t reflect.Type, updates reflectCache
 func buildStructCacheEntry(t reflect.Type, infos map[string]*FieldCacheEntry, fieldPath [][]int) {
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
-		jsonName, omit, isInline, isOmitempty := lookupJsonTags(field)
+		jsonName, omit, isInline, isOmitempty, omitzero := lookupJsonTags(field)
 		if omit {
 			continue
 		}
@@ -159,7 +190,7 @@ func buildStructCacheEntry(t reflect.Type, infos map[string]*FieldCacheEntry, fi
 			}
 			continue
 		}
-		info := &FieldCacheEntry{JsonName: jsonName, isOmitEmpty: isOmitempty, fieldPath: append(fieldPath, field.Index), fieldType: field.Type}
+		info := &FieldCacheEntry{JsonName: jsonName, isOmitEmpty: isOmitempty, omitzero: omitzero, fieldPath: append(fieldPath, field.Index), fieldType: field.Type}
 		infos[jsonName] = info
 	}
 }
@@ -176,7 +207,7 @@ func (e TypeReflectCacheEntry) OrderedFields() []*FieldCacheEntry {
 
 // CanConvertToUnstructured returns true if this TypeReflectCacheEntry can convert values of its type to unstructured.
 func (e TypeReflectCacheEntry) CanConvertToUnstructured() bool {
-	return e.isJsonMarshaler || e.ptrIsJsonMarshaler || e.isStringConvertable || e.ptrIsStringConvertable
+	return e.isJsonMarshaler || e.ptrIsJsonMarshaler || e.isUnstructuredConverter || e.ptrIsUnstructuredConverter || e.isUnstructuredConverterWithError || e.ptrIsUnstructuredConverterWithError
 }
 
 // ToUnstructured converts the provided value to unstructured and returns it.
@@ -184,18 +215,18 @@ func (e TypeReflectCacheEntry) ToUnstructured(sv reflect.Value) (interface{}, er
 	// This is based on https://github.com/kubernetes/kubernetes/blob/82c9e5c814eb7acc6cc0a090c057294d0667ad66/staging/src/k8s.io/apimachinery/pkg/runtime/converter.go#L505
 	// and is intended to replace it.
 
+	// Check if the object is a nil pointer.
+	if sv.Kind() == reflect.Ptr && sv.IsNil() {
+		// We're done - we don't need to store anything.
+		return nil, nil
+	}
 	// Check if the object has a custom string converter and use it if available, since it is much more efficient
 	// than round tripping through json.
 	if converter, ok := e.getUnstructuredConverter(sv); ok {
-		return converter.ToUnstructured(), nil
+		return converter.ToUnstructuredWithError()
 	}
 	// Check if the object has a custom JSON marshaller/unmarshaller.
 	if marshaler, ok := e.getJsonMarshaler(sv); ok {
-		if sv.Kind() == reflect.Ptr && sv.IsNil() {
-			// We're done - we don't need to store anything.
-			return nil, nil
-		}
-
 		data, err := marshaler.MarshalJSON()
 		if err != nil {
 			return nil, err
@@ -304,16 +335,26 @@ func (e TypeReflectCacheEntry) getJsonUnmarshaler(v reflect.Value) (json.Unmarsh
 	return v.Addr().Interface().(json.Unmarshaler), true
 }
 
-func (e TypeReflectCacheEntry) getUnstructuredConverter(v reflect.Value) (UnstructuredConverter, bool) {
-	if e.isStringConvertable {
-		return v.Interface().(UnstructuredConverter), true
-	}
-	if e.ptrIsStringConvertable {
+type unstructuredConverterWithNilError struct {
+	UnstructuredConverter
+}
+
+func (c unstructuredConverterWithNilError) ToUnstructuredWithError() (any, error) {
+	return c.UnstructuredConverter.ToUnstructured(), nil
+}
+
+func (e TypeReflectCacheEntry) getUnstructuredConverter(v reflect.Value) (UnstructuredConverterWithError, bool) {
+	switch {
+	case e.isUnstructuredConverterWithError:
+		return v.Interface().(UnstructuredConverterWithError), true
+	case e.ptrIsUnstructuredConverterWithError && v.CanAddr():
 		// Check pointer receivers if v is not a pointer
-		if v.CanAddr() {
-			v = v.Addr()
-			return v.Interface().(UnstructuredConverter), true
-		}
+		return v.Addr().Interface().(UnstructuredConverterWithError), true
+	case e.isUnstructuredConverter:
+		return unstructuredConverterWithNilError{v.Interface().(UnstructuredConverter)}, true
+	case e.ptrIsUnstructuredConverter && v.CanAddr():
+		// Check pointer receivers if v is not a pointer
+		return unstructuredConverterWithNilError{v.Addr().Interface().(UnstructuredConverter)}, true
 	}
 	return nil, false
 }
@@ -379,34 +420,47 @@ const maxDepth = 10000
 // unmarshal unmarshals the given data
 // If v is a *map[string]interface{}, numbers are converted to int64 or float64
 func unmarshal(data []byte, v interface{}) error {
+	// Build a decoder from the given data
+	decoder := json.NewDecoder(bytes.NewBuffer(data))
+	// Preserve numbers, rather than casting to float64 automatically
+	decoder.UseNumber()
+	// Run the decode
+	if err := decoder.Decode(v); err != nil {
+		return err
+	}
+	next := decoder.InputOffset()
+	if _, err := decoder.Token(); !errors.Is(err, io.EOF) {
+		tail := bytes.TrimLeft(data[next:], " \t\r\n")
+		return fmt.Errorf("unexpected trailing data at offset %d", len(data)-len(tail))
+	}
+
+	// If the decode succeeds, post-process the object to convert json.Number objects to int64 or float64
 	switch v := v.(type) {
 	case *map[string]interface{}:
-		// Build a decoder from the given data
-		decoder := json.NewDecoder(bytes.NewBuffer(data))
-		// Preserve numbers, rather than casting to float64 automatically
-		decoder.UseNumber()
-		// Run the decode
-		if err := decoder.Decode(v); err != nil {
-			return err
-		}
-		// If the decode succeeds, post-process the map to convert json.Number objects to int64 or float64
 		return convertMapNumbers(*v, 0)
 
 	case *[]interface{}:
-		// Build a decoder from the given data
-		decoder := json.NewDecoder(bytes.NewBuffer(data))
-		// Preserve numbers, rather than casting to float64 automatically
-		decoder.UseNumber()
-		// Run the decode
-		if err := decoder.Decode(v); err != nil {
-			return err
-		}
-		// If the decode succeeds, post-process the map to convert json.Number objects to int64 or float64
 		return convertSliceNumbers(*v, 0)
 
+	case *interface{}:
+		return convertInterfaceNumbers(v, 0)
+
 	default:
-		return json.Unmarshal(data, v)
+		return nil
 	}
+}
+
+func convertInterfaceNumbers(v *interface{}, depth int) error {
+	var err error
+	switch v2 := (*v).(type) {
+	case json.Number:
+		*v, err = convertNumber(v2)
+	case map[string]interface{}:
+		err = convertMapNumbers(v2, depth+1)
+	case []interface{}:
+		err = convertSliceNumbers(v2, depth+1)
+	}
+	return err
 }
 
 // convertMapNumbers traverses the map, converting any json.Number values to int64 or float64.

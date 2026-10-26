@@ -24,4 +24,4 @@ limitations under the License.
 //     item to be reenqueued while it is being processed.
 //     In this case it will be processed again.
 //   - Shutdown notifications.
-package workqueue // import "k8s.io/client-go/util/workqueue"
+package workqueue
