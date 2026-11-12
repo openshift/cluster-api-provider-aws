@@ -1443,6 +1443,7 @@ func autoConvert_v1beta2_AWSMachineSpec_To_v1beta1_AWSMachineSpec(in *v1beta2.AW
 	// WARNING: in.HostAffinity requires manual conversion: does not exist in peer-type
 	// WARNING: in.DynamicHostAllocation requires manual conversion: does not exist in peer-type
 	// WARNING: in.CapacityReservationPreference requires manual conversion: does not exist in peer-type
+	// WARNING: in.SourceDestCheck requires manual conversion: does not exist in peer-type
 	return nil
 }
 
