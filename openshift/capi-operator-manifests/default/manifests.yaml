@@ -149,6 +149,7 @@ spec:
         - --insecure-diagnostics=${CAPA_INSECURE_DIAGNOSTICS:=false}
         - --tls-min-version=${TLS_MIN_VERSION}
         - --tls-cipher-suites=${TLS_CIPHER_SUITES}
+        - --tls-curve-preferences=${TLS_CURVE_PREFERENCES}
         env:
         - name: AWS_SHARED_CREDENTIALS_FILE
           value: /home/.aws/credentials
