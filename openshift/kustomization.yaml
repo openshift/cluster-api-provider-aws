@@ -50,6 +50,9 @@ patches:
     - op: add
       path: /spec/template/spec/containers/0/args/-
       value: "--tls-cipher-suites=${TLS_CIPHER_SUITES}"
+    - op: add
+      path: /spec/template/spec/containers/0/args/-
+      value: "--tls-curve-preferences=${TLS_CURVE_PREFERENCES}"
 
 # Add projected bound SA token volume for OpenShift OIDC/STS authentication
 - target:
